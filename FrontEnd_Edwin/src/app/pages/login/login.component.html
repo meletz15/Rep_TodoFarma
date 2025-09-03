@@ -1,0 +1,169 @@
+<div class="min-h-screen flex">
+  <!-- Lado izquierdo - Formulario de login -->
+  <div class="w-1/2 flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-8">
+    <div class="w-full max-w-md">
+      <!-- Logo y título -->
+      <div class="text-center mb-8">
+        <div class="inline-flex items-center justify-center mb-4">
+          <img src="assets/images/logos/logo.png" alt="TodoFarma Logo" class="w-32 h-32 object-contain login-logo" style="filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.1));">
+        </div>
+        <p class="text-gray-600">Sistema de Gestión Farmacéutica</p>
+      </div>
+
+      <!-- Tarjeta de login -->
+      <div class="bg-white rounded-2xl shadow-xl p-8 border border-gray-200">
+        <div class="text-center mb-8">
+          <h2 class="text-2xl font-bold text-gray-900 mb-2">Iniciar Sesión</h2>
+          <p class="text-gray-600">Ingresa tus credenciales para continuar</p>
+        </div>
+
+        <!-- Formulario -->
+        <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="space-y-6">
+          <!-- Campo Usuario -->
+          <div class="space-y-2">
+            <label class="block text-sm font-medium text-gray-700">Usuario</label>
+            <mat-form-field appearance="outline" class="w-full">
+              <input
+                matInput
+                formControlName="email"
+                type="email"
+                placeholder="Ingrese su correo electrónico"
+                autocomplete="email"
+                class="text-gray-900"
+              >
+              <mat-icon matSuffix class="text-gray-400">person</mat-icon>
+              <mat-error *ngIf="loginForm.get('email')?.hasError('required')" class="text-red-500 text-sm">
+                El correo electrónico es requerido
+              </mat-error>
+              <mat-error *ngIf="loginForm.get('email')?.hasError('email')" class="text-red-500 text-sm">
+                Ingrese un correo electrónico válido
+              </mat-error>
+            </mat-form-field>
+          </div>
+
+          <!-- Campo Contraseña -->
+          <div class="space-y-2">
+            <label class="block text-sm font-medium text-gray-700">Contraseña</label>
+            <mat-form-field appearance="outline" class="w-full">
+              <input
+                matInput
+                formControlName="password"
+                [type]="hidePassword ? 'password' : 'text'"
+                placeholder="Ingrese su contraseña"
+                autocomplete="current-password"
+                class="text-gray-900"
+              >
+              <button
+                mat-icon-button
+                matSuffix
+                (click)="hidePassword = !hidePassword"
+                [attr.aria-label]="'Hide password'"
+                [attr.aria-pressed]="hidePassword"
+                type="button"
+                class="text-gray-400 hover:text-gray-600"
+              >
+                <mat-icon>{{hidePassword ? 'visibility_off' : 'visibility'}}</mat-icon>
+              </button>
+              <mat-error *ngIf="loginForm.get('password')?.hasError('required')" class="text-red-500 text-sm">
+                La contraseña es requerida
+              </mat-error>
+              <mat-error *ngIf="loginForm.get('password')?.hasError('minlength')" class="text-red-500 text-sm">
+                La contraseña debe tener al menos 6 caracteres
+              </mat-error>
+            </mat-form-field>
+          </div>
+
+          <!-- Checkbox Recordarme -->
+          <div class="flex items-center">
+            <mat-checkbox formControlName="rememberMe" class="text-gray-700">
+              Recordarme
+            </mat-checkbox>
+          </div>
+
+          <!-- Botón de login -->
+          <button
+            type="submit"
+            class="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 px-4 rounded-lg font-semibold flex items-center justify-center gap-2 transition-colors duration-200 shadow-lg hover:shadow-xl disabled:bg-gray-400 disabled:cursor-not-allowed"
+            [disabled]="loginForm.invalid || loading"
+          >
+            <mat-spinner diameter="20" class="text-white" *ngIf="loading"></mat-spinner>
+            <span *ngIf="!loading">Iniciar Sesión</span>
+          </button>
+        </form>
+
+        <!-- Footer -->
+        <div class="mt-8 pt-6 border-t border-gray-200 text-center">
+          <p class="text-sm text-gray-500">© 2024 TodoFarma. Todos los derechos reservados.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Columna derecha - Información de bienvenida -->
+  <div class="w-1/2 gradient-bg relative overflow-hidden">
+    <!-- Imagen de fondo difuminada -->
+    <div class="absolute inset-0 bg-image-blur"></div>
+    
+    <!-- Franja horizontal más oscura para mejorar visibilidad -->
+    <div class="absolute inset-0 dark-overlay"></div>
+    
+    <!-- Contenido de bienvenida -->
+    <div class="relative z-10 flex flex-col justify-center items-center h-full text-white p-8 fade-in-up">
+      <div class="text-center max-w-lg">
+        <h1 class="text-4xl font-bold mb-4">Bienvenido a TodoFarma</h1>
+        <p class="text-xl text-blue-100 mb-12">Tu solución completa para la gestión farmacéutica</p>
+        
+        <!-- Cuadros de módulos -->
+        <div class="grid grid-cols-2 gap-6">
+          <!-- Gestión de Inventario -->
+          <div class="module-card rounded-lg p-6">
+            <div class="flex flex-col items-center text-center">
+              <mat-icon class="text-3xl mb-3">inventory</mat-icon>
+              <span class="font-medium">Gestión de Inventario</span>
+            </div>
+          </div>
+          
+          <!-- Ventas y Facturación -->
+          <div class="module-card rounded-lg p-6">
+            <div class="flex flex-col items-center text-center">
+              <mat-icon class="text-3xl mb-3">point_of_sale</mat-icon>
+              <span class="font-medium">Ventas y Facturación</span>
+            </div>
+          </div>
+          
+          <!-- Reportes y Estadísticas -->
+          <div class="module-card rounded-lg p-6">
+            <div class="flex flex-col items-center text-center">
+              <mat-icon class="text-3xl mb-3">analytics</mat-icon>
+              <span class="font-medium">Reportes y Estadísticas</span>
+            </div>
+          </div>
+          
+          <!-- Gestión de Usuarios -->
+          <div class="module-card rounded-lg p-6">
+            <div class="flex flex-col items-center text-center">
+              <mat-icon class="text-3xl mb-3">people</mat-icon>
+              <span class="font-medium">Gestión de Usuarios</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Elementos decorativos de fondo -->
+    <div class="absolute inset-0 opacity-10">
+      <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
+        <mat-icon class="text-white text-9xl">local_pharmacy</mat-icon>
+      </div>
+    </div>
+    
+    <!-- Píldoras decorativas -->
+    <div class="absolute bottom-8 left-8 flex space-x-4">
+      <div class="w-4 h-4 bg-red-400 rounded-full pill"></div>
+      <div class="w-4 h-4 bg-purple-400 rounded-full pill"></div>
+      <div class="w-4 h-4 bg-green-400 rounded-full pill"></div>
+      <div class="w-4 h-4 bg-yellow-400 rounded-full pill"></div>
+      <div class="w-4 h-4 bg-blue-400 rounded-full pill"></div>
+    </div>
+  </div>
+</div>

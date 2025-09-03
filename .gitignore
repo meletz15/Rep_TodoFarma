@@ -1,3 +1,6 @@
+# Ignorar node_modules en cualquier nivel
+node_modules/
+
 # Logs
 logs
 *.log

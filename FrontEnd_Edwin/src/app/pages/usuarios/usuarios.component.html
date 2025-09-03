@@ -1,0 +1,366 @@
+<div class="min-h-screen bg-gray-50 p-6">
+  <!-- Header -->
+  <div class="mb-8">
+          <div class="flex justify-between items-center">
+        <div>
+          <h1 class="text-3xl font-bold text-gray-900">Gestión de Usuarios</h1>
+          <p class="text-gray-600 mt-2">Administra los usuarios del sistema TodoFarma</p>
+        </div>
+        <div class="flex items-center gap-3">
+          <button
+            (click)="exportarAExcel()"
+            class="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg font-semibold flex items-center gap-2 transition-colors duration-200 shadow-lg hover:shadow-xl"
+            matTooltip="Exportar usuarios filtrados a Excel"
+            [disabled]="dataSource.data.length === 0"
+          >
+            <mat-icon class="text-white">download</mat-icon>
+            Exportar Excel
+          </button>
+          <button
+            (click)="abrirDialogoUsuario()"
+            class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-semibold flex items-center gap-2 transition-colors duration-200 shadow-lg hover:shadow-xl"
+            matTooltip="Agregar nuevo usuario"
+          >
+            <mat-icon class="text-white">add</mat-icon>
+            Agregar Usuario
+          </button>
+        </div>
+      </div>
+  </div>
+
+  <!-- Filtros mejorados con Tailwind -->
+  <div class="bg-white rounded-xl shadow-lg border border-gray-200 p-6 mb-6">
+    <div class="flex items-center gap-3 mb-6">
+      <mat-icon class="text-blue-600">filter_list</mat-icon>
+      <h3 class="text-xl font-semibold text-gray-900">Filtros de Búsqueda</h3>
+    </div>
+    
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <!-- Búsqueda -->
+      <div class="space-y-2">
+        <label class="block text-sm font-medium text-gray-700">Buscar</label>
+        <mat-form-field appearance="outline" class="w-full">
+          <input 
+            matInput 
+            [(ngModel)]="filtros.busqueda" 
+            placeholder="Nombre, apellido o correo"
+            class="text-gray-900"
+          >
+          <mat-icon matSuffix class="text-gray-400">search</mat-icon>
+        </mat-form-field>
+      </div>
+
+      <!-- Rol -->
+      <div class="space-y-2">
+        <label class="block text-sm font-medium text-gray-700">Rol</label>
+        <mat-form-field appearance="outline" class="w-full">
+          <mat-select [(ngModel)]="filtros.rol_id" placeholder="Seleccionar rol">
+            <mat-option value="">Todos los roles</mat-option>
+            <mat-option *ngFor="let rol of roles" [value]="rol.id">
+              {{rol.nombre}}
+            </mat-option>
+          </mat-select>
+          <mat-icon matSuffix class="text-gray-400">admin_panel_settings</mat-icon>
+        </mat-form-field>
+      </div>
+
+      <!-- Estado -->
+      <div class="space-y-2">
+        <label class="block text-sm font-medium text-gray-700">Estado</label>
+        <mat-form-field appearance="outline" class="w-full">
+          <mat-select [(ngModel)]="filtros.estado" placeholder="Seleccionar estado">
+            <mat-option value="">Todos los estados</mat-option>
+            <mat-option value="ACTIVO">Activo</mat-option>
+            <mat-option value="INACTIVO">Inactivo</mat-option>
+          </mat-select>
+          <mat-icon matSuffix class="text-gray-400">toggle_on</mat-icon>
+        </mat-form-field>
+      </div>
+
+      <!-- Botones de acción -->
+      <div class="space-y-2">
+        <label class="block text-sm font-medium text-gray-700 opacity-0">Acciones</label>
+        <div class="flex gap-3">
+          <button
+            (click)="aplicarFiltros()"
+            class="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-4 py-3 rounded-lg font-medium flex items-center justify-center gap-2 transition-colors duration-200 shadow-md hover:shadow-lg"
+          >
+            <mat-icon class="text-white text-lg">filter_list</mat-icon>
+            Filtrar
+          </button>
+          <button
+            (click)="limpiarFiltros()"
+            class="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-3 rounded-lg font-medium flex items-center justify-center gap-2 transition-colors duration-200 border border-gray-300"
+          >
+            <mat-icon class="text-gray-600 text-lg">clear</mat-icon>
+            Limpiar
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tabla de usuarios -->
+  <div class="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
+    <!-- Loading spinner -->
+    <div *ngIf="loading" class="flex justify-center items-center p-12">
+      <div class="flex items-center gap-4">
+        <mat-spinner diameter="40" class="text-blue-600"></mat-spinner>
+        <span class="text-gray-600 font-medium">Cargando usuarios...</span>
+      </div>
+    </div>
+
+    <!-- Tabla -->
+    <div *ngIf="!loading" class="overflow-x-auto">
+      <table mat-table [dataSource]="dataSource" matSort class="w-full">
+        <!-- Nombre -->
+        <ng-container matColumnDef="nombre">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header class="bg-gray-50 text-gray-900 font-semibold px-6 py-4"> 
+            Nombre 
+          </th>
+          <td mat-cell *matCellDef="let usuario" class="px-6 py-4 text-gray-900"> 
+            {{usuario.nombre}} 
+          </td>
+        </ng-container>
+
+        <!-- Apellido -->
+        <ng-container matColumnDef="apellido">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header class="bg-gray-50 text-gray-900 font-semibold px-6 py-4"> 
+            Apellido 
+          </th>
+          <td mat-cell *matCellDef="let usuario" class="px-6 py-4 text-gray-900"> 
+            {{usuario.apellido}} 
+          </td>
+        </ng-container>
+
+        <!-- Correo -->
+        <ng-container matColumnDef="correo">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header class="bg-gray-50 text-gray-900 font-semibold px-6 py-4"> 
+            Correo 
+          </th>
+          <td mat-cell *matCellDef="let usuario" class="px-6 py-4 text-gray-900"> 
+            {{usuario.correo}} 
+          </td>
+        </ng-container>
+
+        <!-- Rol -->
+        <ng-container matColumnDef="rol_nombre">
+          <th mat-header-cell *matHeaderCellDef class="bg-gray-50 text-gray-900 font-semibold px-6 py-4"> 
+            Rol 
+          </th>
+          <td mat-cell *matCellDef="let usuario" class="px-6 py-4"> 
+            <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800">
+              {{getRolNombre(usuario.rol_id)}}
+            </span>
+          </td>
+        </ng-container>
+
+        <!-- Estado -->
+        <ng-container matColumnDef="estado">
+          <th mat-header-cell *matHeaderCellDef class="bg-gray-50 text-gray-900 font-semibold px-6 py-4"> 
+            Estado 
+          </th>
+          <td mat-cell *matCellDef="let usuario" class="px-6 py-4">
+            <span 
+              class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium"
+              [class]="usuario.estado === 'ACTIVO' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'"
+            >
+              <span class="w-2 h-2 rounded-full mr-2" 
+                    [class]="usuario.estado === 'ACTIVO' ? 'bg-green-400' : 'bg-red-400'">
+              </span>
+              {{usuario.estado}}
+            </span>
+          </td>
+        </ng-container>
+
+        <!-- Fecha de registro -->
+        <ng-container matColumnDef="fecha_registro">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header class="bg-gray-50 text-gray-900 font-semibold px-6 py-4"> 
+            Fecha de Registro 
+          </th>
+          <td mat-cell *matCellDef="let usuario" class="px-6 py-4 text-gray-900"> 
+            {{usuario.fecha_registro | date:'dd/MM/yyyy'}} 
+          </td>
+        </ng-container>
+
+        <!-- Acciones -->
+        <ng-container matColumnDef="acciones">
+          <th mat-header-cell *matHeaderCellDef class="bg-gray-50 text-gray-900 font-semibold px-6 py-4"> 
+            Acciones 
+          </th>
+          <td mat-cell *matCellDef="let usuario" class="px-6 py-4">
+            <div class="flex items-center gap-2">
+              <button
+                (click)="abrirDialogoUsuario(usuario)"
+                class="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors duration-200"
+                matTooltip="Editar usuario"
+              >
+                <mat-icon>edit</mat-icon>
+              </button>
+              <button
+                (click)="eliminarUsuario(usuario)"
+                class="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors duration-200"
+                matTooltip="Eliminar usuario"
+              >
+                <mat-icon>delete</mat-icon>
+              </button>
+            </div>
+          </td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="displayedColumns" class="border-b border-gray-200"></tr>
+        <tr mat-row *matRowDef="let row; columns: displayedColumns;" 
+            class="border-b border-gray-100 hover:bg-gray-50 transition-colors duration-200"></tr>
+      </table>
+
+      <!-- Paginación -->
+      <div class="border-t border-gray-200 bg-gray-50">
+        <mat-paginator
+          [length]="totalUsuarios"
+          [pageSize]="pageSize"
+          [pageSizeOptions]="[5, 10, 25, 50]"
+          (page)="onPageChange($event)"
+          showFirstLastButtons
+          class="bg-transparent"
+        ></mat-paginator>
+      </div>
+
+      <!-- Mensaje cuando no hay datos -->
+      <div *ngIf="dataSource.data.length === 0 && !loading" class="text-center py-12">
+        <mat-icon class="text-gray-300 text-6xl mb-4">people_outline</mat-icon>
+        <h3 class="text-lg font-medium text-gray-900 mb-2">No se encontraron usuarios</h3>
+        <p class="text-gray-600 mb-6">Intenta ajustar los filtros o agregar un nuevo usuario.</p>
+        <button
+          (click)="abrirDialogoUsuario()"
+          class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-semibold flex items-center gap-2 mx-auto transition-colors duration-200"
+        >
+          <mat-icon>add</mat-icon>
+          Agregar Primer Usuario
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Dialog para crear/editar usuario -->
+  <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4" 
+       *ngIf="mostrarDialogo" 
+       (click)="cerrarDialogo()">
+    <div class="bg-white rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto" 
+         (click)="$event.stopPropagation()">
+      <!-- Header del dialog -->
+      <div class="flex justify-between items-center p-6 border-b border-gray-200">
+        <h2 class="text-xl font-semibold text-gray-900">
+          {{ editMode ? 'Editar Usuario' : 'Crear Nuevo Usuario' }}
+        </h2>
+        <button 
+          (click)="cerrarDialogo()"
+          class="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors duration-200"
+        >
+          <mat-icon>close</mat-icon>
+        </button>
+      </div>
+
+      <!-- Contenido del dialog -->
+      <div class="p-6">
+        <form [formGroup]="usuarioForm" (ngSubmit)="guardarUsuario()" class="space-y-6">
+          <!-- Nombre y Apellido -->
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="space-y-2">
+              <label class="block text-sm font-medium text-gray-700">Nombre *</label>
+              <mat-form-field appearance="outline" class="w-full">
+                <input matInput formControlName="nombre" placeholder="Ingrese el nombre">
+                <mat-error *ngIf="usuarioForm.get('nombre')?.hasError('required')">
+                  El nombre es requerido
+                </mat-error>
+              </mat-form-field>
+            </div>
+
+            <div class="space-y-2">
+              <label class="block text-sm font-medium text-gray-700">Apellido *</label>
+              <mat-form-field appearance="outline" class="w-full">
+                <input matInput formControlName="apellido" placeholder="Ingrese el apellido">
+                <mat-error *ngIf="usuarioForm.get('apellido')?.hasError('required')">
+                  El apellido es requerido
+                </mat-error>
+              </mat-form-field>
+            </div>
+          </div>
+
+          <!-- Correo y Contraseña -->
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="space-y-2">
+              <label class="block text-sm font-medium text-gray-700">Correo Electrónico *</label>
+              <mat-form-field appearance="outline" class="w-full">
+                <input matInput formControlName="correo" type="email" placeholder="ejemplo@correo.com">
+                <mat-error *ngIf="usuarioForm.get('correo')?.hasError('required')">
+                  El correo es requerido
+                </mat-error>
+                <mat-error *ngIf="usuarioForm.get('correo')?.hasError('email')">
+                  Ingrese un correo válido
+                </mat-error>
+              </mat-form-field>
+            </div>
+
+            <div class="space-y-2">
+              <label class="block text-sm font-medium text-gray-700">Contraseña *</label>
+              <mat-form-field appearance="outline" class="w-full">
+                <input matInput formControlName="contrasena" type="password" placeholder="Mínimo 8 caracteres">
+                <mat-error *ngIf="usuarioForm.get('contrasena')?.hasError('required')">
+                  La contraseña es requerida
+                </mat-error>
+                <mat-error *ngIf="usuarioForm.get('contrasena')?.hasError('minlength')">
+                  La contraseña debe tener al menos 8 caracteres
+                </mat-error>
+              </mat-form-field>
+            </div>
+          </div>
+
+          <!-- Rol y Estado -->
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="space-y-2">
+              <label class="block text-sm font-medium text-gray-700">Rol *</label>
+              <mat-form-field appearance="outline" class="w-full">
+                <mat-select formControlName="rol_id" placeholder="Seleccionar rol">
+                  <mat-option *ngFor="let rol of roles" [value]="rol.id">
+                    {{rol.nombre}}
+                  </mat-option>
+                </mat-select>
+                <mat-error *ngIf="usuarioForm.get('rol_id')?.hasError('required')">
+                  El rol es requerido
+                </mat-error>
+              </mat-form-field>
+            </div>
+
+            <div class="space-y-2">
+              <label class="block text-sm font-medium text-gray-700">Estado</label>
+              <mat-form-field appearance="outline" class="w-full">
+                <mat-select formControlName="estado" placeholder="Seleccionar estado">
+                  <mat-option value="ACTIVO">Activo</mat-option>
+                  <mat-option value="INACTIVO">Inactivo</mat-option>
+                </mat-select>
+              </mat-form-field>
+            </div>
+          </div>
+
+          <!-- Botones de acción -->
+          <div class="flex justify-end gap-4 pt-6 border-t border-gray-200">
+            <button 
+              type="button" 
+              (click)="cerrarDialogo()"
+              class="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors duration-200"
+            >
+              Cancelar
+            </button>
+            <button 
+              type="submit" 
+              [disabled]="usuarioForm.invalid"
+              class="px-6 py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white rounded-lg font-medium transition-colors duration-200"
+            >
+              {{ editMode ? 'Actualizar' : 'Crear' }}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,281 @@
+<div class="min-h-screen bg-gray-50">
+  <!-- Header mejorado con azul fuerte y diseño minimalista -->
+  <header class="bg-gradient-to-r from-blue-700 via-blue-800 to-blue-900 shadow-xl border-b border-blue-600">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex justify-between items-center h-16">
+        <!-- Logo y título mejorado -->
+        <div class="flex items-center">
+          <div class="flex-shrink-0 flex items-center">
+            <div class="w-18 h-18 flex items-center justify-center mr-4 bg-white rounded-lg shadow-md">
+              <img src="assets/images/logos/logo.png" alt="TodoFarma Logo" class="w-16 h-16 object-contain">
+            </div>
+            <div class="flex flex-col">
+              <p class="text-sm text-blue-200 font-medium">Sistema de Gestión</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Información del usuario mejorada -->
+        <div class="flex items-center space-x-4">
+          <div class="hidden md:flex items-center space-x-3">
+            <div class="text-right user-text">
+              <p class="text-sm font-semibold text-white leading-tight">{{ currentUser?.nombre || 'Usuario' }}</p>
+              <p class="text-xs text-blue-200 font-medium leading-tight">{{ currentUser?.rol || 'Administrador' }}</p>
+            </div>
+            <div class="w-24 h-24 bg-white bg-opacity-20 rounded-full flex items-center justify-center shadow-sm user-icon">
+              <mat-icon class="text-white text-xl">person</mat-icon>
+            </div>
+          </div>
+          
+          <!-- Botón de menú hamburguesa para móvil -->
+          <button 
+            (click)="toggleMenu()"
+            class="md:hidden p-2 rounded-lg text-white hover:bg-white hover:bg-opacity-10 focus:outline-none focus:ring-2 focus:ring-white focus:ring-opacity-50 transition-all duration-200"
+          >
+            <mat-icon>{{ menuAbierto ? 'close' : 'menu' }}</mat-icon>
+          </button>
+
+          <!-- Botón de logout mejorado -->
+          <button 
+            (click)="logout()"
+            class="hidden md:flex items-center px-3 py-2 text-sm font-medium text-white hover:bg-white hover:bg-opacity-10 rounded-lg transition-all duration-200 border border-white border-opacity-20 hover:border-opacity-40"
+          >
+            <mat-icon class="mr-2 text-base">logout</mat-icon>
+            Cerrar Sesión
+          </button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <div class="flex">
+    <!-- Sidebar - Menú de tarjetas -->
+    <aside 
+      class="fixed inset-y-0 left-0 z-50 w-80 bg-white shadow-lg transform transition-transform duration-300 ease-in-out md:relative md:translate-x-0"
+      [class.translate-x-0]="menuAbierto"
+      [class.-translate-x-full]="!menuAbierto"
+    >
+      <div class="h-full flex flex-col">
+        <!-- Header del sidebar -->
+        <div class="flex items-center justify-between p-4 border-b border-gray-200">
+          <h2 class="text-lg font-semibold text-gray-900">Menú Principal</h2>
+          <button 
+            (click)="toggleMenu()"
+            class="md:hidden p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100"
+          >
+            <mat-icon>close</mat-icon>
+          </button>
+        </div>
+
+        <!-- Contenido del menú -->
+        <div class="flex-1 overflow-y-auto p-4">
+          <div class="grid grid-cols-2 gap-4">
+            <!-- Ventas -->
+            <div 
+              (click)="onMenuClick(menuItems[0])"
+              class="bg-white rounded-lg shadow-sm border border-gray-200 p-4 cursor-pointer hover:shadow-md hover:border-blue-300 transition-all duration-200 relative overflow-hidden"
+              [class.opacity-50]="!menuItems[0].disponible"
+              [class.cursor-not-allowed]="!menuItems[0].disponible"
+            >
+              <div class="flex flex-col items-center text-center">
+                <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mb-3">
+                  <mat-icon class="text-blue-600">point_of_sale</mat-icon>
+                </div>
+                <span class="text-sm font-medium text-gray-900">Ventas</span>
+              </div>
+              <!-- Overlay de bloqueado -->
+              <div *ngIf="!menuItems[0].disponible" class="absolute inset-0 bg-gray-900 bg-opacity-20 flex items-center justify-center">
+                <mat-icon class="text-gray-600 text-lg">lock</mat-icon>
+              </div>
+            </div>
+
+            <!-- Productos -->
+            <div 
+              (click)="onMenuClick(menuItems[1])"
+              class="bg-white rounded-lg shadow-sm border border-gray-200 p-4 cursor-pointer hover:shadow-md hover:border-green-300 transition-all duration-200 relative overflow-hidden"
+              [class.opacity-50]="!menuItems[1].disponible"
+              [class.cursor-not-allowed]="!menuItems[1].disponible"
+            >
+              <div class="flex flex-col items-center text-center">
+                <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mb-3">
+                  <mat-icon class="text-green-600">inventory</mat-icon>
+                </div>
+                <span class="text-sm font-medium text-gray-900">Productos</span>
+              </div>
+              <!-- Overlay de bloqueado -->
+              <div *ngIf="!menuItems[1].disponible" class="absolute inset-0 bg-gray-900 bg-opacity-20 flex items-center justify-center">
+                <mat-icon class="text-gray-600 text-lg">lock</mat-icon>
+              </div>
+            </div>
+
+            <!-- Caja -->
+            <div 
+              (click)="onMenuClick(menuItems[2])"
+              class="bg-white rounded-lg shadow-sm border border-gray-200 p-4 cursor-pointer hover:shadow-md hover:border-yellow-300 transition-all duration-200 relative overflow-hidden"
+              [class.opacity-50]="!menuItems[2].disponible"
+              [class.cursor-not-allowed]="!menuItems[2].disponible"
+            >
+              <div class="flex flex-col items-center text-center">
+                <div class="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center mb-3">
+                  <mat-icon class="text-yellow-600">account_balance_wallet</mat-icon>
+                </div>
+                <span class="text-sm font-medium text-gray-900">Caja</span>
+              </div>
+              <!-- Overlay de bloqueado -->
+              <div *ngIf="!menuItems[2].disponible" class="absolute inset-0 bg-gray-900 bg-opacity-20 flex items-center justify-center">
+                <mat-icon class="text-gray-600 text-lg">lock</mat-icon>
+              </div>
+            </div>
+
+            <!-- Clientes -->
+            <div 
+              (click)="onMenuClick(menuItems[3])"
+              class="bg-white rounded-lg shadow-sm border border-gray-200 p-4 cursor-pointer hover:shadow-md hover:border-purple-300 transition-all duration-200 relative overflow-hidden"
+              [class.opacity-50]="!menuItems[3].disponible"
+              [class.cursor-not-allowed]="!menuItems[3].disponible"
+            >
+              <div class="flex flex-col items-center text-center">
+                <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mb-3">
+                  <mat-icon class="text-purple-600">people</mat-icon>
+                </div>
+                <span class="text-sm font-medium text-gray-900">Clientes</span>
+              </div>
+              <!-- Overlay de bloqueado -->
+              <div *ngIf="!menuItems[3].disponible" class="absolute inset-0 bg-gray-900 bg-opacity-20 flex items-center justify-center">
+                <mat-icon class="text-gray-600 text-lg">lock</mat-icon>
+              </div>
+            </div>
+
+            <!-- Gestión Pedido -->
+            <div 
+              (click)="onMenuClick(menuItems[4])"
+              class="bg-white rounded-lg shadow-sm border border-gray-200 p-4 cursor-pointer hover:shadow-md hover:border-orange-300 transition-all duration-200 relative overflow-hidden"
+              [class.opacity-50]="!menuItems[4].disponible"
+              [class.cursor-not-allowed]="!menuItems[4].disponible"
+            >
+              <div class="flex flex-col items-center text-center">
+                <div class="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center mb-3">
+                  <mat-icon class="text-orange-600">local_shipping</mat-icon>
+                </div>
+                <span class="text-sm font-medium text-gray-900">Gestión Pedido</span>
+              </div>
+              <!-- Overlay de bloqueado -->
+              <div *ngIf="!menuItems[4].disponible" class="absolute inset-0 bg-gray-900 bg-opacity-20 flex items-center justify-center">
+                <mat-icon class="text-gray-600 text-lg">lock</mat-icon>
+              </div>
+            </div>
+
+            <!-- Inventario -->
+            <div 
+              (click)="onMenuClick(menuItems[5])"
+              class="bg-white rounded-lg shadow-sm border border-gray-200 p-4 cursor-pointer hover:shadow-md hover:border-indigo-300 transition-all duration-200 relative overflow-hidden"
+              [class.opacity-50]="!menuItems[5].disponible"
+              [class.cursor-not-allowed]="!menuItems[5].disponible"
+            >
+              <div class="flex flex-col items-center text-center">
+                <div class="w-12 h-12 bg-indigo-100 rounded-lg flex items-center justify-center mb-3">
+                  <mat-icon class="text-indigo-600">assessment</mat-icon>
+                </div>
+                <span class="text-sm font-medium text-gray-900">Inventario</span>
+              </div>
+              <!-- Overlay de bloqueado -->
+              <div *ngIf="!menuItems[5].disponible" class="absolute inset-0 bg-gray-900 bg-opacity-20 flex items-center justify-center">
+                <mat-icon class="text-gray-600 text-lg">lock</mat-icon>
+              </div>
+            </div>
+
+            <!-- Reporte -->
+            <div 
+              (click)="onMenuClick(menuItems[6])"
+              class="bg-white rounded-lg shadow-sm border border-gray-200 p-4 cursor-pointer hover:shadow-md hover:border-red-300 transition-all duration-200 relative overflow-hidden"
+              [class.opacity-50]="!menuItems[6].disponible"
+              [class.cursor-not-allowed]="!menuItems[6].disponible"
+            >
+              <div class="flex flex-col items-center text-center">
+                <div class="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center mb-3">
+                  <mat-icon class="text-red-600">analytics</mat-icon>
+                </div>
+                <span class="text-sm font-medium text-gray-900">Reporte</span>
+              </div>
+              <!-- Overlay de bloqueado -->
+              <div *ngIf="!menuItems[6].disponible" class="absolute inset-0 bg-gray-900 bg-opacity-20 flex items-center justify-center">
+                <mat-icon class="text-gray-600 text-lg">lock</mat-icon>
+              </div>
+            </div>
+
+            <!-- Usuario -->
+            <div 
+              (click)="onMenuClick(menuItems[7])"
+              class="bg-white rounded-lg shadow-sm border border-gray-200 p-4 cursor-pointer hover:shadow-md hover:border-teal-300 transition-all duration-200 relative overflow-hidden"
+              [class.opacity-50]="!menuItems[7].disponible"
+              [class.cursor-not-allowed]="!menuItems[7].disponible"
+            >
+              <div class="flex flex-col items-center text-center">
+                <div class="w-12 h-12 bg-teal-100 rounded-lg flex items-center justify-center mb-3">
+                  <mat-icon class="text-teal-600">person</mat-icon>
+                </div>
+                <span class="text-sm font-medium text-gray-900">Usuario</span>
+              </div>
+              <!-- Overlay de bloqueado -->
+              <div *ngIf="!menuItems[7].disponible" class="absolute inset-0 bg-gray-900 bg-opacity-20 flex items-center justify-center">
+                <mat-icon class="text-gray-600 text-lg">lock</mat-icon>
+              </div>
+            </div>
+
+            <!-- Configuración -->
+            <div 
+              (click)="onMenuClick(menuItems[8])"
+              class="bg-white rounded-lg shadow-sm border border-gray-200 p-4 cursor-pointer hover:shadow-md hover:border-gray-300 transition-all duration-200 relative overflow-hidden"
+              [class.opacity-50]="!menuItems[8].disponible"
+              [class.cursor-not-allowed]="!menuItems[8].disponible"
+            >
+              <div class="flex flex-col items-center text-center">
+                <div class="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center mb-3">
+                  <mat-icon class="text-gray-600">settings</mat-icon>
+                </div>
+                <span class="text-sm font-medium text-gray-900">Configuración</span>
+              </div>
+              <!-- Overlay de bloqueado -->
+              <div *ngIf="!menuItems[8].disponible" class="absolute inset-0 bg-gray-900 bg-opacity-20 flex items-center justify-center">
+                <mat-icon class="text-gray-600 text-lg">lock</mat-icon>
+              </div>
+            </div>
+
+            <!-- Menú Inicio -->
+            <div 
+              (click)="onMenuClick(menuItems[9])"
+              class="bg-white rounded-lg shadow-sm border border-gray-200 p-4 cursor-pointer hover:shadow-md hover:border-pink-300 transition-all duration-200 relative overflow-hidden"
+              [class.opacity-50]="!menuItems[9].disponible"
+              [class.cursor-not-allowed]="!menuItems[9].disponible"
+            >
+              <div class="flex flex-col items-center text-center">
+                <div class="w-12 h-12 bg-pink-100 rounded-lg flex items-center justify-center mb-3">
+                  <mat-icon class="text-pink-600">home</mat-icon>
+                </div>
+                <span class="text-sm font-medium text-gray-900">Menú Inicio</span>
+              </div>
+              <!-- Overlay de bloqueado -->
+              <div *ngIf="!menuItems[9].disponible" class="absolute inset-0 bg-gray-900 bg-opacity-20 flex items-center justify-center">
+                <mat-icon class="text-gray-600 text-lg">lock</mat-icon>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Overlay para móvil -->
+    <div 
+      *ngIf="menuAbierto" 
+      (click)="toggleMenu()"
+      class="fixed inset-0 bg-gray-600 bg-opacity-75 z-40 md:hidden"
+    ></div>
+
+    <!-- Contenido principal -->
+    <main class="flex-1 overflow-auto">
+      <div class="p-6">
+        <router-outlet></router-outlet>
+      </div>
+    </main>
+  </div>
+</div>

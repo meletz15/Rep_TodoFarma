@@ -1,0 +1,181 @@
+/* Estilos mínimos para Angular Material que no se pueden hacer con Tailwind */
+
+/* Personalizar los campos de formulario de Angular Material */
+::ng-deep .mat-mdc-form-field {
+  width: 100%;
+}
+
+::ng-deep .mat-mdc-form-field-appearance-outline .mat-mdc-form-field-outline {
+  border-radius: 8px;
+}
+
+::ng-deep .mat-mdc-form-field-appearance-outline.mat-focused .mat-mdc-form-field-outline-thick {
+  color: #3b82f6;
+}
+
+::ng-deep .mat-mdc-form-field.mat-focused .mat-mdc-form-field-label {
+  color: #3b82f6;
+}
+
+/* Personalizar la tabla de Angular Material */
+::ng-deep .mat-mdc-table {
+  background: transparent;
+}
+
+::ng-deep .mat-mdc-header-cell {
+  border-bottom: 1px solid #e5e7eb;
+}
+
+::ng-deep .mat-mdc-cell {
+  border-bottom: 1px solid #f3f4f6;
+}
+
+/* Personalizar el paginador */
+::ng-deep .mat-mdc-paginator {
+  background: transparent;
+}
+
+/* Personalizar el spinner */
+::ng-deep .mat-mdc-progress-spinner circle {
+  stroke: #3b82f6;
+}
+
+/* Personalizar los tooltips */
+::ng-deep .mat-mdc-tooltip {
+  background: #1f2937;
+  color: white;
+  font-size: 12px;
+  padding: 8px 12px;
+  border-radius: 6px;
+}
+
+/* Personalizar los selects */
+::ng-deep .mat-mdc-select-value {
+  color: #1f2937;
+}
+
+::ng-deep .mat-mdc-select-arrow {
+  color: #6b7280;
+}
+
+/* Personalizar los iconos en los campos */
+::ng-deep .mat-mdc-form-field-icon-suffix {
+  color: #6b7280;
+}
+
+/* Personalizar los errores */
+::ng-deep .mat-mdc-form-field-error {
+  color: #ef4444;
+  font-size: 12px;
+  margin-top: 4px;
+}
+
+/* Personalizar el dialog de Angular Material si se usa */
+::ng-deep .mat-mdc-dialog-container {
+  border-radius: 12px;
+}
+
+::ng-deep .mat-mdc-dialog-surface {
+  border-radius: 12px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+}
+
+/* Responsive para Angular Material */
+@media (max-width: 768px) {
+  ::ng-deep .mat-mdc-form-field {
+    font-size: 16px; /* Evita zoom en iOS */
+  }
+  
+  ::ng-deep .mat-mdc-table {
+    font-size: 14px;
+  }
+}
+
+/* Estilos para el componente de usuarios */
+
+/* Botón de exportar a Excel */
+.export-button {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  transition: all 0.3s ease;
+}
+
+.export-button:hover {
+  background: linear-gradient(135deg, #059669 0%, #047857 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 8px 25px rgba(16, 185, 129, 0.3);
+}
+
+.export-button:disabled {
+  background: #9ca3af;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+/* Animación para el icono de descarga */
+.export-button mat-icon {
+  transition: transform 0.3s ease;
+}
+
+.export-button:hover mat-icon {
+  transform: translateY(-2px);
+}
+
+/* Estilos para el estado de los usuarios */
+.estado-activo {
+  color: #059669;
+  background-color: #d1fae5;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.estado-inactivo {
+  color: #dc2626;
+  background-color: #fee2e2;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+/* Estilos para la tabla */
+.mat-mdc-table {
+  width: 100%;
+}
+
+.mat-mdc-row:hover {
+  background-color: #f8fafc;
+}
+
+/* Estilos para los filtros */
+.filter-section {
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  border: 1px solid #e2e8f0;
+}
+
+/* Estilos para el botón de agregar usuario */
+.add-button {
+  background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+  transition: all 0.3s ease;
+}
+
+.add-button:hover {
+  background: linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 8px 25px rgba(59, 130, 246, 0.3);
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .header-buttons {
+    flex-direction: column;
+    gap: 1rem;
+  }
+  
+  .export-button,
+  .add-button {
+    width: 100%;
+  }
+}

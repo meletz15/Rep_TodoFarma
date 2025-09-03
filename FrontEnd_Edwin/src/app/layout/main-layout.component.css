@@ -1,0 +1,231 @@
+/* Estilos mínimos para Angular Material que no se pueden hacer con Tailwind */
+
+/* Personalizar los tooltips */
+::ng-deep .mat-mdc-tooltip {
+  background: #1f2937;
+  color: white;
+  font-size: 12px;
+  padding: 8px 12px;
+  border-radius: 6px;
+}
+
+/* Estilos mejorados para el header */
+.header-gradient {
+  background: linear-gradient(135deg, #1e40af 0%, #1e3a8a 50%, #1e3a8a 100%);
+}
+
+/* Efecto de brillo en el logo */
+.logo-container {
+  position: relative;
+  overflow: hidden;
+}
+
+.logo-container::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: linear-gradient(45deg, transparent, rgba(255,255,255,0.1), transparent);
+  transform: rotate(45deg);
+  animation: logo-shine 3s ease-in-out infinite;
+}
+
+@keyframes logo-shine {
+  0%, 100% {
+    transform: translateX(-100%) translateY(-100%) rotate(45deg);
+  }
+  50% {
+    transform: translateX(100%) translateY(100%) rotate(45deg);
+  }
+}
+
+/* Efecto hover para el botón de logout */
+.logout-button {
+  position: relative;
+  overflow: hidden;
+}
+
+.logout-button::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+  transition: left 0.5s;
+}
+
+.logout-button:hover::before {
+  left: 100%;
+}
+
+/* Animación para el avatar del usuario */
+.user-avatar {
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.user-avatar:hover {
+  transform: scale(1.1);
+  box-shadow: 0 8px 25px rgba(255, 255, 255, 0.2);
+}
+
+/* Estilos específicos para el icono de usuario */
+.user-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+}
+
+.user-icon mat-icon {
+  font-size: 28px;
+  width: 28px;
+  height: 28px;
+  line-height: 28px;
+}
+
+/* Estilos para el texto del usuario */
+.user-text {
+  line-height: 1.2;
+  margin: 0;
+}
+
+.user-text p {
+  margin: 0;
+  padding: 0;
+}
+
+/* Efecto de pulso suave para elementos activos */
+.pulse-soft {
+  animation: pulse-soft 2s infinite;
+}
+
+@keyframes pulse-soft {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.8;
+  }
+}
+
+/* Animaciones suaves para el menú */
+.menu-transition {
+  transition: transform 0.3s ease-in-out;
+}
+
+/* Efectos de bloqueado */
+.menu-item-blocked {
+  position: relative;
+  overflow: hidden;
+}
+
+.menu-item-blocked::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(45deg, transparent 30%, rgba(0,0,0,0.1) 50%, transparent 70%);
+  animation: shimmer 2s infinite;
+  pointer-events: none;
+}
+
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+/* Overlay de bloqueado */
+.blocked-overlay {
+  background: rgba(0, 0, 0, 0.2);
+  backdrop-filter: blur(1px);
+}
+
+/* Responsive para Angular Material */
+@media (max-width: 768px) {
+  /* Asegurar que el menú se oculte correctamente en móvil */
+  .sidebar-mobile {
+    transform: translateX(-100%);
+  }
+  
+  .sidebar-mobile.open {
+    transform: translateX(0);
+  }
+}
+
+/* Efectos hover personalizados para las tarjetas del menú */
+.menu-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+}
+
+/* Transiciones suaves */
+.transition-all {
+  transition: all 0.2s ease-in-out;
+}
+
+/* Estilos para elementos bloqueados */
+.opacity-50 {
+  opacity: 0.5;
+}
+
+.cursor-not-allowed {
+  cursor: not-allowed !important;
+}
+
+/* Efecto de deshabilitado */
+.disabled-effect {
+  filter: grayscale(30%);
+  opacity: 0.6;
+}
+
+/* Animación de pulso para elementos bloqueados */
+@keyframes pulse-blocked {
+  0%, 100% {
+    opacity: 0.5;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+.pulse-blocked {
+  animation: pulse-blocked 2s infinite;
+}
+
+/* Efecto de sombra mejorada para el header */
+.header-shadow {
+  box-shadow: 0 4px 20px rgba(30, 58, 138, 0.3);
+}
+
+/* Efecto de glassmorphism sutil */
+.glass-effect {
+  backdrop-filter: blur(10px);
+  background: rgba(255, 255, 255, 0.1);
+}
+
+/* Estilos para el header minimalista */
+.header-minimalist {
+  backdrop-filter: blur(10px);
+  background: linear-gradient(135deg, #1e40af 0%, #1e3a8a 50%, #1e3a8a 100%);
+}
+
+/* Efecto hover para botones del header */
+.header-button {
+  transition: all 0.2s ease;
+}
+
+.header-button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(255, 255, 255, 0.1);
+}

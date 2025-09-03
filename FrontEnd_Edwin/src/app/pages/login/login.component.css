@@ -1,0 +1,175 @@
+/* Estilos personalizados para el componente de login */
+
+/* Imagen de fondo difuminada */
+.bg-image-blur {
+  background-image: url('../../../assets/images/ui/backgrounds/login_bk.jpg');
+  background-size: cover;
+  background-position: right center;
+  background-repeat: no-repeat;
+  filter: blur(1.96px) brightness(0.3) contrast(0.8);
+  transform: scale(1.1);
+  opacity: 0.4;
+}
+
+/* Efecto de glassmorphism para los cuadros de módulos */
+.module-card {
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  transition: all 0.3s ease;
+}
+
+.module-card:hover {
+  background: rgba(255, 255, 255, 0.2);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+}
+
+/* Franja horizontal más oscura */
+.dark-overlay {
+  background: linear-gradient(
+    180deg,
+    rgba(0, 0, 0, 0.4) 0%,
+    rgba(0, 0, 0, 0.2) 50%,
+    rgba(0, 0, 0, 0.4) 100%
+  );
+}
+
+/* Efecto de brillo en el logo */
+.logo-container {
+  position: relative;
+  overflow: hidden;
+}
+
+.logo-container::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: linear-gradient(45deg, transparent, rgba(255,255,255,0.1), transparent);
+  transform: rotate(45deg);
+  animation: logo-shine 3s ease-in-out infinite;
+}
+
+@keyframes logo-shine {
+  0%, 100% {
+    transform: translateX(-100%) translateY(-100%) rotate(45deg);
+  }
+  50% {
+    transform: translateX(100%) translateY(100%) rotate(45deg);
+  }
+}
+
+/* Animación de las píldoras decorativas */
+.pill {
+  animation: pill-float 3s ease-in-out infinite;
+}
+
+.pill:nth-child(1) { animation-delay: 0s; }
+.pill:nth-child(2) { animation-delay: 0.5s; }
+.pill:nth-child(3) { animation-delay: 1s; }
+.pill:nth-child(4) { animation-delay: 1.5s; }
+.pill:nth-child(5) { animation-delay: 2s; }
+
+@keyframes pill-float {
+  0%, 100% {
+    transform: translateY(0px);
+    opacity: 0.6;
+  }
+  50% {
+    transform: translateY(-10px);
+    opacity: 1;
+  }
+}
+
+/* Efecto de hover para el botón de login */
+.login-button {
+  position: relative;
+  overflow: hidden;
+}
+
+.login-button::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+  transition: left 0.5s;
+}
+
+.login-button:hover::before {
+  left: 100%;
+}
+
+/* Responsive para móviles */
+@media (max-width: 768px) {
+  .login-container {
+    flex-direction: column;
+  }
+  
+  .welcome-section {
+    display: none;
+  }
+  
+  .form-section {
+    width: 100%;
+  }
+}
+
+/* Efecto de sombra mejorada para las tarjetas */
+.mat-card {
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1) !important;
+  border: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+/* Estilos para los campos de formulario */
+.mat-form-field {
+  margin-bottom: 1rem;
+}
+
+/* Efecto de focus mejorado */
+.mat-form-field.mat-focused .mat-form-field-ripple {
+  background-color: #1976d2;
+}
+
+/* Animación de entrada para el contenido */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.fade-in-up {
+  animation: fadeInUp 0.6s ease-out;
+}
+
+/* Efecto de gradiente mejorado para el fondo */
+.gradient-bg {
+  background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 25%, #3b82f6 50%, #1e40af 75%, #1e3a8a 100%);
+  background-size: 400% 400%;
+  animation: gradient-shift 8s ease infinite;
+}
+
+@keyframes gradient-shift {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+
