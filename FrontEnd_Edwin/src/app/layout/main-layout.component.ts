@@ -60,6 +60,13 @@ export class MainLayoutComponent implements OnInit {
       disponible: true
     },
     {
+      title: 'Gestión de Proveedores',
+      description: 'Gestión de proveedores y contactos comerciales',
+      icon: 'business',
+      route: '/proveedores',
+      disponible: true
+    },
+    {
       title: 'Gestión Pedido',
       description: 'Gestión de pedidos y entregas',
       icon: 'local_shipping',

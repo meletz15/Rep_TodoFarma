@@ -146,7 +146,7 @@
               </div>
             </div>
 
-            <!-- Gestión Pedido -->
+            <!-- Gestión de Proveedores -->
             <div 
               (click)="onMenuClick(menuItems[4])"
               class="bg-white rounded-lg shadow-sm border border-gray-200 p-4 cursor-pointer hover:shadow-md hover:border-orange-300 transition-all duration-200 relative overflow-hidden"
@@ -155,9 +155,9 @@
             >
               <div class="flex flex-col items-center text-center">
                 <div class="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center mb-3">
-                  <mat-icon class="text-orange-600">local_shipping</mat-icon>
+                  <mat-icon class="text-orange-600">business</mat-icon>
                 </div>
-                <span class="text-sm font-medium text-gray-900">Gestión Pedido</span>
+                <span class="text-sm font-medium text-gray-900">Gestión de Proveedores</span>
               </div>
               <!-- Overlay de bloqueado -->
               <div *ngIf="!menuItems[4].disponible" class="absolute inset-0 bg-gray-900 bg-opacity-20 flex items-center justify-center">
@@ -165,12 +165,31 @@
               </div>
             </div>
 
-            <!-- Inventario -->
+            <!-- Gestión Pedido -->
             <div 
               (click)="onMenuClick(menuItems[5])"
-              class="bg-white rounded-lg shadow-sm border border-gray-200 p-4 cursor-pointer hover:shadow-md hover:border-indigo-300 transition-all duration-200 relative overflow-hidden"
+              class="bg-white rounded-lg shadow-sm border border-gray-200 p-4 cursor-pointer hover:shadow-md hover:border-teal-300 transition-all duration-200 relative overflow-hidden"
               [class.opacity-50]="!menuItems[5].disponible"
               [class.cursor-not-allowed]="!menuItems[5].disponible"
+            >
+              <div class="flex flex-col items-center text-center">
+                <div class="w-12 h-12 bg-teal-100 rounded-lg flex items-center justify-center mb-3">
+                  <mat-icon class="text-teal-600">local_shipping</mat-icon>
+                </div>
+                <span class="text-sm font-medium text-gray-900">Gestión Pedido</span>
+              </div>
+              <!-- Overlay de bloqueado -->
+              <div *ngIf="!menuItems[5].disponible" class="absolute inset-0 bg-gray-900 bg-opacity-20 flex items-center justify-center">
+                <mat-icon class="text-gray-600 text-lg">lock</mat-icon>
+              </div>
+            </div>
+
+            <!-- Inventario -->
+            <div 
+              (click)="onMenuClick(menuItems[6])"
+              class="bg-white rounded-lg shadow-sm border border-gray-200 p-4 cursor-pointer hover:shadow-md hover:border-indigo-300 transition-all duration-200 relative overflow-hidden"
+              [class.opacity-50]="!menuItems[6].disponible"
+              [class.cursor-not-allowed]="!menuItems[6].disponible"
             >
               <div class="flex flex-col items-center text-center">
                 <div class="w-12 h-12 bg-indigo-100 rounded-lg flex items-center justify-center mb-3">
@@ -179,17 +198,17 @@
                 <span class="text-sm font-medium text-gray-900">Inventario</span>
               </div>
               <!-- Overlay de bloqueado -->
-              <div *ngIf="!menuItems[5].disponible" class="absolute inset-0 bg-gray-900 bg-opacity-20 flex items-center justify-center">
+              <div *ngIf="!menuItems[6].disponible" class="absolute inset-0 bg-gray-900 bg-opacity-20 flex items-center justify-center">
                 <mat-icon class="text-gray-600 text-lg">lock</mat-icon>
               </div>
             </div>
 
             <!-- Reporte -->
             <div 
-              (click)="onMenuClick(menuItems[6])"
+              (click)="onMenuClick(menuItems[7])"
               class="bg-white rounded-lg shadow-sm border border-gray-200 p-4 cursor-pointer hover:shadow-md hover:border-red-300 transition-all duration-200 relative overflow-hidden"
-              [class.opacity-50]="!menuItems[6].disponible"
-              [class.cursor-not-allowed]="!menuItems[6].disponible"
+              [class.opacity-50]="!menuItems[7].disponible"
+              [class.cursor-not-allowed]="!menuItems[7].disponible"
             >
               <div class="flex flex-col items-center text-center">
                 <div class="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center mb-3">
@@ -198,36 +217,36 @@
                 <span class="text-sm font-medium text-gray-900">Reporte</span>
               </div>
               <!-- Overlay de bloqueado -->
-              <div *ngIf="!menuItems[6].disponible" class="absolute inset-0 bg-gray-900 bg-opacity-20 flex items-center justify-center">
+              <div *ngIf="!menuItems[7].disponible" class="absolute inset-0 bg-gray-900 bg-opacity-20 flex items-center justify-center">
                 <mat-icon class="text-gray-600 text-lg">lock</mat-icon>
               </div>
             </div>
 
             <!-- Usuario -->
             <div 
-              (click)="onMenuClick(menuItems[7])"
-              class="bg-white rounded-lg shadow-sm border border-gray-200 p-4 cursor-pointer hover:shadow-md hover:border-teal-300 transition-all duration-200 relative overflow-hidden"
-              [class.opacity-50]="!menuItems[7].disponible"
-              [class.cursor-not-allowed]="!menuItems[7].disponible"
+              (click)="onMenuClick(menuItems[8])"
+              class="bg-white rounded-lg shadow-sm border border-gray-200 p-4 cursor-pointer hover:shadow-md hover:border-cyan-300 transition-all duration-200 relative overflow-hidden"
+              [class.opacity-50]="!menuItems[8].disponible"
+              [class.cursor-not-allowed]="!menuItems[8].disponible"
             >
               <div class="flex flex-col items-center text-center">
-                <div class="w-12 h-12 bg-teal-100 rounded-lg flex items-center justify-center mb-3">
-                  <mat-icon class="text-teal-600">person</mat-icon>
+                <div class="w-12 h-12 bg-cyan-100 rounded-lg flex items-center justify-center mb-3">
+                  <mat-icon class="text-cyan-600">person</mat-icon>
                 </div>
                 <span class="text-sm font-medium text-gray-900">Usuario</span>
               </div>
               <!-- Overlay de bloqueado -->
-              <div *ngIf="!menuItems[7].disponible" class="absolute inset-0 bg-gray-900 bg-opacity-20 flex items-center justify-center">
+              <div *ngIf="!menuItems[8].disponible" class="absolute inset-0 bg-gray-900 bg-opacity-20 flex items-center justify-center">
                 <mat-icon class="text-gray-600 text-lg">lock</mat-icon>
               </div>
             </div>
 
             <!-- Configuración -->
             <div 
-              (click)="onMenuClick(menuItems[8])"
+              (click)="onMenuClick(menuItems[9])"
               class="bg-white rounded-lg shadow-sm border border-gray-200 p-4 cursor-pointer hover:shadow-md hover:border-gray-300 transition-all duration-200 relative overflow-hidden"
-              [class.opacity-50]="!menuItems[8].disponible"
-              [class.cursor-not-allowed]="!menuItems[8].disponible"
+              [class.opacity-50]="!menuItems[9].disponible"
+              [class.cursor-not-allowed]="!menuItems[9].disponible"
             >
               <div class="flex flex-col items-center text-center">
                 <div class="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center mb-3">
@@ -236,17 +255,17 @@
                 <span class="text-sm font-medium text-gray-900">Configuración</span>
               </div>
               <!-- Overlay de bloqueado -->
-              <div *ngIf="!menuItems[8].disponible" class="absolute inset-0 bg-gray-900 bg-opacity-20 flex items-center justify-center">
+              <div *ngIf="!menuItems[9].disponible" class="absolute inset-0 bg-gray-900 bg-opacity-20 flex items-center justify-center">
                 <mat-icon class="text-gray-600 text-lg">lock</mat-icon>
               </div>
             </div>
 
             <!-- Menú Inicio -->
             <div 
-              (click)="onMenuClick(menuItems[9])"
+              (click)="onMenuClick(menuItems[10])"
               class="bg-white rounded-lg shadow-sm border border-gray-200 p-4 cursor-pointer hover:shadow-md hover:border-pink-300 transition-all duration-200 relative overflow-hidden"
-              [class.opacity-50]="!menuItems[9].disponible"
-              [class.cursor-not-allowed]="!menuItems[9].disponible"
+              [class.opacity-50]="!menuItems[10].disponible"
+              [class.cursor-not-allowed]="!menuItems[10].disponible"
             >
               <div class="flex flex-col items-center text-center">
                 <div class="w-12 h-12 bg-pink-100 rounded-lg flex items-center justify-center mb-3">
@@ -255,7 +274,7 @@
                 <span class="text-sm font-medium text-gray-900">Menú Inicio</span>
               </div>
               <!-- Overlay de bloqueado -->
-              <div *ngIf="!menuItems[9].disponible" class="absolute inset-0 bg-gray-900 bg-opacity-20 flex items-center justify-center">
+              <div *ngIf="!menuItems[10].disponible" class="absolute inset-0 bg-gray-900 bg-opacity-20 flex items-center justify-center">
                 <mat-icon class="text-gray-600 text-lg">lock</mat-icon>
               </div>
             </div>

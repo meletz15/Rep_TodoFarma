@@ -90,8 +90,6 @@ class ClienteModel {
       if (filtros.activo !== undefined && filtros.activo !== '') {
         consulta += ` AND activo = $${contadorParametros}`;
         parametros.push(filtros.activo);
-        console.log('DEBUG MODELO - Filtro activo aplicado:', filtros.activo);
-        console.log('DEBUG MODELO - Parámetros hasta ahora:', parametros);
         contadorParametros++;
       }
       
@@ -124,9 +122,6 @@ class ClienteModel {
         consulta += ` OFFSET $${contadorParametros}`;
         parametros.push(paginacion.offset);
       }
-      
-      console.log('DEBUG MODELO - Consulta SQL final:', consulta);
-      console.log('DEBUG MODELO - Parámetros finales:', parametros);
       
       const resultado = await cliente.query(consulta, parametros);
       
