@@ -18,7 +18,7 @@ export class ClienteService {
       .set('limite', limite.toString());
 
     if (filtros) {
-      if (filtros.activo !== undefined) params = params.set('activo', filtros.activo);
+      if (filtros.activo !== undefined && filtros.activo !== '') params = params.set('activo', filtros.activo);
       if (filtros.busqueda) params = params.set('busqueda', filtros.busqueda);
     }
 

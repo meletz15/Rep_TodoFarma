@@ -60,7 +60,7 @@ export class ClientesComponent implements OnInit {
   
   // Filtros
   filtros = {
-    activo: 'true', // Por defecto mostrar solo clientes activos
+    activo: '', // Por defecto mostrar todos los clientes (activos e inactivos)
     busqueda: ''
   };
 
@@ -125,7 +125,7 @@ export class ClientesComponent implements OnInit {
 
   limpiarFiltros(): void {
     this.filtros = {
-      activo: 'true', // Volver a mostrar solo clientes activos
+      activo: '', // Volver a mostrar todos los clientes (activos e inactivos)
       busqueda: ''
     };
     this.aplicarFiltros();

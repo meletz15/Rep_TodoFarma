@@ -106,14 +106,31 @@ class ClienteController {
     try {
       const { pagina, limite, activo, busqueda } = req.query;
       
+      // DEBUG: Log de parámetros recibidos
+      console.log('=== DEBUG CLIENTES ===');
+      console.log('Query params recibidos:', { pagina, limite, activo, busqueda });
+      console.log('Tipo de activo:', typeof activo);
+      console.log('Valor de activo:', activo);
+      
       // Validar parámetros de paginación
       const paginacionValida = validarPaginacion(pagina, limite);
       const paginacion = construirPaginacion(paginacionValida.pagina, paginacionValida.limite);
       
       // Construir filtros
       const filtros = {};
-      if (activo !== undefined) filtros.activo = activo === 'true';
+      if (activo !== undefined && activo !== '') {
+        // TEMPORAL: Forzar que activo=true muestre clientes activos
+        if (activo === 'true') {
+          filtros.activo = true;
+        } else if (activo === 'false') {
+          filtros.activo = false;
+        }
+        console.log('Filtro activo convertido:', filtros.activo);
+      }
       if (busqueda) filtros.busqueda = busqueda;
+      
+      console.log('Filtros finales:', filtros);
+      console.log('=====================');
       
       // Obtener clientes
       const resultado = await ClienteModel.obtenerTodos(filtros, paginacion);
