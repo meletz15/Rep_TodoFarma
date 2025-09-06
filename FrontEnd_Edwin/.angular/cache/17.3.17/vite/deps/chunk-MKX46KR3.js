@@ -4,16 +4,16 @@ import {
   OverlayModule
 } from "./chunk-EAZKTC6A.js";
 import {
+  CdkScrollableModule,
+  ScrollDispatcher
+} from "./chunk-RSTVENI5.js";
+import {
   animate,
   state,
   style,
   transition,
   trigger
 } from "./chunk-PU4OD3SX.js";
-import {
-  CdkScrollableModule,
-  ScrollDispatcher
-} from "./chunk-RSTVENI5.js";
 import {
   A11yModule,
   AriaDescriber,
@@ -1050,4 +1050,4 @@ export {
   matTooltipAnimations,
   MatTooltipModule
 };
-//# sourceMappingURL=chunk-LFYKIA25.js.map
+//# sourceMappingURL=chunk-MKX46KR3.js.map

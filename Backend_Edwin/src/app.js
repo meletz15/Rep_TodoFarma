@@ -8,6 +8,7 @@ const { manejadorErrores } = require('./utils/errorHandler');
 const authRoutes = require('./routes/authRoutes');
 const usuarioRoutes = require('./routes/usuarioRoutes');
 const reporteRoutes = require('./routes/reporteRoutes');
+const proveedorRoutes = require('./routes/proveedorRoutes');
 
 const app = express();
 
@@ -62,6 +63,7 @@ app.get('/health', (req, res) => {
 app.use('/api/auth', authRoutes);
 app.use('/api/usuarios', usuarioRoutes);
 app.use('/api/reportes', reporteRoutes);
+app.use('/api/proveedores', proveedorRoutes);
 
 // Middleware para rutas no encontradas
 app.use('*', (req, res) => {
