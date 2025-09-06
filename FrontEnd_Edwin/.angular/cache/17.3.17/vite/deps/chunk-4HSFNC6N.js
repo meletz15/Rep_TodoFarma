@@ -328,6 +328,7 @@ var LEFT_ARROW = 37;
 var UP_ARROW = 38;
 var RIGHT_ARROW = 39;
 var DOWN_ARROW = 40;
+var DELETE = 46;
 var ZERO = 48;
 var NINE = 57;
 var A = 65;
@@ -1421,6 +1422,26 @@ var ActiveDescendantKeyManager = class extends ListKeyManager {
     super.setActiveItem(index);
     if (this.activeItem) {
       this.activeItem.setActiveStyles();
+    }
+  }
+};
+var FocusKeyManager = class extends ListKeyManager {
+  constructor() {
+    super(...arguments);
+    this._origin = "program";
+  }
+  /**
+   * Sets the focus origin that will be passed in to the items for any subsequent `focus` calls.
+   * @param origin Focus origin to be used when focusing items.
+   */
+  setFocusOrigin(origin) {
+    this._origin = origin;
+    return this;
+  }
+  setActiveItem(item) {
+    super.setActiveItem(item);
+    if (this.activeItem) {
+      this.activeItem.focus(this._origin);
     }
   }
 };
@@ -5341,6 +5362,7 @@ export {
   _getEventTarget,
   _isTestEnvironment,
   BACKSPACE,
+  TAB,
   ENTER,
   ESCAPE,
   SPACE,
@@ -5352,6 +5374,7 @@ export {
   UP_ARROW,
   RIGHT_ARROW,
   DOWN_ARROW,
+  DELETE,
   A,
   hasModifierKey,
   coerceBooleanProperty,
@@ -5361,6 +5384,7 @@ export {
   coerceCssPixelValue,
   coerceElement,
   coerceStringArray,
+  CdkObserveContent,
   ObserversModule,
   BreakpointObserver,
   Breakpoints,
@@ -5368,6 +5392,7 @@ export {
   removeAriaReferencedId,
   AriaDescriber,
   ActiveDescendantKeyManager,
+  FocusKeyManager,
   InteractivityChecker,
   FocusTrapFactory,
   CdkTrapFocus,
@@ -5423,4 +5448,4 @@ export {
   MatRippleLoader,
   _MatInternalFormField
 };
-//# sourceMappingURL=chunk-YNGTH3LU.js.map
+//# sourceMappingURL=chunk-4HSFNC6N.js.map

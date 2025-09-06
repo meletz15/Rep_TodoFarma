@@ -1,0 +1,791 @@
+<div class="min-h-screen bg-gray-50 p-6">
+  <!-- Header -->
+  <div class="mb-8">
+    <div class="flex justify-between items-center">
+      <div>
+        <h1 class="text-3xl font-bold text-gray-900">Gestión de Productos</h1>
+        <p class="text-gray-600 mt-2">Administra categorías y productos del inventario</p>
+      </div>
+    </div>
+  </div>
+
+  <mat-tab-group [(selectedIndex)]="tabSeleccionado" class="bg-white rounded-xl shadow-lg border border-gray-200">
+    <!-- Tab de Categorías -->
+    <mat-tab label="Categorías">
+      <div class="p-6">
+        <!-- Filtros de Categorías -->
+        <div class="bg-white rounded-xl shadow-lg border border-gray-200 p-6 mb-6">
+          <div class="flex items-center gap-3 mb-6">
+            <mat-icon class="text-blue-600">filter_list</mat-icon>
+            <h3 class="text-xl font-semibold text-gray-900">Filtros de Búsqueda</h3>
+          </div>
+          
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <!-- Búsqueda -->
+            <div class="space-y-2">
+              <label class="block text-sm font-medium text-gray-700">Buscar</label>
+              <mat-form-field appearance="outline" class="w-full">
+                <input 
+                  matInput 
+                  [(ngModel)]="categoriaFiltros.busqueda" 
+                  placeholder="Nombre o descripción"
+                  class="text-gray-900"
+                >
+                <mat-icon matSuffix class="text-gray-400">search</mat-icon>
+              </mat-form-field>
+            </div>
+
+            <!-- Estado -->
+            <div class="space-y-2">
+              <label class="block text-sm font-medium text-gray-700">Estado</label>
+              <mat-form-field appearance="outline" class="w-full">
+                <mat-select [(value)]="categoriaFiltros.activo" placeholder="Seleccionar estado">
+                  <mat-option value="">Todos los estados</mat-option>
+                  <mat-option value="true">Activo</mat-option>
+                  <mat-option value="false">Inactivo</mat-option>
+                </mat-select>
+                <mat-icon matSuffix class="text-gray-400">toggle_on</mat-icon>
+              </mat-form-field>
+            </div>
+
+            <!-- Botones de acción -->
+            <div class="space-y-2">
+              <label class="block text-sm font-medium text-gray-700 opacity-0">Acciones</label>
+              <div class="flex gap-3">
+                <button
+                  (click)="aplicarFiltrosCategoria()"
+                  class="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-4 py-3 rounded-lg font-medium flex items-center justify-center gap-2 transition-colors duration-200 shadow-md hover:shadow-lg"
+                >
+                  <mat-icon class="text-white text-lg">filter_list</mat-icon>
+                  Filtrar
+                </button>
+                <button
+                  (click)="limpiarFiltrosCategoria()"
+                  class="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-3 rounded-lg font-medium flex items-center justify-center gap-2 transition-colors duration-200 border border-gray-300"
+                >
+                  <mat-icon class="text-gray-600 text-lg">clear</mat-icon>
+                  Limpiar
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tabla de Categorías -->
+        <div class="bg-white rounded-xl shadow-lg border border-gray-200">
+          <div class="flex justify-between items-center p-6 border-b border-gray-200">
+            <h3 class="text-xl font-semibold text-gray-900">Categorías</h3>
+            <button
+              (click)="abrirModalCategoria()"
+              class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-semibold flex items-center gap-2 transition-colors duration-200 shadow-lg hover:shadow-xl"
+              matTooltip="Agregar nueva categoría"
+            >
+              <mat-icon class="text-white">add</mat-icon>
+              Nueva Categoría
+            </button>
+          </div>
+          <div class="overflow-x-auto">
+            <table mat-table [dataSource]="categoriasDataSource" class="w-full">
+              <ng-container matColumnDef="nombre">
+                <th mat-header-cell *matHeaderCellDef class="font-semibold text-gray-700 px-6 py-4">Nombre</th>
+                <td mat-cell *matCellDef="let categoria" class="font-medium px-6 py-4">{{ categoria.nombre }}</td>
+              </ng-container>
+
+              <ng-container matColumnDef="descripcion">
+                <th mat-header-cell *matHeaderCellDef class="font-semibold text-gray-700 px-6 py-4">Descripción</th>
+                <td mat-cell *matCellDef="let categoria" class="text-gray-600 px-6 py-4">{{ categoria.descripcion || '-' }}</td>
+              </ng-container>
+
+              <ng-container matColumnDef="activo">
+                <th mat-header-cell *matHeaderCellDef class="font-semibold text-gray-700 px-6 py-4">Estado</th>
+                <td mat-cell *matCellDef="let categoria" class="px-6 py-4">
+                  <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium"
+                        [class]="categoria.activo ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'">
+                    {{ categoria.activo ? 'Activo' : 'Inactivo' }}
+                  </span>
+                </td>
+              </ng-container>
+
+              <ng-container matColumnDef="created_at">
+                <th mat-header-cell *matHeaderCellDef class="font-semibold text-gray-700 px-6 py-4">Fecha Creación</th>
+                <td mat-cell *matCellDef="let categoria" class="text-gray-600 px-6 py-4">{{ formatearFecha(categoria.created_at) }}</td>
+              </ng-container>
+
+              <ng-container matColumnDef="acciones">
+                <th mat-header-cell *matHeaderCellDef class="font-semibold text-gray-700 px-6 py-4">Acciones</th>
+                <td mat-cell *matCellDef="let categoria" class="px-6 py-4">
+                  <div class="flex gap-2">
+                    <button mat-icon-button (click)="abrirModalCategoria(categoria)" matTooltip="Editar" class="text-blue-600 hover:bg-blue-50">
+                      <mat-icon>edit</mat-icon>
+                    </button>
+                    <button mat-icon-button (click)="eliminarCategoria(categoria)" matTooltip="Eliminar" class="text-red-600 hover:bg-red-50">
+                      <mat-icon>delete</mat-icon>
+                    </button>
+                  </div>
+                </td>
+              </ng-container>
+
+              <tr mat-header-row *matHeaderRowDef="categoriasDisplayedColumns" class="bg-gray-50 border-b border-gray-200"></tr>
+              <tr mat-row *matRowDef="let row; columns: categoriasDisplayedColumns;" class="hover:bg-gray-50 border-b border-gray-100"></tr>
+            </table>
+
+            <mat-paginator
+              #categoriaPaginator
+              [length]="categoriaTotal"
+              [pageSize]="categoriaLimite"
+              [pageSizeOptions]="[5, 10, 25, 50]"
+              (page)="onCategoriaPageChange($event)"
+              showFirstLastButtons
+              class="bg-gray-50 border-t border-gray-200">
+            </mat-paginator>
+          </div>
+        </div>
+      </div>
+    </mat-tab>
+
+    <!-- Tab de Productos -->
+    <mat-tab label="Productos">
+      <div class="p-6">
+        <!-- Filtros de Productos -->
+        <div class="bg-white rounded-xl shadow-lg border border-gray-200 p-6 mb-6">
+          <div class="flex items-center gap-3 mb-6">
+            <mat-icon class="text-blue-600">filter_list</mat-icon>
+            <h3 class="text-xl font-semibold text-gray-900">Filtros de Búsqueda</h3>
+          </div>
+          
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <!-- Búsqueda -->
+            <div class="space-y-2">
+              <label class="block text-sm font-medium text-gray-700">Buscar</label>
+              <mat-form-field appearance="outline" class="w-full">
+                <input 
+                  matInput 
+                  [(ngModel)]="productoFiltros.busqueda" 
+                  placeholder="Nombre, SKU, código de barras"
+                  class="text-gray-900"
+                >
+                <mat-icon matSuffix class="text-gray-400">search</mat-icon>
+              </mat-form-field>
+            </div>
+
+            <!-- Categoría -->
+            <div class="space-y-2">
+              <label class="block text-sm font-medium text-gray-700">Categoría</label>
+              <mat-form-field appearance="outline" class="w-full">
+                <mat-select [(value)]="productoFiltros.id_categoria" placeholder="Seleccionar categoría">
+                  <mat-option value="">Todas las categorías</mat-option>
+                  <mat-option *ngFor="let categoria of categoriasParaDropdown" [value]="categoria.id_categoria">
+                    {{ categoria.nombre }}
+                  </mat-option>
+                </mat-select>
+                <mat-icon matSuffix class="text-gray-400">category</mat-icon>
+              </mat-form-field>
+            </div>
+
+            <!-- Estado -->
+            <div class="space-y-2">
+              <label class="block text-sm font-medium text-gray-700">Estado</label>
+              <mat-form-field appearance="outline" class="w-full">
+                <mat-select [(value)]="productoFiltros.activo" placeholder="Seleccionar estado">
+                  <mat-option value="">Todos los estados</mat-option>
+                  <mat-option value="true">Activo</mat-option>
+                  <mat-option value="false">Inactivo</mat-option>
+                </mat-select>
+                <mat-icon matSuffix class="text-gray-400">toggle_on</mat-icon>
+              </mat-form-field>
+            </div>
+
+            <!-- Botones de acción -->
+            <div class="space-y-2">
+              <label class="block text-sm font-medium text-gray-700 opacity-0">Acciones</label>
+              <div class="flex gap-3">
+                <button
+                  (click)="aplicarFiltrosProducto()"
+                  class="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-4 py-3 rounded-lg font-medium flex items-center justify-center gap-2 transition-colors duration-200 shadow-md hover:shadow-lg"
+                >
+                  <mat-icon class="text-white text-lg">filter_list</mat-icon>
+                  Filtrar
+                </button>
+                <button
+                  (click)="limpiarFiltrosProducto()"
+                  class="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-3 rounded-lg font-medium flex items-center justify-center gap-2 transition-colors duration-200 border border-gray-300"
+                >
+                  <mat-icon class="text-gray-600 text-lg">clear</mat-icon>
+                  Limpiar
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tabla de Productos -->
+        <div class="bg-white rounded-xl shadow-lg border border-gray-200">
+          <div class="flex justify-between items-center p-6 border-b border-gray-200">
+            <h3 class="text-xl font-semibold text-gray-900">Productos</h3>
+            <button
+              (click)="abrirModalProducto()"
+              class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-semibold flex items-center gap-2 transition-colors duration-200 shadow-lg hover:shadow-xl"
+              matTooltip="Agregar nuevo producto"
+            >
+              <mat-icon class="text-white">add</mat-icon>
+              Nuevo Producto
+            </button>
+          </div>
+          <div class="overflow-x-auto">
+            <table mat-table [dataSource]="productosDataSource" class="w-full">
+              <ng-container matColumnDef="nombre">
+                <th mat-header-cell *matHeaderCellDef class="font-semibold text-gray-700 px-6 py-4">Nombre</th>
+                <td mat-cell *matCellDef="let producto" class="font-medium px-6 py-4">{{ producto.nombre }}</td>
+              </ng-container>
+
+              <ng-container matColumnDef="sku">
+                <th mat-header-cell *matHeaderCellDef class="font-semibold text-gray-700 px-6 py-4">SKU</th>
+                <td mat-cell *matCellDef="let producto" class="text-gray-600 px-6 py-4">{{ producto.sku || '-' }}</td>
+              </ng-container>
+
+              <ng-container matColumnDef="categoria_nombre">
+                <th mat-header-cell *matHeaderCellDef class="font-semibold text-gray-700 px-6 py-4">Categoría</th>
+                <td mat-cell *matCellDef="let producto" class="text-gray-600 px-6 py-4">{{ producto.categoria_nombre }}</td>
+              </ng-container>
+
+              <ng-container matColumnDef="marca_nombre">
+                <th mat-header-cell *matHeaderCellDef class="font-semibold text-gray-700 px-6 py-4">Marca</th>
+                <td mat-cell *matCellDef="let producto" class="text-gray-600 px-6 py-4">{{ producto.marca_nombre }}</td>
+              </ng-container>
+
+              <ng-container matColumnDef="precio_unitario">
+                <th mat-header-cell *matHeaderCellDef class="font-semibold text-gray-700 px-6 py-4">Precio</th>
+                <td mat-cell *matCellDef="let producto" class="font-semibold text-green-600 px-6 py-4">{{ formatearPrecio(producto.precio_unitario) }}</td>
+              </ng-container>
+
+              <ng-container matColumnDef="stock">
+                <th mat-header-cell *matHeaderCellDef class="font-semibold text-gray-700 px-6 py-4">Stock</th>
+                <td mat-cell *matCellDef="let producto" class="px-6 py-4">
+                  <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium"
+                        [class]="obtenerColorStock(producto.stock) === 'primary' ? 'bg-green-100 text-green-800' : 
+                                 obtenerColorStock(producto.stock) === 'accent' ? 'bg-yellow-100 text-yellow-800' : 'bg-red-100 text-red-800'">
+                    {{ producto.stock }} - {{ obtenerEstadoStock(producto.stock) }}
+                  </span>
+                </td>
+              </ng-container>
+
+              <ng-container matColumnDef="fecha_vencimiento">
+                <th mat-header-cell *matHeaderCellDef class="font-semibold text-gray-700 px-6 py-4">Vencimiento</th>
+                <td mat-cell *matCellDef="let producto" class="text-gray-600 px-6 py-4">
+                  {{ producto.fecha_vencimiento ? formatearFecha(producto.fecha_vencimiento) : '-' }}
+                </td>
+              </ng-container>
+
+              <ng-container matColumnDef="activo">
+                <th mat-header-cell *matHeaderCellDef class="font-semibold text-gray-700 px-6 py-4">Estado</th>
+                <td mat-cell *matCellDef="let producto" class="px-6 py-4">
+                  <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium"
+                        [class]="producto.activo ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'">
+                    {{ producto.activo ? 'Activo' : 'Inactivo' }}
+                  </span>
+                </td>
+              </ng-container>
+
+              <ng-container matColumnDef="acciones">
+                <th mat-header-cell *matHeaderCellDef class="font-semibold text-gray-700 px-6 py-4">Acciones</th>
+                <td mat-cell *matCellDef="let producto" class="px-6 py-4">
+                  <div class="flex gap-2">
+                    <button mat-icon-button (click)="abrirModalProducto(producto)" matTooltip="Editar" class="text-blue-600 hover:bg-blue-50">
+                      <mat-icon>edit</mat-icon>
+                    </button>
+                    <button mat-icon-button (click)="eliminarProducto(producto)" matTooltip="Eliminar" class="text-red-600 hover:bg-red-50">
+                      <mat-icon>delete</mat-icon>
+                    </button>
+                  </div>
+                </td>
+              </ng-container>
+
+              <tr mat-header-row *matHeaderRowDef="productosDisplayedColumns" class="bg-gray-50 border-b border-gray-200"></tr>
+              <tr mat-row *matRowDef="let row; columns: productosDisplayedColumns;" class="hover:bg-gray-50 border-b border-gray-100"></tr>
+            </table>
+
+            <mat-paginator
+              #productoPaginator
+              [length]="productoTotal"
+              [pageSize]="productoLimite"
+              [pageSizeOptions]="[5, 10, 25, 50]"
+              (page)="onProductoPageChange($event)"
+              showFirstLastButtons
+              class="bg-gray-50 border-t border-gray-200">
+            </mat-paginator>
+          </div>
+        </div>
+      </div>
+    </mat-tab>
+
+    <!-- Tab de Marcas -->
+    <mat-tab label="Marcas">
+      <div class="p-6">
+        <!-- Filtros de Marcas -->
+        <div class="bg-white rounded-xl shadow-lg border border-gray-200 p-6 mb-6">
+          <div class="flex items-center gap-3 mb-6">
+            <mat-icon class="text-blue-600">filter_list</mat-icon>
+            <h3 class="text-xl font-semibold text-gray-900">Filtros de Búsqueda</h3>
+          </div>
+          
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <!-- Búsqueda -->
+            <div class="space-y-2">
+              <label class="block text-sm font-medium text-gray-700">Buscar</label>
+              <mat-form-field appearance="outline" class="w-full">
+                <input 
+                  matInput 
+                  [(ngModel)]="marcaFiltros.busqueda" 
+                  placeholder="Nombre de la marca"
+                  class="text-gray-900"
+                >
+                <mat-icon matSuffix class="text-gray-400">search</mat-icon>
+              </mat-form-field>
+            </div>
+
+            <!-- Estado -->
+            <div class="space-y-2">
+              <label class="block text-sm font-medium text-gray-700">Estado</label>
+              <mat-form-field appearance="outline" class="w-full">
+                <mat-select [(ngModel)]="marcaFiltros.activo" placeholder="Seleccionar estado">
+                  <mat-option value="">Todos los estados</mat-option>
+                  <mat-option value="true">Activo</mat-option>
+                  <mat-option value="false">Inactivo</mat-option>
+                </mat-select>
+                <mat-icon matSuffix class="text-gray-400">toggle_on</mat-icon>
+              </mat-form-field>
+            </div>
+
+            <!-- Botones de acción -->
+            <div class="space-y-2">
+              <label class="block text-sm font-medium text-gray-700 opacity-0">Acciones</label>
+              <div class="flex gap-3">
+                <button
+                  (click)="aplicarFiltrosMarca()"
+                  class="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-4 py-3 rounded-lg font-medium flex items-center justify-center gap-2 transition-colors duration-200 shadow-md hover:shadow-lg"
+                >
+                  <mat-icon class="text-white text-lg">filter_list</mat-icon>
+                  Filtrar
+                </button>
+                <button
+                  (click)="limpiarFiltrosMarca()"
+                  class="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-3 rounded-lg font-medium flex items-center justify-center gap-2 transition-colors duration-200 border border-gray-300"
+                >
+                  <mat-icon class="text-gray-600 text-lg">clear</mat-icon>
+                  Limpiar
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tabla de Marcas -->
+        <div class="bg-white rounded-xl shadow-lg border border-gray-200">
+          <div class="flex justify-between items-center p-6 border-b border-gray-200">
+            <h3 class="text-xl font-semibold text-gray-900">Marcas</h3>
+            <button
+              (click)="abrirModalMarca()"
+              class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-semibold flex items-center gap-2 transition-colors duration-200 shadow-lg hover:shadow-xl"
+              matTooltip="Agregar nueva marca"
+            >
+              <mat-icon class="text-white">add</mat-icon>
+              Nueva Marca
+            </button>
+          </div>
+          <div class="overflow-x-auto">
+            <table mat-table [dataSource]="marcasDataSource" class="w-full">
+              <ng-container matColumnDef="nombre">
+                <th mat-header-cell *matHeaderCellDef class="font-semibold text-gray-700 px-6 py-4">Nombre</th>
+                <td mat-cell *matCellDef="let marca" class="font-medium px-6 py-4">{{ marca.nombre }}</td>
+              </ng-container>
+
+              <ng-container matColumnDef="descripcion">
+                <th mat-header-cell *matHeaderCellDef class="font-semibold text-gray-700 px-6 py-4">Descripción</th>
+                <td mat-cell *matCellDef="let marca" class="text-gray-600 px-6 py-4">{{ marca.descripcion || '-' }}</td>
+              </ng-container>
+
+              <ng-container matColumnDef="activo">
+                <th mat-header-cell *matHeaderCellDef class="font-semibold text-gray-700 px-6 py-4">Estado</th>
+                <td mat-cell *matCellDef="let marca" class="px-6 py-4">
+                  <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium"
+                        [class]="marca.activo ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'">
+                    {{ marca.activo ? 'Activo' : 'Inactivo' }}
+                  </span>
+                </td>
+              </ng-container>
+
+              <ng-container matColumnDef="created_at">
+                <th mat-header-cell *matHeaderCellDef class="font-semibold text-gray-700 px-6 py-4">Fecha Creación</th>
+                <td mat-cell *matCellDef="let marca" class="text-gray-600 px-6 py-4">{{ formatearFecha(marca.created_at) }}</td>
+              </ng-container>
+
+              <ng-container matColumnDef="acciones">
+                <th mat-header-cell *matHeaderCellDef class="font-semibold text-gray-700 px-6 py-4">Acciones</th>
+                <td mat-cell *matCellDef="let marca" class="px-6 py-4">
+                  <div class="flex gap-2">
+                    <button mat-icon-button (click)="abrirModalMarca(marca)" matTooltip="Editar" class="text-blue-600 hover:bg-blue-50">
+                      <mat-icon>edit</mat-icon>
+                    </button>
+                    <button mat-icon-button (click)="eliminarMarca(marca)" matTooltip="Eliminar" class="text-red-600 hover:bg-red-50">
+                      <mat-icon>delete</mat-icon>
+                    </button>
+                  </div>
+                </td>
+              </ng-container>
+
+              <tr mat-header-row *matHeaderRowDef="marcasDisplayedColumns" class="bg-gray-50 border-b border-gray-200"></tr>
+              <tr mat-row *matRowDef="let row; columns: marcasDisplayedColumns;" class="hover:bg-gray-50 border-b border-gray-100"></tr>
+            </table>
+
+            <mat-paginator
+              #marcaPaginator
+              [length]="marcaTotal"
+              [pageSize]="marcaLimite"
+              [pageSizeOptions]="[5, 10, 25, 50]"
+              (page)="onMarcaPageChange($event)"
+              showFirstLastButtons
+              class="bg-gray-50 border-t border-gray-200">
+            </mat-paginator>
+          </div>
+        </div>
+      </div>
+    </mat-tab>
+  </mat-tab-group>
+
+  <!-- Modal de Categoría -->
+  <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4" 
+       *ngIf="categoriaModalAbierto" 
+       (click)="cerrarModalCategoria()">
+    <div class="bg-white rounded-xl shadow-2xl w-full max-w-md max-h-[90vh] overflow-y-auto" 
+         (click)="$event.stopPropagation()">
+      <!-- Header del dialog -->
+      <div class="flex justify-between items-center p-6 border-b border-gray-200">
+        <h2 class="text-xl font-semibold text-gray-900">
+          {{ categoriaEditando ? 'Editar Categoría' : 'Crear Nueva Categoría' }}
+        </h2>
+        <button 
+          (click)="cerrarModalCategoria()"
+          class="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors duration-200"
+        >
+          <mat-icon>close</mat-icon>
+        </button>
+      </div>
+
+      <!-- Contenido del dialog -->
+      <div class="p-6">
+        <form [formGroup]="categoriaForm" (ngSubmit)="guardarCategoria()" class="space-y-6">
+          <!-- Nombre -->
+          <div class="space-y-2">
+            <label class="block text-sm font-medium text-gray-700">Nombre *</label>
+            <mat-form-field appearance="outline" class="w-full">
+              <input matInput formControlName="nombre" placeholder="Ingrese el nombre de la categoría">
+              <mat-error *ngIf="categoriaForm.get('nombre')?.hasError('required')">
+                El nombre es requerido
+              </mat-error>
+              <mat-error *ngIf="categoriaForm.get('nombre')?.hasError('minlength')">
+                El nombre debe tener al menos 2 caracteres
+              </mat-error>
+              <mat-error *ngIf="categoriaForm.get('nombre')?.hasError('maxlength')">
+                El nombre no puede exceder 100 caracteres
+              </mat-error>
+            </mat-form-field>
+          </div>
+
+          <!-- Descripción -->
+          <div class="space-y-2">
+            <label class="block text-sm font-medium text-gray-700">Descripción</label>
+            <mat-form-field appearance="outline" class="w-full">
+              <textarea matInput formControlName="descripcion" placeholder="Descripción de la categoría" rows="3"></textarea>
+              <mat-error *ngIf="categoriaForm.get('descripcion')?.hasError('maxlength')">
+                La descripción no puede exceder 255 caracteres
+              </mat-error>
+            </mat-form-field>
+          </div>
+
+          <!-- Estado -->
+          <div class="space-y-2">
+            <label class="block text-sm font-medium text-gray-700">Estado</label>
+            <mat-form-field appearance="outline" class="w-full">
+              <mat-select formControlName="activo" placeholder="Seleccionar estado">
+                <mat-option [value]="true">Activo</mat-option>
+                <mat-option [value]="false">Inactivo</mat-option>
+              </mat-select>
+            </mat-form-field>
+          </div>
+
+          <!-- Botones de acción -->
+          <div class="flex justify-end gap-4 pt-6 border-t border-gray-200">
+            <button 
+              type="button" 
+              (click)="cerrarModalCategoria()"
+              class="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors duration-200"
+            >
+              Cancelar
+            </button>
+            <button 
+              type="submit" 
+              [disabled]="categoriaForm.invalid"
+              class="px-6 py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white rounded-lg font-medium transition-colors duration-200"
+            >
+              {{ categoriaEditando ? 'Actualizar' : 'Crear' }}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal de Producto -->
+  <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4" 
+       *ngIf="productoModalAbierto" 
+       (click)="cerrarModalProducto()">
+    <div class="bg-white rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto" 
+         (click)="$event.stopPropagation()">
+      <!-- Header del dialog -->
+      <div class="flex justify-between items-center p-6 border-b border-gray-200">
+        <h2 class="text-xl font-semibold text-gray-900">
+          {{ productoEditando ? 'Editar Producto' : 'Crear Nuevo Producto' }}
+        </h2>
+        <button 
+          (click)="cerrarModalProducto()"
+          class="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors duration-200"
+        >
+          <mat-icon>close</mat-icon>
+        </button>
+      </div>
+
+      <!-- Contenido del dialog -->
+      <div class="p-6">
+        <form [formGroup]="productoForm" (ngSubmit)="guardarProducto()" class="space-y-6">
+          <!-- Nombre y Categoría -->
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="space-y-2">
+              <label class="block text-sm font-medium text-gray-700">Nombre *</label>
+              <mat-form-field appearance="outline" class="w-full">
+                <input matInput formControlName="nombre" placeholder="Ingrese el nombre del producto">
+                <mat-error *ngIf="productoForm.get('nombre')?.hasError('required')">
+                  El nombre es requerido
+                </mat-error>
+                <mat-error *ngIf="productoForm.get('nombre')?.hasError('minlength')">
+                  El nombre debe tener al menos 2 caracteres
+                </mat-error>
+                <mat-error *ngIf="productoForm.get('nombre')?.hasError('maxlength')">
+                  El nombre no puede exceder 140 caracteres
+                </mat-error>
+              </mat-form-field>
+            </div>
+
+            <div class="space-y-2">
+              <label class="block text-sm font-medium text-gray-700">Categoría *</label>
+              <mat-form-field appearance="outline" class="w-full">
+                <mat-select formControlName="id_categoria" placeholder="Seleccionar categoría">
+                  <mat-option *ngFor="let categoria of categoriasParaDropdown" [value]="categoria.id_categoria">
+                    {{ categoria.nombre }}
+                  </mat-option>
+                </mat-select>
+                <mat-error *ngIf="productoForm.get('id_categoria')?.hasError('required')">
+                  La categoría es requerida
+                </mat-error>
+              </mat-form-field>
+            </div>
+
+            <div class="space-y-2">
+              <label class="block text-sm font-medium text-gray-700">Marca *</label>
+              <mat-form-field appearance="outline" class="w-full">
+                <mat-select formControlName="id_marca" placeholder="Seleccionar marca">
+                  <mat-option *ngFor="let marca of marcasParaDropdown" [value]="marca.id_marca">
+                    {{ marca.nombre }}
+                  </mat-option>
+                </mat-select>
+                <mat-error *ngIf="productoForm.get('id_marca')?.hasError('required')">
+                  La marca es requerida
+                </mat-error>
+              </mat-form-field>
+            </div>
+          </div>
+
+          <!-- Descripción -->
+          <div class="space-y-2">
+            <label class="block text-sm font-medium text-gray-700">Descripción</label>
+            <mat-form-field appearance="outline" class="w-full">
+              <textarea matInput formControlName="descripcion" placeholder="Descripción del producto" rows="3"></textarea>
+              <mat-error *ngIf="productoForm.get('descripcion')?.hasError('maxlength')">
+                La descripción no puede exceder 500 caracteres
+              </mat-error>
+            </mat-form-field>
+          </div>
+
+          <!-- SKU y Código de Barras -->
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="space-y-2">
+              <label class="block text-sm font-medium text-gray-700">SKU</label>
+              <mat-form-field appearance="outline" class="w-full">
+                <input matInput formControlName="sku" placeholder="Código SKU">
+                <mat-error *ngIf="productoForm.get('sku')?.hasError('maxlength')">
+                  El SKU no puede exceder 40 caracteres
+                </mat-error>
+              </mat-form-field>
+            </div>
+
+            <div class="space-y-2">
+              <label class="block text-sm font-medium text-gray-700">Código de Barras</label>
+              <mat-form-field appearance="outline" class="w-full">
+                <input matInput formControlName="codigo_barras" placeholder="Código de barras">
+                <mat-error *ngIf="productoForm.get('codigo_barras')?.hasError('maxlength')">
+                  El código de barras no puede exceder 64 caracteres
+                </mat-error>
+              </mat-form-field>
+            </div>
+          </div>
+
+          <!-- Precio y Stock -->
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="space-y-2">
+              <label class="block text-sm font-medium text-gray-700">Precio Unitario</label>
+              <mat-form-field appearance="outline" class="w-full">
+                <input matInput type="number" formControlName="precio_unitario" placeholder="0.00" step="0.01">
+                <span matPrefix>$&nbsp;</span>
+                <mat-error *ngIf="productoForm.get('precio_unitario')?.hasError('min')">
+                  El precio no puede ser negativo
+                </mat-error>
+              </mat-form-field>
+            </div>
+
+            <div class="space-y-2">
+              <label class="block text-sm font-medium text-gray-700">Stock</label>
+              <mat-form-field appearance="outline" class="w-full">
+                <input matInput type="number" formControlName="stock" placeholder="0">
+                <mat-error *ngIf="productoForm.get('stock')?.hasError('min')">
+                  El stock no puede ser negativo
+                </mat-error>
+              </mat-form-field>
+            </div>
+          </div>
+
+          <!-- Fecha de Vencimiento y Estado -->
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="space-y-2">
+              <label class="block text-sm font-medium text-gray-700">Fecha de Vencimiento</label>
+              <mat-form-field appearance="outline" class="w-full">
+                <input matInput [matDatepicker]="picker" formControlName="fecha_vencimiento" placeholder="Seleccionar fecha">
+                <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
+                <mat-datepicker #picker></mat-datepicker>
+              </mat-form-field>
+            </div>
+
+            <div class="space-y-2">
+              <label class="block text-sm font-medium text-gray-700">Estado</label>
+              <mat-form-field appearance="outline" class="w-full">
+                <mat-select formControlName="activo" placeholder="Seleccionar estado">
+                  <mat-option [value]="true">Activo</mat-option>
+                  <mat-option [value]="false">Inactivo</mat-option>
+                </mat-select>
+              </mat-form-field>
+            </div>
+          </div>
+
+          <!-- Botones de acción -->
+          <div class="flex justify-end gap-4 pt-6 border-t border-gray-200">
+            <button 
+              type="button" 
+              (click)="cerrarModalProducto()"
+              class="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors duration-200"
+            >
+              Cancelar
+            </button>
+            <button 
+              type="submit" 
+              [disabled]="productoForm.invalid"
+              class="px-6 py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white rounded-lg font-medium transition-colors duration-200"
+            >
+              {{ productoEditando ? 'Actualizar' : 'Crear' }}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal de Marca -->
+  <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4" 
+       *ngIf="marcaModalAbierto" 
+       (click)="cerrarModalMarca()">
+    <div class="bg-white rounded-xl shadow-2xl w-full max-w-md max-h-[90vh] overflow-y-auto" 
+         (click)="$event.stopPropagation()">
+      <!-- Header del dialog -->
+      <div class="flex justify-between items-center p-6 border-b border-gray-200">
+        <h2 class="text-xl font-semibold text-gray-900">
+          {{ marcaEditando ? 'Editar Marca' : 'Crear Nueva Marca' }}
+        </h2>
+        <button 
+          (click)="cerrarModalMarca()"
+          class="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors duration-200"
+        >
+          <mat-icon>close</mat-icon>
+        </button>
+      </div>
+
+      <!-- Contenido del dialog -->
+      <div class="p-6">
+        <form [formGroup]="marcaForm" (ngSubmit)="guardarMarca()" class="space-y-6">
+          <!-- Nombre -->
+          <div class="space-y-2">
+            <label class="block text-sm font-medium text-gray-700">Nombre *</label>
+            <mat-form-field appearance="outline" class="w-full">
+              <input matInput formControlName="nombre" placeholder="Ingrese el nombre de la marca">
+              <mat-error *ngIf="marcaForm.get('nombre')?.hasError('required')">
+                El nombre es requerido
+              </mat-error>
+              <mat-error *ngIf="marcaForm.get('nombre')?.hasError('minlength')">
+                El nombre debe tener al menos 2 caracteres
+              </mat-error>
+              <mat-error *ngIf="marcaForm.get('nombre')?.hasError('maxlength')">
+                El nombre no puede exceder 120 caracteres
+              </mat-error>
+            </mat-form-field>
+          </div>
+
+          <!-- Descripción -->
+          <div class="space-y-2">
+            <label class="block text-sm font-medium text-gray-700">Descripción</label>
+            <mat-form-field appearance="outline" class="w-full">
+              <textarea matInput formControlName="descripcion" placeholder="Descripción de la marca" rows="3"></textarea>
+              <mat-error *ngIf="marcaForm.get('descripcion')?.hasError('maxlength')">
+                La descripción no puede exceder 255 caracteres
+              </mat-error>
+            </mat-form-field>
+          </div>
+
+          <!-- Estado -->
+          <div class="space-y-2">
+            <label class="block text-sm font-medium text-gray-700">Estado</label>
+            <mat-form-field appearance="outline" class="w-full">
+              <mat-select formControlName="activo" placeholder="Seleccionar estado">
+                <mat-option [value]="true">Activo</mat-option>
+                <mat-option [value]="false">Inactivo</mat-option>
+              </mat-select>
+            </mat-form-field>
+          </div>
+
+          <!-- Botones de acción -->
+          <div class="flex justify-end gap-4 pt-6 border-t border-gray-200">
+            <button 
+              type="button" 
+              (click)="cerrarModalMarca()"
+              class="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors duration-200"
+            >
+              Cancelar
+            </button>
+            <button 
+              type="submit" 
+              [disabled]="marcaForm.invalid"
+              class="px-6 py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white rounded-lg font-medium transition-colors duration-200"
+            >
+              {{ marcaEditando ? 'Actualizar' : 'Crear' }}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>

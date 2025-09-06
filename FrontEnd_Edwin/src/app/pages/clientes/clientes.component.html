@@ -1,0 +1,380 @@
+<div class="min-h-screen bg-gray-50 p-6">
+  <!-- Header -->
+  <div class="mb-8">
+    <div class="flex justify-between items-center">
+      <div>
+        <h1 class="text-3xl font-bold text-gray-900">Gestión de Clientes</h1>
+        <p class="text-gray-600 mt-2">Administra los clientes del sistema TodoFarma</p>
+      </div>
+      <div class="flex items-center gap-3">
+        <button
+          (click)="exportarAExcel()"
+          class="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg font-semibold flex items-center gap-2 transition-colors duration-200 shadow-lg hover:shadow-xl"
+          matTooltip="Exportar clientes filtrados a Excel"
+          [disabled]="dataSource.data.length === 0"
+        >
+          <mat-icon class="text-white">download</mat-icon>
+          Exportar Excel
+        </button>
+        <button
+          (click)="abrirDialogoCliente()"
+          class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-semibold flex items-center gap-2 transition-colors duration-200 shadow-lg hover:shadow-xl"
+          matTooltip="Agregar nuevo cliente"
+        >
+          <mat-icon class="text-white">add</mat-icon>
+          Agregar Cliente
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filtros mejorados con Tailwind -->
+  <div class="bg-white rounded-xl shadow-lg border border-gray-200 p-6 mb-6">
+    <div class="flex items-center gap-3 mb-6">
+      <mat-icon class="text-blue-600">filter_list</mat-icon>
+      <h3 class="text-xl font-semibold text-gray-900">Filtros de Búsqueda</h3>
+    </div>
+    
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <!-- Búsqueda -->
+      <div class="space-y-2">
+        <label class="block text-sm font-medium text-gray-700">Buscar</label>
+        <mat-form-field appearance="outline" class="w-full">
+          <input 
+            matInput 
+            [(ngModel)]="filtros.busqueda" 
+            placeholder="Nombre, apellido, NIT, email o teléfono"
+            class="text-gray-900"
+          >
+          <mat-icon matSuffix class="text-gray-400">search</mat-icon>
+        </mat-form-field>
+      </div>
+
+      <!-- Estado -->
+      <div class="space-y-2">
+        <label class="block text-sm font-medium text-gray-700">Estado</label>
+        <mat-form-field appearance="outline" class="w-full">
+          <mat-select [(ngModel)]="filtros.activo" placeholder="Seleccionar estado">
+            <mat-option value="">Todos los estados</mat-option>
+            <mat-option value="true">Activo</mat-option>
+            <mat-option value="false">Inactivo</mat-option>
+          </mat-select>
+          <mat-icon matSuffix class="text-gray-400">toggle_on</mat-icon>
+        </mat-form-field>
+      </div>
+
+      <!-- Botones de acción -->
+      <div class="space-y-2">
+        <label class="block text-sm font-medium text-gray-700 opacity-0">Acciones</label>
+        <div class="flex gap-3">
+          <button
+            (click)="aplicarFiltros()"
+            class="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-4 py-3 rounded-lg font-medium flex items-center justify-center gap-2 transition-colors duration-200 shadow-md hover:shadow-lg"
+          >
+            <mat-icon class="text-white text-lg">filter_list</mat-icon>
+            Filtrar
+          </button>
+          <button
+            (click)="limpiarFiltros()"
+            class="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-3 rounded-lg font-medium flex items-center justify-center gap-2 transition-colors duration-200 border border-gray-300"
+          >
+            <mat-icon class="text-gray-600 text-lg">clear</mat-icon>
+            Limpiar
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tabla de clientes -->
+  <div class="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
+    <!-- Loading spinner -->
+    <div *ngIf="loading" class="flex justify-center items-center p-12">
+      <div class="flex items-center gap-4">
+        <mat-spinner diameter="40" class="text-blue-600"></mat-spinner>
+        <span class="text-gray-600 font-medium">Cargando clientes...</span>
+      </div>
+    </div>
+
+    <!-- Tabla -->
+    <div *ngIf="!loading" class="overflow-x-auto">
+      <table mat-table [dataSource]="dataSource" matSort class="w-full">
+        <!-- Nombres -->
+        <ng-container matColumnDef="nombres">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header class="bg-gray-50 text-gray-900 font-semibold px-6 py-4"> 
+            Nombres 
+          </th>
+          <td mat-cell *matCellDef="let cliente" class="px-6 py-4 text-gray-900"> 
+            {{cliente.nombres}} 
+          </td>
+        </ng-container>
+
+        <!-- Apellidos -->
+        <ng-container matColumnDef="apellidos">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header class="bg-gray-50 text-gray-900 font-semibold px-6 py-4"> 
+            Apellidos 
+          </th>
+          <td mat-cell *matCellDef="let cliente" class="px-6 py-4 text-gray-900"> 
+            {{cliente.apellidos || '-'}} 
+          </td>
+        </ng-container>
+
+        <!-- NIT -->
+        <ng-container matColumnDef="nit">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header class="bg-gray-50 text-gray-900 font-semibold px-6 py-4"> 
+            NIT 
+          </th>
+          <td mat-cell *matCellDef="let cliente" class="px-6 py-4 text-gray-900"> 
+            {{cliente.nit || '-'}} 
+          </td>
+        </ng-container>
+
+        <!-- Email -->
+        <ng-container matColumnDef="email">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header class="bg-gray-50 text-gray-900 font-semibold px-6 py-4"> 
+            Email 
+          </th>
+          <td mat-cell *matCellDef="let cliente" class="px-6 py-4 text-gray-900"> 
+            {{cliente.email || '-'}} 
+          </td>
+        </ng-container>
+
+        <!-- Teléfono -->
+        <ng-container matColumnDef="telefono">
+          <th mat-header-cell *matHeaderCellDef class="bg-gray-50 text-gray-900 font-semibold px-6 py-4"> 
+            Teléfono 
+          </th>
+          <td mat-cell *matCellDef="let cliente" class="px-6 py-4 text-gray-900"> 
+            {{cliente.telefono || '-'}} 
+          </td>
+        </ng-container>
+
+        <!-- Estado -->
+        <ng-container matColumnDef="activo">
+          <th mat-header-cell *matHeaderCellDef class="bg-gray-50 text-gray-900 font-semibold px-6 py-4"> 
+            Estado 
+          </th>
+          <td mat-cell *matCellDef="let cliente" class="px-6 py-4">
+            <span 
+              class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium"
+              [class]="cliente.activo ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'"
+            >
+              <span class="w-2 h-2 rounded-full mr-2" 
+                    [class]="cliente.activo ? 'bg-green-400' : 'bg-red-400'">
+              </span>
+              {{cliente.activo ? 'Activo' : 'Inactivo'}}
+            </span>
+          </td>
+        </ng-container>
+
+        <!-- Fecha de registro -->
+        <ng-container matColumnDef="created_at">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header class="bg-gray-50 text-gray-900 font-semibold px-6 py-4"> 
+            Fecha de Registro 
+          </th>
+          <td mat-cell *matCellDef="let cliente" class="px-6 py-4 text-gray-900"> 
+            {{cliente.created_at | date:'dd/MM/yyyy'}} 
+          </td>
+        </ng-container>
+
+        <!-- Acciones -->
+        <ng-container matColumnDef="acciones">
+          <th mat-header-cell *matHeaderCellDef class="bg-gray-50 text-gray-900 font-semibold px-6 py-4"> 
+            Acciones 
+          </th>
+          <td mat-cell *matCellDef="let cliente" class="px-6 py-4">
+            <div class="flex items-center gap-2">
+              <button
+                (click)="abrirDialogoCliente(cliente)"
+                class="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors duration-200"
+                matTooltip="Editar cliente"
+              >
+                <mat-icon>edit</mat-icon>
+              </button>
+              <button
+                (click)="eliminarCliente(cliente)"
+                class="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors duration-200"
+                matTooltip="Eliminar cliente"
+              >
+                <mat-icon>delete</mat-icon>
+              </button>
+            </div>
+          </td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="displayedColumns" class="border-b border-gray-200"></tr>
+        <tr mat-row *matRowDef="let row; columns: displayedColumns;" 
+            class="border-b border-gray-100 hover:bg-gray-50 transition-colors duration-200"></tr>
+      </table>
+
+      <!-- Paginación -->
+      <div class="border-t border-gray-200 bg-gray-50">
+        <mat-paginator
+          [length]="totalClientes"
+          [pageSize]="pageSize"
+          [pageSizeOptions]="[5, 10, 25, 50]"
+          (page)="onPageChange($event)"
+          showFirstLastButtons
+          class="bg-transparent"
+        ></mat-paginator>
+      </div>
+
+      <!-- Mensaje cuando no hay datos -->
+      <div *ngIf="dataSource.data.length === 0 && !loading" class="text-center py-12">
+        <mat-icon class="text-gray-300 text-6xl mb-4">people_outline</mat-icon>
+        <h3 class="text-lg font-medium text-gray-900 mb-2">No se encontraron clientes</h3>
+        <p class="text-gray-600 mb-6">Intenta ajustar los filtros o agregar un nuevo cliente.</p>
+        <button
+          (click)="abrirDialogoCliente()"
+          class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-semibold flex items-center gap-2 mx-auto transition-colors duration-200"
+        >
+          <mat-icon>add</mat-icon>
+          Agregar Primer Cliente
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Dialog para crear/editar cliente -->
+  <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4" 
+       *ngIf="mostrarDialogo" 
+       (click)="cerrarDialogo()">
+    <div class="bg-white rounded-xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto" 
+         (click)="$event.stopPropagation()">
+      <!-- Header del dialog -->
+      <div class="flex justify-between items-center p-6 border-b border-gray-200">
+        <h2 class="text-xl font-semibold text-gray-900">
+          {{ editMode ? 'Editar Cliente' : 'Crear Nuevo Cliente' }}
+        </h2>
+        <button 
+          (click)="cerrarDialogo()"
+          class="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors duration-200"
+        >
+          <mat-icon>close</mat-icon>
+        </button>
+      </div>
+
+      <!-- Contenido del dialog -->
+      <div class="p-6">
+        <form [formGroup]="clienteForm" (ngSubmit)="guardarCliente()" class="space-y-6">
+          <!-- Nombres y Apellidos -->
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="space-y-2">
+              <label class="block text-sm font-medium text-gray-700">Nombres *</label>
+              <mat-form-field appearance="outline" class="w-full">
+                <input matInput formControlName="nombres" placeholder="Ingrese los nombres">
+                <mat-error *ngIf="clienteForm.get('nombres')?.hasError('required')">
+                  Los nombres son requeridos
+                </mat-error>
+                <mat-error *ngIf="clienteForm.get('nombres')?.hasError('minlength')">
+                  Los nombres deben tener al menos 2 caracteres
+                </mat-error>
+              </mat-form-field>
+            </div>
+
+            <div class="space-y-2">
+              <label class="block text-sm font-medium text-gray-700">Apellidos</label>
+              <mat-form-field appearance="outline" class="w-full">
+                <input matInput formControlName="apellidos" placeholder="Ingrese los apellidos">
+                <mat-error *ngIf="clienteForm.get('apellidos')?.hasError('minlength')">
+                  Los apellidos deben tener al menos 2 caracteres
+                </mat-error>
+              </mat-form-field>
+            </div>
+          </div>
+
+          <!-- NIT y Email -->
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="space-y-2">
+              <label class="block text-sm font-medium text-gray-700">NIT</label>
+              <mat-form-field appearance="outline" class="w-full">
+                <input matInput formControlName="nit" placeholder="Número de Identificación Tributaria">
+                <mat-error *ngIf="clienteForm.get('nit')?.hasError('maxlength')">
+                  El NIT no puede exceder 20 caracteres
+                </mat-error>
+              </mat-form-field>
+            </div>
+
+            <div class="space-y-2">
+              <label class="block text-sm font-medium text-gray-700">Email</label>
+              <mat-form-field appearance="outline" class="w-full">
+                <input matInput formControlName="email" type="email" placeholder="ejemplo@correo.com">
+                <mat-error *ngIf="clienteForm.get('email')?.hasError('email')">
+                  Ingrese un email válido
+                </mat-error>
+                <mat-error *ngIf="clienteForm.get('email')?.hasError('maxlength')">
+                  El email no puede exceder 160 caracteres
+                </mat-error>
+              </mat-form-field>
+            </div>
+          </div>
+
+          <!-- Teléfono y Dirección -->
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="space-y-2">
+              <label class="block text-sm font-medium text-gray-700">Teléfono</label>
+              <mat-form-field appearance="outline" class="w-full">
+                <input matInput formControlName="telefono" placeholder="Número de teléfono">
+                <mat-error *ngIf="clienteForm.get('telefono')?.hasError('maxlength')">
+                  El teléfono no puede exceder 25 caracteres
+                </mat-error>
+              </mat-form-field>
+            </div>
+
+            <div class="space-y-2">
+              <label class="block text-sm font-medium text-gray-700">Dirección</label>
+              <mat-form-field appearance="outline" class="w-full">
+                <input matInput formControlName="direccion" placeholder="Dirección del cliente">
+                <mat-error *ngIf="clienteForm.get('direccion')?.hasError('maxlength')">
+                  La dirección no puede exceder 200 caracteres
+                </mat-error>
+              </mat-form-field>
+            </div>
+          </div>
+
+          <!-- Observaciones -->
+          <div class="space-y-2">
+            <label class="block text-sm font-medium text-gray-700">Observaciones</label>
+            <mat-form-field appearance="outline" class="w-full">
+              <textarea 
+                matInput 
+                formControlName="observaciones" 
+                placeholder="Notas adicionales sobre el cliente"
+                rows="3"
+              ></textarea>
+              <mat-error *ngIf="clienteForm.get('observaciones')?.hasError('maxlength')">
+                Las observaciones no pueden exceder 300 caracteres
+              </mat-error>
+            </mat-form-field>
+          </div>
+
+          <!-- Estado -->
+          <div class="space-y-2">
+            <label class="block text-sm font-medium text-gray-700">Estado</label>
+            <mat-checkbox formControlName="activo" class="text-gray-700">
+              Cliente activo
+            </mat-checkbox>
+          </div>
+
+          <!-- Botones de acción -->
+          <div class="flex justify-end gap-4 pt-6 border-t border-gray-200">
+            <button 
+              type="button" 
+              (click)="cerrarDialogo()"
+              class="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors duration-200"
+            >
+              Cancelar
+            </button>
+            <button 
+              type="submit" 
+              [disabled]="clienteForm.invalid"
+              class="px-6 py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white rounded-lg font-medium transition-colors duration-200"
+            >
+              {{ editMode ? 'Actualizar' : 'Crear' }}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>

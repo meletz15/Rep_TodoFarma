@@ -43,7 +43,7 @@ export class MainLayoutComponent implements OnInit {
       description: 'Inventario y gestión de productos farmacéuticos',
       icon: 'inventory',
       route: '/productos',
-      disponible: false
+      disponible: true
     },
     {
       title: 'Caja',
@@ -57,7 +57,7 @@ export class MainLayoutComponent implements OnInit {
       description: 'Gestión de clientes y contactos',
       icon: 'people',
       route: '/clientes',
-      disponible: false
+      disponible: true
     },
     {
       title: 'Gestión Pedido',

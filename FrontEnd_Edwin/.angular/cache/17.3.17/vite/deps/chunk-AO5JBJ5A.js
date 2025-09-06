@@ -7,7 +7,7 @@ import {
   coerceNumberProperty,
   getRtlScrollAxisType,
   supportsScrollBehavior
-} from "./chunk-YNGTH3LU.js";
+} from "./chunk-4HSFNC6N.js";
 import {
   DOCUMENT
 } from "./chunk-YBCPKXH5.js";
@@ -2033,8 +2033,9 @@ export {
   _RecycleViewRepeaterStrategy,
   SelectionModel,
   ScrollDispatcher,
+  CdkScrollable,
   ViewportRuler,
   CdkScrollableModule,
   ScrollingModule
 };
-//# sourceMappingURL=chunk-RSTVENI5.js.map
+//# sourceMappingURL=chunk-AO5JBJ5A.js.map

@@ -25,7 +25,6 @@ const iniciarServidor = async () => {
       console.log(`🔐 API Auth: http://localhost:${puerto}/api/auth`);
       console.log(`👥 API Usuarios: http://localhost:${puerto}/api/usuarios`);
       console.log(`📈 API Reportes: http://localhost:${puerto}/api/reportes`);
-      console.log(`API Proveedores: http://localhost:${puerto}/api/proveedores`);
     });
     
     // Manejo de señales para cierre graceful

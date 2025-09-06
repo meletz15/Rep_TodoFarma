@@ -1,0 +1,142 @@
+/* Estilos específicos para el componente de clientes */
+
+.estado-activo {
+  @apply bg-green-100 text-green-800;
+}
+
+.estado-inactivo {
+  @apply bg-red-100 text-red-800;
+}
+
+/* Animaciones suaves para transiciones */
+.transition-all {
+  transition: all 0.2s ease-in-out;
+}
+
+/* Estilos para el formulario */
+.mat-form-field {
+  width: 100%;
+}
+
+.mat-form-field-appearance-outline .mat-form-field-outline {
+  color: #d1d5db;
+}
+
+.mat-form-field-appearance-outline.mat-focused .mat-form-field-outline-thick {
+  color: #3b82f6;
+}
+
+/* Estilos para la tabla */
+.mat-table {
+  background: transparent;
+}
+
+.mat-header-cell {
+  color: #374151;
+  font-weight: 600;
+}
+
+.mat-cell {
+  color: #374151;
+}
+
+/* Estilos para botones */
+.mat-button, .mat-raised-button, .mat-flat-button {
+  border-radius: 0.5rem;
+}
+
+/* Estilos para el diálogo */
+.mat-dialog-container {
+  border-radius: 0.75rem;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+}
+
+/* Estilos para el spinner */
+.mat-spinner circle {
+  stroke: #3b82f6;
+}
+
+/* Estilos para el paginador */
+.mat-paginator {
+  background: transparent;
+  border-top: 1px solid #e5e7eb;
+}
+
+/* Estilos para tooltips */
+.mat-tooltip {
+  background-color: #374151;
+  color: white;
+  font-size: 0.875rem;
+}
+
+/* Estilos para el snackbar */
+.mat-snack-bar-container {
+  border-radius: 0.5rem;
+}
+
+/* Estilos para el checkbox */
+.mat-checkbox-checked .mat-checkbox-background {
+  background-color: #3b82f6;
+}
+
+/* Estilos para el select */
+.mat-select-panel {
+  border-radius: 0.5rem;
+}
+
+/* Estilos para el input */
+.mat-input-element {
+  color: #374151;
+}
+
+/* Estilos para el textarea */
+.mat-input-element textarea {
+  resize: vertical;
+  min-height: 80px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .grid-cols-1.md\\:grid-cols-2 {
+    grid-template-columns: 1fr;
+  }
+  
+  .grid-cols-1.md\\:grid-cols-2.lg\\:grid-cols-4 {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Hover effects */
+.hover\\:bg-blue-50:hover {
+  background-color: #eff6ff;
+}
+
+.hover\\:bg-red-50:hover {
+  background-color: #fef2f2;
+}
+
+.hover\\:bg-gray-50:hover {
+  background-color: #f9fafb;
+}
+
+/* Focus styles */
+.focus\\:outline-none:focus {
+  outline: none;
+}
+
+.focus\\:ring-2:focus {
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.5);
+}
+
+/* Shadow effects */
+.shadow-lg {
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+
+.shadow-xl {
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+.shadow-2xl {
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+}
