@@ -36,7 +36,7 @@ export class MainLayoutComponent implements OnInit {
       description: 'Sistema de ventas y facturación',
       icon: 'point_of_sale',
       route: '/ventas',
-      disponible: false
+      disponible: true
     },
     {
       title: 'Productos',
@@ -50,7 +50,7 @@ export class MainLayoutComponent implements OnInit {
       description: 'Gestión de caja y transacciones',
       icon: 'account_balance_wallet',
       route: '/caja',
-      disponible: false
+      disponible: true
     },
     {
       title: 'Clientes',
@@ -71,14 +71,14 @@ export class MainLayoutComponent implements OnInit {
       description: 'Gestión de pedidos y entregas',
       icon: 'local_shipping',
       route: '/gestion-pedido',
-      disponible: false
+      disponible: true
     },
     {
       title: 'Inventario',
       description: 'Control de inventario y stock',
       icon: 'assessment',
       route: '/inventario',
-      disponible: false
+      disponible: true
     },
     {
       title: 'Reporte',

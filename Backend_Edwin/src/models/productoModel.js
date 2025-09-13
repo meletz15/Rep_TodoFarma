@@ -32,22 +32,22 @@ class ProductoModel {
       
       // Verificar que la categoría existe
       const categoriaExiste = await cliente.query(
-        'SELECT 1 FROM categoria WHERE id_categoria = $1 AND activo = true',
+        'SELECT 1 FROM categoria WHERE id_categoria = $1',
         [datosProducto.id_categoria]
       );
       
       if (categoriaExiste.rows.length === 0) {
-        throw crearError('La categoría especificada no existe o está inactiva', 400);
+        throw crearError('La categoría especificada no existe', 400);
       }
 
       // Verificar que la marca existe
       const marcaExiste = await cliente.query(
-        'SELECT 1 FROM marca WHERE id_marca = $1 AND activo = true',
+        'SELECT 1 FROM marca WHERE id_marca = $1',
         [datosProducto.id_marca]
       );
       
       if (marcaExiste.rows.length === 0) {
-        throw crearError('La marca especificada no existe o está inactiva', 400);
+        throw crearError('La marca especificada no existe', 400);
       }
       
       // Validar fecha de vencimiento
@@ -223,7 +223,7 @@ class ProductoModel {
       // Verificar que la categoría existe si se está actualizando
       if (datosActualizacion.id_categoria) {
         const categoriaExiste = await cliente.query(
-          'SELECT 1 FROM categoria WHERE id_categoria = $1 AND activo = true',
+          'SELECT 1 FROM categoria WHERE id_categoria = $1',
           [datosActualizacion.id_categoria]
         );
         
@@ -235,7 +235,7 @@ class ProductoModel {
       // Verificar que la marca existe si se está actualizando
       if (datosActualizacion.id_marca) {
         const marcaExiste = await cliente.query(
-          'SELECT 1 FROM marca WHERE id_marca = $1 AND activo = true',
+          'SELECT 1 FROM marca WHERE id_marca = $1',
           [datosActualizacion.id_marca]
         );
         

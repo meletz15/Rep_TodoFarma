@@ -7,7 +7,7 @@ class RolModel {
     const cliente = await pool.connect();
     try {
       const resultado = await cliente.query(
-        'SELECT id_rol, nombre, descripcion, activo, fecha_creacion FROM roles WHERE activo = true ORDER BY nombre'
+        'SELECT id_rol, nombre, descripcion, activo, fecha_creacion FROM roles ORDER BY nombre'
       );
       return resultado.rows;
     } finally {
@@ -58,7 +58,7 @@ class RolModel {
     const cliente = await pool.connect();
     try {
       const resultado = await cliente.query(
-        'SELECT 1 FROM roles WHERE id_rol = $1 AND activo = true',
+        'SELECT 1 FROM roles WHERE id_rol = $1',
         [idRol]
       );
       return resultado.rows.length > 0;

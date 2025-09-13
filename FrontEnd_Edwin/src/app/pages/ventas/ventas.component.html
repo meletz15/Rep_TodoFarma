@@ -1,0 +1,550 @@
+<div class="min-h-screen bg-gray-50 p-6">
+  <!-- Header -->
+  <div class="mb-8">
+    <div class="flex justify-between items-center">
+      <div>
+        <h1 class="text-3xl font-bold text-gray-900">Gestión de Ventas</h1>
+        <p class="text-gray-600 mt-2">Administra las ventas y facturación del sistema</p>
+      </div>
+      <button 
+        mat-raised-button 
+        color="primary" 
+        (click)="abrirModalVenta()"
+        [disabled]="!cajaAbierta"
+        class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
+        <mat-icon>add</mat-icon>
+        Nueva Venta
+      </button>
+    </div>
+  </div>
+
+  <!-- Estado de caja -->
+  <div class="mb-8">
+    <!-- Caja Cerrada -->
+    <div *ngIf="!cajaAbierta" class="bg-red-50 border border-red-200 rounded-xl p-6">
+      <div class="flex items-center">
+        <div class="p-3 bg-red-100 rounded-lg mr-4">
+          <mat-icon class="text-red-600">account_balance_wallet</mat-icon>
+        </div>
+        <div class="flex-1">
+          <h3 class="text-lg font-semibold text-red-800">Caja Cerrada</h3>
+          <p class="text-red-600 text-sm mt-1">
+            No hay caja abierta. Debe abrir una caja para realizar ventas.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Caja Abierta -->
+    <div *ngIf="cajaAbierta" class="bg-green-50 border border-green-200 rounded-xl p-6">
+      <div class="flex items-center">
+        <div class="p-3 bg-green-100 rounded-lg mr-4">
+          <mat-icon class="text-green-600">account_balance_wallet</mat-icon>
+        </div>
+        <div class="flex-1">
+          <h3 class="text-lg font-semibold text-green-800">Caja Abierta</h3>
+          <p class="text-green-600 text-sm mt-1">
+            Caja #{{cajaAbierta.id_caja}} abierta desde {{cajaAbierta.fecha_apertura | date:'dd/MM/yyyy HH:mm'}} con saldo inicial de Q{{cajaAbierta.saldo_inicial | number:'1.2-2'}}.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Contenido principal -->
+  <div class="bg-white rounded-xl shadow-lg border border-gray-200 mb-8">
+    <div class="p-6">
+        <!-- Filtros -->
+        <div class="bg-white rounded-xl shadow-lg border border-gray-200 p-6 mb-8">
+          <div class="flex items-center gap-3 mb-6">
+            <mat-icon class="text-blue-600">filter_list</mat-icon>
+            <h3 class="text-xl font-semibold text-gray-900">Filtros de Búsqueda</h3>
+          </div>
+          
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div class="space-y-2">
+              <label class="block text-sm font-medium text-gray-700">Estado</label>
+              <mat-form-field appearance="outline" class="w-full">
+                <mat-select>
+                  <mat-option value="">Todos</mat-option>
+                  <mat-option value="EMITIDA">Emitida</mat-option>
+                  <mat-option value="ANULADA">Anulada</mat-option>
+                </mat-select>
+              </mat-form-field>
+            </div>
+
+            <div class="space-y-2">
+              <label class="block text-sm font-medium text-gray-700">Cliente</label>
+              <mat-form-field appearance="outline" class="w-full">
+                <mat-select>
+                  <mat-option value="">Todos</mat-option>
+                </mat-select>
+              </mat-form-field>
+            </div>
+
+            <div class="space-y-2">
+              <label class="block text-sm font-medium text-gray-700">Usuario</label>
+              <mat-form-field appearance="outline" class="w-full">
+                <mat-select>
+                  <mat-option value="">Todos</mat-option>
+                </mat-select>
+              </mat-form-field>
+            </div>
+
+            <div class="space-y-2">
+              <label class="block text-sm font-medium text-gray-700">Búsqueda</label>
+              <mat-form-field appearance="outline" class="w-full">
+                <input matInput placeholder="ID, observación...">
+                <mat-icon matSuffix class="text-gray-400">search</mat-icon>
+              </mat-form-field>
+            </div>
+          </div>
+
+          <div class="flex justify-end gap-3 mt-6">
+            <button 
+              mat-button 
+              class="text-gray-600 hover:text-gray-800">
+              <mat-icon>clear</mat-icon>
+              Limpiar
+            </button>
+            <button 
+              mat-raised-button 
+              color="primary" 
+              class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg">
+              <mat-icon>search</mat-icon>
+              Buscar
+            </button>
+          </div>
+        </div>
+
+        <!-- Tabla de ventas -->
+        <div class="bg-white rounded-xl shadow-lg border border-gray-200">
+          <div class="p-6 border-b border-gray-200">
+            <h3 class="text-xl font-semibold text-gray-900">Lista de Ventas</h3>
+          </div>
+          
+          <div class="p-6">
+            <!-- Loading spinner -->
+            <div *ngIf="ventaCargando" class="flex justify-center items-center py-8">
+              <mat-spinner diameter="40"></mat-spinner>
+              <span class="ml-3 text-gray-600">Cargando ventas...</span>
+            </div>
+
+            <!-- Tabla de ventas -->
+            <div *ngIf="!ventaCargando" class="overflow-x-auto">
+              <table mat-table [dataSource]="ventasDataSource" class="w-full">
+                <!-- Columna ID -->
+                <ng-container matColumnDef="id_venta">
+                  <th mat-header-cell *matHeaderCellDef class="text-left font-semibold text-gray-700">ID</th>
+                  <td mat-cell *matCellDef="let venta" class="py-3 text-gray-900">#{{venta.id_venta}}</td>
+                </ng-container>
+
+                <!-- Columna Fecha -->
+                <ng-container matColumnDef="fecha">
+                  <th mat-header-cell *matHeaderCellDef class="text-left font-semibold text-gray-700">Fecha</th>
+                  <td mat-cell *matCellDef="let venta" class="py-3 text-gray-900">{{venta.fecha | date:'dd/MM/yyyy HH:mm'}}</td>
+                </ng-container>
+
+                <!-- Columna Cliente -->
+                <ng-container matColumnDef="cliente">
+                  <th mat-header-cell *matHeaderCellDef class="text-left font-semibold text-gray-700">Cliente</th>
+                  <td mat-cell *matCellDef="let venta" class="py-3 text-gray-900">
+                    {{venta.cliente_nombre || 'Sin cliente'}}
+                  </td>
+                </ng-container>
+
+                <!-- Columna Cajero -->
+                <ng-container matColumnDef="cajero">
+                  <th mat-header-cell *matHeaderCellDef class="text-left font-semibold text-gray-700">Cajero</th>
+                  <td mat-cell *matCellDef="let venta" class="py-3 text-gray-900">{{venta.usuario_nombre}}</td>
+                </ng-container>
+
+                <!-- Columna Total -->
+                <ng-container matColumnDef="total">
+                  <th mat-header-cell *matHeaderCellDef class="text-right font-semibold text-gray-700">Total</th>
+                  <td mat-cell *matCellDef="let venta" class="py-3 text-right font-semibold text-green-600">
+                    Q{{venta.total | number:'1.2-2'}}
+                  </td>
+                </ng-container>
+
+                <!-- Columna Estado -->
+                <ng-container matColumnDef="estado">
+                  <th mat-header-cell *matHeaderCellDef class="text-center font-semibold text-gray-700">Estado</th>
+                  <td mat-cell *matCellDef="let venta" class="py-3 text-center">
+                    <span [ngClass]="{
+                      'bg-green-100 text-green-800': venta.estado === 'EMITIDA',
+                      'bg-red-100 text-red-800': venta.estado === 'ANULADA'
+                    }" class="px-2 py-1 rounded-full text-xs font-medium">
+                      {{venta.estado}}
+                    </span>
+                  </td>
+                </ng-container>
+
+                <!-- Columna Acciones -->
+                <ng-container matColumnDef="acciones">
+                  <th mat-header-cell *matHeaderCellDef class="text-center font-semibold text-gray-700">Acciones</th>
+                  <td mat-cell *matCellDef="let venta" class="py-3 text-center">
+                    <button mat-icon-button 
+                            class="text-blue-600 hover:text-blue-800"
+                            (click)="verDetalleVenta(venta.id_venta)"
+                            matTooltip="Ver detalle">
+                      <mat-icon>visibility</mat-icon>
+                    </button>
+                    <button *ngIf="venta.estado === 'EMITIDA'" 
+                            mat-icon-button 
+                            class="text-red-600 hover:text-red-800 ml-2"
+                            (click)="anularVenta(venta.id_venta)"
+                            matTooltip="Anular venta">
+                      <mat-icon>cancel</mat-icon>
+                    </button>
+                  </td>
+                </ng-container>
+
+                <tr mat-header-row *matHeaderRowDef="ventasDisplayedColumns" class="border-b border-gray-200"></tr>
+                <tr mat-row *matRowDef="let row; columns: ventasDisplayedColumns;" class="hover:bg-gray-50 border-b border-gray-100"></tr>
+              </table>
+
+              <!-- Mensaje cuando no hay datos -->
+              <div *ngIf="ventas.length === 0" class="text-center py-8">
+                <mat-icon class="text-gray-400 text-6xl mb-4">receipt_long</mat-icon>
+                <p class="text-gray-500 text-lg">No hay ventas registradas</p>
+                <p class="text-gray-400 text-sm mt-2">Las ventas aparecerán aquí una vez que se realicen</p>
+              </div>
+            </div>
+
+            <!-- Paginación -->
+            <div *ngIf="!ventaCargando && ventas.length > 0" class="mt-6 flex justify-between items-center">
+              <div class="text-sm text-gray-600">
+                Mostrando {{ventas.length}} de {{ventaTotal}} ventas
+              </div>
+              <mat-paginator [pageSizeOptions]="[5, 10, 25, 50]" 
+                             [pageSize]="ventaLimite"
+                             [length]="ventaTotal"
+                             (page)="onVentaPageChange($event)"
+                             showFirstLastButtons>
+              </mat-paginator>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal para Ver Detalles de Venta -->
+  <div *ngIf="ventaDetalleModalAbierto" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div class="bg-white rounded-xl shadow-2xl max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+      <div class="p-6 border-b border-gray-200">
+        <div class="flex justify-between items-center">
+          <h2 class="text-2xl font-bold text-gray-900">Detalles de Venta #{{ventaSeleccionada?.id_venta}}</h2>
+          <button (click)="cerrarModalDetalleVenta()" class="text-gray-400 hover:text-gray-600">
+            <mat-icon>close</mat-icon>
+          </button>
+        </div>
+      </div>
+      
+      <div class="p-6" *ngIf="ventaSeleccionada">
+        <!-- Información General -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+          <div class="bg-gray-50 p-4 rounded-lg">
+            <h3 class="text-lg font-semibold text-gray-900 mb-3">Información General</h3>
+            <div class="space-y-2">
+              <div class="flex justify-between">
+                <span class="text-gray-600">ID de Venta:</span>
+                <span class="font-medium">#{{ventaSeleccionada.id_venta}}</span>
+              </div>
+              <div class="flex justify-between">
+                <span class="text-gray-600">Fecha:</span>
+                <span class="font-medium">{{ventaSeleccionada.fecha | date:'dd/MM/yyyy HH:mm'}}</span>
+              </div>
+              <div class="flex justify-between">
+                <span class="text-gray-600">Estado:</span>
+                <span [ngClass]="{
+                  'bg-green-100 text-green-800': ventaSeleccionada.estado === 'EMITIDA',
+                  'bg-red-100 text-red-800': ventaSeleccionada.estado === 'ANULADA'
+                }" class="px-2 py-1 rounded-full text-xs font-medium">
+                  {{ventaSeleccionada.estado}}
+                </span>
+              </div>
+              <div class="flex justify-between">
+                <span class="text-gray-600">Total:</span>
+                <span class="font-bold text-green-600 text-lg">Q{{ventaSeleccionada.total | number:'1.2-2'}}</span>
+              </div>
+            </div>
+          </div>
+          
+          <div class="bg-gray-50 p-4 rounded-lg">
+            <h3 class="text-lg font-semibold text-gray-900 mb-3">Información de Cliente y Cajero</h3>
+            <div class="space-y-2">
+              <div class="flex justify-between">
+                <span class="text-gray-600">Cliente:</span>
+                <span class="font-medium">{{ventaSeleccionada.cliente_nombre || 'Sin cliente'}}</span>
+              </div>
+              <div class="flex justify-between">
+                <span class="text-gray-600">Cajero:</span>
+                <span class="font-medium">{{ventaSeleccionada.usuario_nombre}}</span>
+              </div>
+              <div class="flex justify-between">
+                <span class="text-gray-600">Caja ID:</span>
+                <span class="font-medium">#{{ventaSeleccionada.caja_id}}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Detalles de Productos -->
+        <div class="mb-6">
+          <h3 class="text-lg font-semibold text-gray-900 mb-4">Productos Vendidos</h3>
+          <div class="bg-white border border-gray-200 rounded-lg overflow-hidden">
+            <table class="min-w-full divide-y divide-gray-200">
+              <thead class="bg-gray-50">
+                <tr>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Producto</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Cantidad</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Precio Unitario</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Subtotal</th>
+                </tr>
+              </thead>
+              <tbody class="bg-white divide-y divide-gray-200">
+                <tr *ngFor="let detalle of detallesVentaSeleccionada" class="hover:bg-gray-50">
+                  <td class="px-6 py-4 whitespace-nowrap">
+                    <div class="text-sm font-medium text-gray-900">{{detalle.nombre_producto || 'Producto no encontrado'}}</div>
+                    <div class="text-sm text-gray-500">SKU: {{detalle.sku || 'N/A'}}</div>
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{detalle.cantidad}}</td>
+                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">Q{{detalle.precio_unitario | number:'1.2-2'}}</td>
+                  <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Q{{(detalle.cantidad * detalle.precio_unitario) | number:'1.2-2'}}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Observaciones -->
+        <div *ngIf="ventaSeleccionada.observacion" class="mb-6">
+          <h3 class="text-lg font-semibold text-gray-900 mb-2">Observaciones</h3>
+          <div class="bg-gray-50 p-4 rounded-lg">
+            <p class="text-gray-700">{{ventaSeleccionada.observacion}}</p>
+          </div>
+        </div>
+
+        <!-- Botones de Acción -->
+        <div class="flex justify-end gap-3 pt-4 border-t border-gray-200">
+          <button mat-button (click)="cerrarModalDetalleVenta()" class="px-6 py-2 text-gray-600 hover:text-gray-800">
+            Cerrar
+          </button>
+          <button *ngIf="ventaSeleccionada.estado === 'EMITIDA'" 
+                  mat-raised-button 
+                  color="warn" 
+                  (click)="anularVenta(ventaSeleccionada.id_venta)"
+                  class="px-6 py-2 bg-red-600 text-white hover:bg-red-700">
+            <mat-icon>cancel</mat-icon>
+            Anular Venta
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal para Nueva Venta -->
+  <div *ngIf="ventaModalAbierto" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" data-modal>
+    <div class="bg-white rounded-xl shadow-2xl w-full max-w-6xl mx-4 max-h-[90vh] overflow-y-auto" style="z-index: 9999 !important;">
+      <div class="p-6 border-b border-gray-200">
+        <div class="flex items-center justify-between">
+          <h3 class="text-xl font-semibold text-gray-900">
+            {{ventaEditando ? 'Editar Venta' : 'Nueva Venta'}}
+          </h3>
+          <div class="flex gap-2">
+            <button 
+              (click)="cerrarModalVenta()"
+              class="text-gray-400 hover:text-gray-600 transition-colors">
+            <mat-icon>close</mat-icon>
+          </button>
+        </div>
+      </div>
+      
+      <form [formGroup]="ventaForm" (ngSubmit)="guardarVenta()" class="p-6">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+          <!-- Cliente -->
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">
+              Cliente (Opcional)
+            </label>
+            <mat-form-field appearance="outline" class="w-full">
+              <input matInput 
+                     placeholder="Buscar cliente por nombre o email..." 
+                     [matAutocomplete]="clienteAuto"
+                     [formControl]="clienteSearchControl"
+                     (optionSelected)="onClienteSelected($event)">
+              <mat-autocomplete #clienteAuto="matAutocomplete" 
+                                [displayWith]="displayClienteFn">
+                <mat-option *ngFor="let cliente of clientesFiltrados$ | async" [value]="cliente">
+                  <div class="flex justify-between items-center">
+                    <span>{{cliente.nombres}} {{cliente.apellidos}}</span>
+                    <span class="text-sm text-gray-500 ml-2">{{cliente.email}}</span>
+                  </div>
+                </mat-option>
+              </mat-autocomplete>
+            </mat-form-field>
+          </div>
+
+          <!-- Cajero -->
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">
+              Cajero *
+            </label>
+            <mat-form-field appearance="outline" class="w-full">
+              <mat-select formControlName="usuario_id" placeholder="Seleccionar cajero...">
+                <mat-option value="">Seleccionar cajero</mat-option>
+                <mat-option *ngFor="let usuario of usuariosParaDropdown" [value]="usuario.id_usuario">
+                  {{usuario.nombre}} {{usuario.apellido}}
+                </mat-option>
+              </mat-select>
+            </mat-form-field>
+            <div *ngIf="ventaForm.get('usuario_id')?.invalid && ventaForm.get('usuario_id')?.touched" 
+                 class="text-red-500 text-sm mt-1">
+              El cajero es requerido
+            </div>
+          </div>
+
+          <!-- Fecha -->
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">
+              Fecha
+            </label>
+            <mat-form-field appearance="outline" class="w-full">
+              <input matInput [matDatepicker]="picker" formControlName="fecha">
+              <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
+              <mat-datepicker #picker></mat-datepicker>
+            </mat-form-field>
+          </div>
+        </div>
+
+        <!-- Observaciones -->
+        <div class="mb-6">
+          <label class="block text-sm font-medium text-gray-700 mb-2">
+            Observaciones (Opcional)
+          </label>
+          <mat-form-field appearance="outline" class="w-full">
+            <textarea matInput formControlName="observacion" rows="3" placeholder="Observaciones adicionales..."></textarea>
+          </mat-form-field>
+        </div>
+
+        <!-- Detalles de la venta -->
+        <div class="mb-6">
+          <div class="flex items-center justify-between mb-4">
+            <h4 class="text-lg font-semibold text-gray-900">Detalles de la Venta</h4>
+            <button 
+              type="button"
+              (click)="agregarDetalle()"
+              mat-raised-button 
+              color="primary"
+              class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg flex items-center gap-2">
+              <mat-icon>add</mat-icon>
+              Agregar Producto
+            </button>
+          </div>
+
+          <div *ngIf="detallesVenta.length === 0" class="text-center py-8 text-gray-500">
+            <mat-icon class="text-4xl text-gray-300 mb-2">shopping_cart</mat-icon>
+            <p>No hay productos agregados</p>
+            <p class="text-sm">Haz clic en "Agregar Producto" para comenzar</p>
+          </div>
+
+          <div *ngIf="detallesVenta.length > 0" class="space-y-4">
+            <div *ngFor="let detalle of detallesVenta; let i = index" 
+                 class="bg-gray-50 rounded-lg p-4 border border-gray-200">
+              <div class="grid grid-cols-1 lg:grid-cols-12 gap-4 items-end">
+                <!-- Producto - Ocupa más espacio -->
+                <div class="lg:col-span-5">
+                  <label class="block text-sm font-medium text-gray-700 mb-2">Producto *</label>
+                  <mat-form-field appearance="outline" class="w-full">
+                    <input matInput 
+                           placeholder="Buscar producto por nombre..." 
+                           [matAutocomplete]="productoAuto"
+                           [formControl]="getProductoSearchControl(i)">
+                    <mat-autocomplete #productoAuto="matAutocomplete" 
+                                      [displayWith]="displayProductoFn"
+                                      (optionSelected)="onProductoSelected($event, detalle)">
+                      <mat-option *ngFor="let producto of getProductosFiltrados(i) | async" [value]="producto">
+                        <div class="flex justify-between items-center">
+                          <span>{{producto.nombre}}</span>
+                          <span class="text-sm text-gray-500 ml-2">Stock: {{producto.stock}} | Q{{producto.precio_unitario | number:'1.2-2'}}</span>
+                        </div>
+                      </mat-option>
+                    </mat-autocomplete>
+                  </mat-form-field>
+                </div>
+
+                <!-- Cantidad -->
+                <div class="lg:col-span-2">
+                  <label class="block text-sm font-medium text-gray-700 mb-2">Cantidad *</label>
+                  <mat-form-field appearance="outline" class="w-full">
+                    <input matInput type="number" [value]="detalle.cantidad || 1" (input)="onCantidadChange($event, detalle)" min="1" step="1">
+                  </mat-form-field>
+                </div>
+
+                <!-- Precio Unitario -->
+                <div class="lg:col-span-2">
+                  <label class="block text-sm font-medium text-gray-700 mb-2">Precio Unitario (Q)</label>
+                  <mat-form-field appearance="outline" class="w-full">
+                    <input matInput type="number" [value]="detalle.precio_unitario || 0" min="0" step="0.01" readonly>
+                  </mat-form-field>
+                  <div *ngIf="detalle.precio_unitario > 0" class="text-xs text-green-600 mt-1">
+                    ✓ Precio asignado: Q{{detalle.precio_unitario | number:'1.2-2'}}
+                  </div>
+                </div>
+
+                <!-- Subtotal -->
+                <div class="lg:col-span-2">
+                  <label class="block text-sm font-medium text-gray-700 mb-2">Subtotal</label>
+                  <div class="px-3 py-2 bg-gray-100 rounded border text-center font-semibold">
+                    Q{{calcularSubtotal(detalle) | number:'1.2-2'}}
+                  </div>
+                </div>
+
+                <!-- Botón Eliminar -->
+                <div class="lg:col-span-1 flex justify-center">
+                  <button 
+                    type="button"
+                    (click)="eliminarDetalle(i)"
+                    mat-icon-button 
+                    color="warn"
+                    class="text-red-600 hover:text-red-800"
+                    matTooltip="Eliminar producto">
+                    <mat-icon>delete</mat-icon>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Total de la venta -->
+        <div *ngIf="detallesVenta.length > 0" class="bg-blue-50 rounded-lg p-4 border border-blue-200 mb-6">
+          <div class="flex justify-between items-center">
+            <span class="text-lg font-semibold text-blue-900">Total de la Venta:</span>
+            <span class="text-2xl font-bold text-blue-900">Q{{calcularTotalVenta() | number:'1.2-2'}}</span>
+          </div>
+        </div>
+
+        <!-- Botones de acción -->
+        <div class="flex justify-end gap-3 pt-6 border-t border-gray-200">
+          <button 
+            type="button"
+            (click)="cerrarModalVenta()"
+            mat-button 
+            class="text-gray-600 hover:text-gray-800">
+            Cancelar
+          </button>
+          <button 
+            type="submit"
+            [disabled]="!ventaForm.valid || detallesVenta.length === 0"
+            mat-raised-button 
+            color="primary"
+            class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed">
+            {{ventaEditando ? 'Actualizar Venta' : 'Crear Venta'}}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>

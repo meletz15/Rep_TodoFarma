@@ -1,0 +1,390 @@
+<div class="min-h-screen bg-gray-50 p-6">
+  <!-- Header -->
+  <div class="mb-8">
+    <div class="flex justify-between items-center">
+      <div>
+        <h1 class="text-3xl font-bold text-gray-900">Control de Inventario</h1>
+        <p class="text-gray-600 mt-2">Gestiona movimientos y stock del inventario</p>
+      </div>
+      <button 
+        mat-raised-button 
+        color="primary" 
+        (click)="abrirModalNuevoMovimiento()"
+        class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg flex items-center gap-2">
+        <mat-icon>add</mat-icon>
+        Nuevo Movimiento
+      </button>
+      
+    </div>
+  </div>
+
+  <!-- Tabs -->
+  <div class="mb-8">
+    <mat-tab-group [(selectedIndex)]="tabSeleccionado" class="bg-white rounded-xl shadow-lg border border-gray-200">
+      <mat-tab label="Movimientos de Inventario">
+        <div class="p-6">
+
+          <!-- Filtros -->
+          <div class="bg-white rounded-xl shadow-lg border border-gray-200 p-6 mb-8">
+    <div class="flex items-center gap-3 mb-6">
+      <mat-icon class="text-blue-600">filter_list</mat-icon>
+      <h3 class="text-xl font-semibold text-gray-900">Filtros de Búsqueda</h3>
+    </div>
+    
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div class="space-y-2">
+        <label class="block text-sm font-medium text-gray-700">Tipo de Movimiento</label>
+        <mat-form-field appearance="outline" class="w-full">
+          <mat-select>
+            <mat-option value="">Todos</mat-option>
+            <mat-option value="ENTRADA_COMPRA">Entrada por Compra</mat-option>
+            <mat-option value="SALIDA_VENTA">Salida por Venta</mat-option>
+            <mat-option value="AJUSTE_ENTRADA">Ajuste de Entrada</mat-option>
+            <mat-option value="AJUSTE_SALIDA">Ajuste de Salida</mat-option>
+            <mat-option value="DEVOLUCION_COMPRA">Devolución de Compra</mat-option>
+            <mat-option value="DEVOLUCION_CLIENTE">Devolución de Cliente</mat-option>
+          </mat-select>
+        </mat-form-field>
+      </div>
+
+      <div class="space-y-2">
+        <label class="block text-sm font-medium text-gray-700">Producto</label>
+        <mat-form-field appearance="outline" class="w-full">
+          <mat-select>
+            <mat-option value="">Todos</mat-option>
+          </mat-select>
+        </mat-form-field>
+      </div>
+
+      <div class="space-y-2">
+        <label class="block text-sm font-medium text-gray-700">Búsqueda</label>
+        <mat-form-field appearance="outline" class="w-full">
+          <input matInput placeholder="Referencia, observación...">
+          <mat-icon matSuffix class="text-gray-400">search</mat-icon>
+        </mat-form-field>
+      </div>
+
+      <div class="space-y-2">
+        <label class="block text-sm font-medium text-gray-700">Fecha Desde</label>
+        <mat-form-field appearance="outline" class="w-full">
+          <input matInput [matDatepicker]="pickerDesde">
+          <mat-datepicker-toggle matSuffix [for]="pickerDesde"></mat-datepicker-toggle>
+          <mat-datepicker #pickerDesde></mat-datepicker>
+        </mat-form-field>
+      </div>
+    </div>
+
+    <div class="flex justify-end gap-3 mt-6">
+      <button 
+        mat-button 
+        class="text-gray-600 hover:text-gray-800">
+        <mat-icon>clear</mat-icon>
+        Limpiar
+      </button>
+      <button 
+        mat-raised-button 
+        color="primary" 
+        class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg">
+        <mat-icon>search</mat-icon>
+        Buscar
+      </button>
+    </div>
+  </div>
+
+  <!-- Tabla de Movimientos -->
+  <div class="bg-white rounded-xl shadow-lg border border-gray-200">
+    <div class="p-6 border-b border-gray-200">
+      <h3 class="text-xl font-semibold text-gray-900">Movimientos de Inventario</h3>
+    </div>
+    
+    <!-- Loading spinner -->
+    <div *ngIf="movimientoCargando" class="p-6 text-center">
+      <mat-spinner diameter="40" class="mx-auto"></mat-spinner>
+      <p class="text-gray-500 mt-4">Cargando movimientos...</p>
+    </div>
+
+    <!-- Tabla de movimientos -->
+    <div *ngIf="!movimientoCargando && movimientos.length > 0" class="overflow-x-auto">
+      <table mat-table [dataSource]="movimientosDataSource" class="w-full">
+        <!-- Columna Fecha -->
+        <ng-container matColumnDef="fecha">
+          <th mat-header-cell *matHeaderCellDef class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Fecha</th>
+          <td mat-cell *matCellDef="let movimiento" class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+            {{ formatearFecha(movimiento.fecha) }}
+          </td>
+        </ng-container>
+
+        <!-- Columna Producto -->
+        <ng-container matColumnDef="producto">
+          <th mat-header-cell *matHeaderCellDef class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Producto</th>
+          <td mat-cell *matCellDef="let movimiento" class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+            <div>
+              <div class="font-medium">{{ movimiento.producto_nombre }}</div>
+              <div class="text-gray-500 text-xs">{{ movimiento.sku }}</div>
+            </div>
+          </td>
+        </ng-container>
+
+        <!-- Columna Tipo -->
+        <ng-container matColumnDef="tipo">
+          <th mat-header-cell *matHeaderCellDef class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tipo</th>
+          <td mat-cell *matCellDef="let movimiento" class="px-6 py-4 whitespace-nowrap">
+            <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full"
+                  [ngClass]="{
+                    'bg-green-100 text-green-800': movimiento.signo === 1,
+                    'bg-red-100 text-red-800': movimiento.signo === -1
+                  }">
+              {{ formatearTipoMovimiento(movimiento.tipo) }}
+            </span>
+          </td>
+        </ng-container>
+
+        <!-- Columna Cantidad -->
+        <ng-container matColumnDef="cantidad">
+          <th mat-header-cell *matHeaderCellDef class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Cantidad</th>
+          <td mat-cell *matCellDef="let movimiento" class="px-6 py-4 whitespace-nowrap text-sm font-medium"
+              [ngClass]="{
+                'text-green-600': movimiento.signo === 1,
+                'text-red-600': movimiento.signo === -1
+              }">
+            {{ movimiento.signo === 1 ? '+' : '-' }}{{ movimiento.cantidad }}
+          </td>
+        </ng-container>
+
+        <!-- Columna Referencia -->
+        <ng-container matColumnDef="referencia">
+          <th mat-header-cell *matHeaderCellDef class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Referencia</th>
+          <td mat-cell *matCellDef="let movimiento" class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+            {{ movimiento.referencia || '-' }}
+          </td>
+        </ng-container>
+
+        <!-- Columna Usuario -->
+        <ng-container matColumnDef="usuario">
+          <th mat-header-cell *matHeaderCellDef class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Usuario</th>
+          <td mat-cell *matCellDef="let movimiento" class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+            {{ movimiento.usuario_nombre || '-' }}
+          </td>
+        </ng-container>
+
+        <!-- Columna Observación -->
+        <ng-container matColumnDef="observacion">
+          <th mat-header-cell *matHeaderCellDef class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Observación</th>
+          <td mat-cell *matCellDef="let movimiento" class="px-6 py-4 text-sm text-gray-900">
+            {{ movimiento.observacion || '-' }}
+          </td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="movimientosDisplayedColumns" class="bg-gray-50"></tr>
+        <tr mat-row *matRowDef="let row; columns: movimientosDisplayedColumns;" class="hover:bg-gray-50"></tr>
+      </table>
+
+      <!-- Paginación -->
+      <mat-paginator 
+        [length]="movimientoTotal"
+        [pageSize]="movimientoLimite"
+        [pageSizeOptions]="[5, 10, 25, 50]"
+        (page)="onMovimientoPageChange($event)"
+        class="bg-white border-t border-gray-200">
+      </mat-paginator>
+    </div>
+
+    <!-- Mensaje cuando no hay datos -->
+    <div *ngIf="!movimientoCargando && movimientos.length === 0" class="p-6 text-center">
+      <div class="flex flex-col items-center">
+        <mat-icon class="text-gray-400 text-6xl mb-4">inventory_2</mat-icon>
+        <p class="text-gray-500 text-lg mb-4">No hay movimientos de inventario registrados</p>
+        <button 
+          mat-raised-button 
+          color="primary"
+          class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg">
+          <mat-icon class="mr-2">add</mat-icon>
+          Crear Primer Movimiento
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal de Nuevo Movimiento -->
+  <div *ngIf="nuevoMovimientoModalAbierto" 
+       data-modal="nuevo-movimiento"
+       class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[9999] p-4" 
+       style="z-index: 9999 !important;"
+       (click)="cerrarModalNuevoMovimiento()">
+    <div class="bg-white rounded-xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto" (click)="$event.stopPropagation()">
+      <div class="p-6">
+        <h2 class="text-2xl font-bold text-gray-900 mb-4">Nuevo Movimiento de Inventario</h2>
+        <p class="text-gray-600 mb-6">Formulario simplificado para crear un nuevo movimiento</p>
+        
+        <!-- Formulario básico sin Angular Material -->
+        <div class="space-y-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Producto</label>
+            <select class="w-full p-2 border border-gray-300 rounded-md">
+              <option>Seleccione un producto</option>
+              <option *ngFor="let producto of productosParaDropdown" [value]="producto.id_producto">
+                {{ producto.nombre }} (Stock: {{ producto.stock }})
+              </option>
+            </select>
+          </div>
+          
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Tipo de Movimiento</label>
+            <select class="w-full p-2 border border-gray-300 rounded-md">
+              <option value="AJUSTE_ENTRADA">Ajuste Entrada</option>
+              <option value="AJUSTE_SALIDA">Ajuste Salida</option>
+              <option value="DEVOLUCION_COMPRA">Devolución Compra</option>
+              <option value="DEVOLUCION_CLIENTE">Devolución Cliente</option>
+            </select>
+          </div>
+          
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Cantidad</label>
+            <input type="number" class="w-full p-2 border border-gray-300 rounded-md" placeholder="Ingrese la cantidad" min="1">
+          </div>
+          
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Observación</label>
+            <textarea class="w-full p-2 border border-gray-300 rounded-md" rows="3" placeholder="Observaciones del movimiento"></textarea>
+          </div>
+        </div>
+        
+        <div class="flex justify-end gap-3 mt-6">
+          <button type="button" (click)="cerrarModalNuevoMovimiento()" class="px-4 py-2 text-gray-600 border border-gray-300 rounded-md hover:bg-gray-50">
+            Cancelar
+          </button>
+          <button type="button" 
+                  (click)="crearMovimientoSimplificado()" 
+                  [disabled]="nuevoMovimientoCargando"
+                  class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2">
+            <mat-spinner *ngIf="nuevoMovimientoCargando" diameter="16"></mat-spinner>
+            {{ nuevoMovimientoCargando ? 'Creando...' : 'Crear Movimiento' }}
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+        </div>
+      </mat-tab>
+      <mat-tab label="Inventario Total">
+        <div class="p-6">
+          <!-- Tabla de Inventario Total -->
+          <div class="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
+            <div class="p-6 border-b border-gray-200">
+              <div class="flex items-center justify-between">
+                <h3 class="text-xl font-semibold text-gray-900">Inventario Total por Producto</h3>
+                <div class="flex items-center gap-3">
+                  <span class="text-sm text-gray-600">
+                    Total: {{ inventarioTotalTotal }} productos
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Tabla -->
+            <div class="overflow-x-auto">
+              <table mat-table [dataSource]="inventarioTotalDataSource" class="w-full">
+                <!-- Columna Producto -->
+                <ng-container matColumnDef="producto">
+                  <th mat-header-cell *matHeaderCellDef class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Producto
+                  </th>
+                  <td mat-cell *matCellDef="let producto" class="px-6 py-4 whitespace-nowrap">
+                    <div class="flex items-center">
+                      <div class="flex-shrink-0 h-10 w-10">
+                        <div class="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center">
+                          <mat-icon class="text-blue-600">inventory</mat-icon>
+                        </div>
+                      </div>
+                      <div class="ml-4">
+                        <div class="text-sm font-medium text-gray-900">{{ producto.nombre }}</div>
+                        <div class="text-sm text-gray-500">ID: {{ producto.id_producto }}</div>
+                      </div>
+                    </div>
+                  </td>
+                </ng-container>
+
+
+                <!-- Columna Stock Actual -->
+                <ng-container matColumnDef="stock_actual">
+                  <th mat-header-cell *matHeaderCellDef class="px-6 py-4 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Stock Actual
+                  </th>
+                  <td mat-cell *matCellDef="let producto" class="px-6 py-4 whitespace-nowrap text-center">
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
+                          [ngClass]="{
+                            'bg-green-100 text-green-800': producto.stock > 10,
+                            'bg-yellow-100 text-yellow-800': producto.stock > 0 && producto.stock <= 10,
+                            'bg-red-100 text-red-800': producto.stock <= 0
+                          }">
+                      {{ producto.stock || 0 }}
+                    </span>
+                  </td>
+                </ng-container>
+
+                <!-- Columna Precio Unitario -->
+                <ng-container matColumnDef="precio_compra">
+                  <th mat-header-cell *matHeaderCellDef class="px-6 py-4 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Precio Unitario
+                  </th>
+                  <td mat-cell *matCellDef="let producto" class="px-6 py-4 whitespace-nowrap text-right text-sm text-gray-900">
+                    {{ formatearPrecio(producto.precio_unitario) }}
+                  </td>
+                </ng-container>
+
+                <!-- Columna Precio Venta (mismo que unitario) -->
+                <ng-container matColumnDef="precio_venta">
+                  <th mat-header-cell *matHeaderCellDef class="px-6 py-4 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Precio Venta
+                  </th>
+                  <td mat-cell *matCellDef="let producto" class="px-6 py-4 whitespace-nowrap text-right text-sm text-gray-900">
+                    {{ formatearPrecio(producto.precio_unitario) }}
+                  </td>
+                </ng-container>
+
+                <!-- Columna Valor Total -->
+                <ng-container matColumnDef="valor_total">
+                  <th mat-header-cell *matHeaderCellDef class="px-6 py-4 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Valor Total
+                  </th>
+                  <td mat-cell *matCellDef="let producto" class="px-6 py-4 whitespace-nowrap text-right text-sm font-semibold text-gray-900">
+                    {{ formatearValorTotal(producto) }}
+                  </td>
+                </ng-container>
+
+                <tr mat-header-row *matHeaderRowDef="inventarioTotalDisplayedColumns" class="bg-gray-50"></tr>
+                <tr mat-row *matRowDef="let row; columns: inventarioTotalDisplayedColumns;" 
+                    class="hover:bg-gray-50 border-b border-gray-200"></tr>
+              </table>
+            </div>
+
+            <!-- Paginación -->
+            <div class="px-6 py-4 border-t border-gray-200">
+              <mat-paginator 
+                #inventarioTotalPaginator
+                [length]="inventarioTotalTotal"
+                [pageSize]="inventarioTotalLimite"
+                [pageSizeOptions]="[5, 10, 25, 50]"
+                (page)="onInventarioTotalPageChange($event)"
+                class="bg-transparent">
+              </mat-paginator>
+            </div>
+
+            <!-- Loading -->
+            <div *ngIf="inventarioTotalCargando" class="flex justify-center items-center py-8">
+              <mat-spinner diameter="40"></mat-spinner>
+            </div>
+
+            <!-- Empty State -->
+            <div *ngIf="!inventarioTotalCargando && inventarioTotal.length === 0" class="text-center py-12">
+              <mat-icon class="text-gray-400 text-6xl mb-4">inventory_2</mat-icon>
+              <h3 class="text-lg font-medium text-gray-900 mb-2">No hay productos en inventario</h3>
+              <p class="text-gray-500">No se encontraron productos activos en el inventario.</p>
+            </div>
+          </div>
+        </div>
+      </mat-tab>
+    </mat-tab-group>
+  </div>
+</div>

@@ -205,7 +205,7 @@ class CategoriaModel {
       
       // Verificar que no tenga productos asociados
       const productosAsociados = await cliente.query(
-        'SELECT COUNT(*) as total FROM producto WHERE id_categoria = $1 AND activo = true',
+        'SELECT COUNT(*) as total FROM producto WHERE id_categoria = $1',
         [idCategoria]
       );
       
@@ -248,7 +248,7 @@ class CategoriaModel {
     const cliente = await pool.connect();
     try {
       const resultado = await cliente.query(
-        'SELECT 1 FROM categoria WHERE id_categoria = $1 AND activo = true',
+        'SELECT 1 FROM categoria WHERE id_categoria = $1',
         [idCategoria]
       );
       

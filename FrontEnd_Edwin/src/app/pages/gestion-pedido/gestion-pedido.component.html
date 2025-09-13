@@ -1,0 +1,560 @@
+<div class="min-h-screen bg-gray-50 p-6">
+  <!-- Header -->
+  <div class="mb-8">
+    <div class="flex justify-between items-center">
+      <div>
+        <h1 class="text-3xl font-bold text-gray-900">Gestión de Pedidos</h1>
+        <p class="text-gray-600 mt-2">Administra los pedidos a proveedores</p>
+      </div>
+      <button 
+        mat-raised-button 
+        color="primary" 
+        (click)="abrirModalPedido()"
+        class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg flex items-center gap-2">
+        <mat-icon>add</mat-icon>
+        Nuevo Pedido
+      </button>
+    </div>
+  </div>
+
+
+  <!-- Filtros -->
+  <div class="bg-white rounded-xl shadow-lg border border-gray-200 p-6 mb-8">
+    <div class="flex items-center gap-3 mb-6">
+      <mat-icon class="text-blue-600">filter_list</mat-icon>
+      <h3 class="text-xl font-semibold text-gray-900">Filtros de Búsqueda</h3>
+    </div>
+    
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div class="space-y-2">
+        <label class="block text-sm font-medium text-gray-700">Estado</label>
+        <mat-form-field appearance="outline" class="w-full">
+          <mat-select [(ngModel)]="pedidoFiltros.estado" placeholder="Seleccionar estado">
+            <mat-option value="">Todos los estados</mat-option>
+            <mat-option value="CREADO">Creado</mat-option>
+            <mat-option value="ENVIADO">Enviado</mat-option>
+            <mat-option value="RECIBIDO">Recibido</mat-option>
+            <mat-option value="CANCELADO">Cancelado</mat-option>
+          </mat-select>
+          <mat-icon matSuffix class="text-gray-400">filter_list</mat-icon>
+        </mat-form-field>
+      </div>
+
+      <div class="space-y-2">
+        <label class="block text-sm font-medium text-gray-700">Proveedor</label>
+        <mat-form-field appearance="outline" class="w-full">
+          <mat-select [(ngModel)]="pedidoFiltros.proveedor_id" placeholder="Seleccionar proveedor">
+            <mat-option value="">Todos los proveedores</mat-option>
+            <mat-option *ngFor="let proveedor of proveedoresParaDropdown" [value]="proveedor.id">
+              {{proveedor.empresa}} - {{proveedor.nombre}} {{proveedor.apellido}}
+            </mat-option>
+          </mat-select>
+          <mat-icon matSuffix class="text-gray-400">business</mat-icon>
+        </mat-form-field>
+      </div>
+
+      <div class="space-y-2">
+        <label class="block text-sm font-medium text-gray-700">Búsqueda</label>
+        <mat-form-field appearance="outline" class="w-full">
+          <input 
+            matInput 
+            [(ngModel)]="pedidoFiltros.busqueda" 
+            placeholder="Proveedor, observación, ID..."
+            class="text-gray-900">
+          <mat-icon matSuffix class="text-gray-400">search</mat-icon>
+        </mat-form-field>
+      </div>
+
+      <div class="space-y-2">
+        <label class="block text-sm font-medium text-gray-700">Fecha Desde</label>
+        <mat-form-field appearance="outline" class="w-full">
+          <input 
+            matInput 
+            [(ngModel)]="pedidoFiltros.fecha_desde" 
+            [matDatepicker]="pickerDesde"
+            placeholder="Seleccionar fecha">
+          <mat-datepicker-toggle matSuffix [for]="pickerDesde"></mat-datepicker-toggle>
+          <mat-datepicker #pickerDesde></mat-datepicker>
+        </mat-form-field>
+      </div>
+    </div>
+
+    <!-- Segunda fila de filtros -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mt-4">
+      <div class="space-y-2">
+        <label class="block text-sm font-medium text-gray-700">Fecha Hasta</label>
+        <mat-form-field appearance="outline" class="w-full">
+          <input 
+            matInput 
+            [(ngModel)]="pedidoFiltros.fecha_hasta" 
+            [matDatepicker]="pickerHasta"
+            placeholder="Seleccionar fecha">
+          <mat-datepicker-toggle matSuffix [for]="pickerHasta"></mat-datepicker-toggle>
+          <mat-datepicker #pickerHasta></mat-datepicker>
+        </mat-form-field>
+      </div>
+
+      <div class="space-y-2">
+        <label class="block text-sm font-medium text-gray-700 opacity-0">Espacio</label>
+        <div class="flex gap-2">
+          <button 
+            mat-raised-button 
+            color="primary" 
+            (click)="aplicarFiltrosPedido()"
+            class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2">
+            <mat-icon>search</mat-icon>
+            Buscar
+          </button>
+          <button 
+            mat-button 
+            (click)="limpiarFiltrosPedido()"
+            class="text-gray-600 hover:text-gray-800 px-4 py-2">
+            <mat-icon>clear</mat-icon>
+            Limpiar
+          </button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Tabla de Pedidos -->
+  <div class="bg-white rounded-xl shadow-lg border border-gray-200">
+    <div class="p-6 border-b border-gray-200">
+      <h3 class="text-xl font-semibold text-gray-900">Lista de Pedidos</h3>
+    </div>
+    
+    <!-- Loading spinner -->
+    <div *ngIf="pedidoCargando" class="p-6 text-center">
+      <mat-spinner diameter="40" class="mx-auto"></mat-spinner>
+      <p class="text-gray-500 mt-4">Cargando pedidos...</p>
+    </div>
+
+    <!-- Tabla de pedidos -->
+    <div *ngIf="!pedidoCargando && pedidos.length > 0" class="overflow-x-auto">
+      <table mat-table [dataSource]="pedidosDataSource" class="w-full">
+        <!-- Columna ID Pedido -->
+        <ng-container matColumnDef="id_pedido">
+          <th mat-header-cell *matHeaderCellDef class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
+          <td mat-cell *matCellDef="let pedido" class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+            #{{ pedido.id_pedido }}
+          </td>
+        </ng-container>
+
+        <!-- Columna Proveedor -->
+        <ng-container matColumnDef="proveedor_nombre">
+          <th mat-header-cell *matHeaderCellDef class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Proveedor</th>
+          <td mat-cell *matCellDef="let pedido" class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+            {{ pedido.proveedor_nombre }}
+          </td>
+        </ng-container>
+
+        <!-- Columna Fecha -->
+        <ng-container matColumnDef="fecha_pedido">
+          <th mat-header-cell *matHeaderCellDef class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Fecha</th>
+          <td mat-cell *matCellDef="let pedido" class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+            {{ formatearFecha(pedido.fecha_pedido) }}
+          </td>
+        </ng-container>
+
+        <!-- Columna Estado -->
+        <ng-container matColumnDef="estado">
+          <th mat-header-cell *matHeaderCellDef class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Estado</th>
+          <td mat-cell *matCellDef="let pedido" class="px-6 py-4 whitespace-nowrap">
+            <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full"
+                  [ngClass]="{
+                    'bg-blue-100 text-blue-800': pedido.estado === 'CREADO',
+                    'bg-yellow-100 text-yellow-800': pedido.estado === 'ENVIADO',
+                    'bg-green-100 text-green-800': pedido.estado === 'RECIBIDO',
+                    'bg-red-100 text-red-800': pedido.estado === 'CANCELADO'
+                  }">
+              {{ pedido.estado }}
+            </span>
+          </td>
+        </ng-container>
+
+        <!-- Columna Total -->
+        <ng-container matColumnDef="total_costo">
+          <th mat-header-cell *matHeaderCellDef class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total</th>
+          <td mat-cell *matCellDef="let pedido" class="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900">
+            {{ formatearPrecio(pedido.total_costo) }}
+          </td>
+        </ng-container>
+
+        <!-- Columna Usuario -->
+        <ng-container matColumnDef="usuario_nombre">
+          <th mat-header-cell *matHeaderCellDef class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Usuario</th>
+          <td mat-cell *matCellDef="let pedido" class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+            {{ pedido.usuario_nombre }}
+          </td>
+        </ng-container>
+
+        <!-- Columna Acciones -->
+        <ng-container matColumnDef="acciones">
+          <th mat-header-cell *matHeaderCellDef class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
+          <td mat-cell *matCellDef="let pedido" class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+            <div class="flex space-x-2">
+              <!-- Botón Editar -->
+              <button mat-icon-button 
+                      (click)="abrirModalPedido(pedido)"
+                      class="text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-full p-2 transition-colors duration-200"
+                      matTooltip="Editar pedido">
+                <mat-icon>edit</mat-icon>
+              </button>
+              
+              <!-- Botones de acción dinámicos -->
+              <ng-container *ngFor="let accion of obtenerAccionesDisponibles(pedido)">
+                <button mat-icon-button 
+                        (click)="actualizarEstadoPedido(pedido, accion.estado)"
+                        [class]="'text-' + accion.color + '-600 hover:text-' + accion.color + '-800 hover:bg-' + accion.color + '-50 rounded-full p-2 transition-colors duration-200'"
+                        [matTooltip]="accion.texto">
+                  <mat-icon>{{ accion.icono }}</mat-icon>
+                </button>
+              </ng-container>
+            </div>
+          </td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="pedidosDisplayedColumns" class="bg-gray-50"></tr>
+        <tr mat-row *matRowDef="let row; columns: pedidosDisplayedColumns;" class="hover:bg-gray-50"></tr>
+      </table>
+    </div>
+
+    <!-- Paginación -->
+    <div *ngIf="!pedidoCargando && pedidos.length > 0" class="px-6 py-4 border-t border-gray-200">
+      <mat-paginator #pedidoPaginator
+                     [length]="pedidoTotal"
+                     [pageSize]="pedidoLimite"
+                     [pageSizeOptions]="[5, 10, 25, 50]"
+                     (page)="onPedidoPageChange($event)"
+                     showFirstLastButtons>
+      </mat-paginator>
+    </div>
+
+    <!-- Mensaje cuando no hay pedidos -->
+    <div *ngIf="!pedidoCargando && pedidos.length === 0" class="p-6 text-center">
+      <mat-icon class="text-6xl text-gray-400 mb-4">shopping_cart</mat-icon>
+      <h4 class="text-lg font-semibold text-gray-600 mb-2">No hay pedidos registrados</h4>
+      <p class="text-gray-500 mb-4">Comienza creando tu primer pedido</p>
+      <button 
+        mat-raised-button 
+        color="primary"
+        (click)="abrirModalPedido()"
+        class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg">
+        <mat-icon class="mr-2">add</mat-icon>
+        Crear Primer Pedido
+      </button>
+    </div>
+  </div>
+
+  <!-- Modal de Pedido -->
+  <div *ngIf="pedidoModalAbierto" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+    <div class="bg-white rounded-xl shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+      <div class="p-6">
+        <div class="flex justify-between items-center mb-6">
+          <h2 class="text-2xl font-bold text-gray-900">
+            {{ pedidoEditando ? 'Editar Pedido' : 'Nuevo Pedido' }}
+          </h2>
+          <button mat-icon-button (click)="cerrarModalPedido()" class="text-gray-400 hover:text-gray-600">
+            <mat-icon>close</mat-icon>
+          </button>
+        </div>
+
+        <form [formGroup]="pedidoForm" (ngSubmit)="guardarPedido()">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+            <div class="space-y-2">
+              <label class="block text-sm font-medium text-gray-700">Proveedor *</label>
+              <mat-form-field appearance="outline" class="w-full">
+                <mat-select formControlName="proveedor_id">
+                  <mat-option *ngFor="let proveedor of proveedoresParaDropdown" [value]="proveedor.id">
+                    {{ proveedor.nombre }} {{ proveedor.apellido }}
+                  </mat-option>
+                </mat-select>
+                <mat-error *ngIf="pedidoForm.get('proveedor_id')?.hasError('required')">
+                  El proveedor es requerido
+                </mat-error>
+              </mat-form-field>
+            </div>
+
+            <div class="space-y-2">
+              <label class="block text-sm font-medium text-gray-700">Usuario *</label>
+              <mat-form-field appearance="outline" class="w-full">
+                <mat-select formControlName="usuario_id">
+                  <mat-option *ngFor="let usuario of usuariosParaDropdown" [value]="usuario.id_usuario">
+                    {{ usuario.nombre }} {{ usuario.apellido }}
+                  </mat-option>
+                </mat-select>
+                <mat-error *ngIf="pedidoForm.get('usuario_id')?.hasError('required')">
+                  El usuario es requerido
+                </mat-error>
+              </mat-form-field>
+            </div>
+
+            <div class="space-y-2">
+              <label class="block text-sm font-medium text-gray-700">Fecha de Pedido</label>
+              <mat-form-field appearance="outline" class="w-full">
+                <input matInput [matDatepicker]="picker" formControlName="fecha_pedido">
+                <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
+                <mat-datepicker #picker></mat-datepicker>
+              </mat-form-field>
+            </div>
+
+            <div class="space-y-2">
+              <label class="block text-sm font-medium text-gray-700">Estado</label>
+              
+              <!-- Input deshabilitado para nuevo pedido -->
+              <mat-form-field appearance="outline" class="w-full" *ngIf="!estadoEditable">
+                <input matInput 
+                       [value]="'CREADO'" 
+                       disabled
+                       class="bg-gray-100 text-gray-600">
+                <mat-icon matSuffix class="text-gray-400">lock</mat-icon>
+                <mat-hint class="text-blue-600">
+                  <mat-icon class="text-sm mr-1">info</mat-icon>
+                  Los nuevos pedidos se crean en estado CREADO
+                </mat-hint>
+              </mat-form-field>
+              
+              <!-- Select editable para edición -->
+              <mat-form-field appearance="outline" class="w-full" *ngIf="estadoEditable">
+                <mat-select formControlName="estado" (selectionChange)="onEstadoChange($event)">
+                  <mat-option 
+                    *ngFor="let estado of obtenerEstadosDisponibles(pedidoEditando?.estado || 'CREADO')" 
+                    [value]="estado">
+                    <span class="flex items-center gap-2">
+                      <mat-icon class="text-sm">{{ obtenerIconoEstado(estado) }}</mat-icon>
+                      {{ obtenerTextoEstado(estado) }}
+                    </span>
+                  </mat-option>
+                </mat-select>
+                <mat-hint *ngIf="pedidoEditando && obtenerEstadosDisponibles(pedidoEditando.estado).length === 0" class="text-orange-600">
+                  Este pedido no puede cambiar de estado
+                </mat-hint>
+              </mat-form-field>
+            </div>
+          </div>
+
+          <div class="space-y-2 mb-6">
+            <label class="block text-sm font-medium text-gray-700">Observación</label>
+            <mat-form-field appearance="outline" class="w-full">
+              <textarea matInput formControlName="observacion" rows="3" placeholder="Observaciones del pedido..."></textarea>
+              <mat-error *ngIf="pedidoForm.get('observacion')?.hasError('maxlength')">
+                La observación no puede exceder 300 caracteres
+              </mat-error>
+            </mat-form-field>
+          </div>
+
+          <!-- Detalles del Pedido -->
+          <div class="mb-8">
+            <!-- Header con estadísticas -->
+            <div class="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl p-6 mb-6 border border-blue-200 shadow-sm">
+              <div class="flex justify-between items-center">
+                <div class="flex items-center space-x-4">
+                  <div class="p-3 bg-blue-100 rounded-xl">
+                    <mat-icon class="text-blue-600 text-2xl">shopping_cart</mat-icon>
+                  </div>
+                  <div>
+                    <h3 class="text-2xl font-bold text-gray-900">Detalles del Pedido</h3>
+                    <p class="text-gray-600 mt-1">Gestiona los productos y cantidades del pedido</p>
+                  </div>
+                </div>
+                <div class="flex items-center space-x-4">
+                  <div class="text-right">
+                    <p class="text-sm text-gray-600">Productos agregados</p>
+                    <p class="text-2xl font-bold text-blue-600">{{ detallesPedido.length }}</p>
+                  </div>
+                  <button 
+                    type="button" 
+                    mat-raised-button 
+                    color="accent"
+                    (click)="agregarDetalle()"
+                    class="bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700 text-white px-8 py-3 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 flex items-center gap-3 font-bold text-lg">
+                    <mat-icon class="text-xl">add_circle</mat-icon>
+                    Agregar Producto
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Lista de productos en formato de filas -->
+            <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden" *ngIf="detallesPedido.length > 0">
+              <!-- Header de la tabla -->
+              <div class="bg-gradient-to-r from-gray-50 to-gray-100 px-6 py-4 border-b border-gray-200">
+                <div class="grid grid-cols-12 gap-4 items-center">
+                  <div class="col-span-1 text-center">
+                    <span class="text-sm font-bold text-gray-700">#</span>
+                  </div>
+                  <div class="col-span-4">
+                    <span class="text-sm font-bold text-gray-700">Producto</span>
+                  </div>
+                  <div class="col-span-2 text-center">
+                    <span class="text-sm font-bold text-gray-700">Cantidad</span>
+                  </div>
+                  <div class="col-span-2 text-center">
+                    <span class="text-sm font-bold text-gray-700">Costo Unit.</span>
+                  </div>
+                  <div class="col-span-2 text-center">
+                    <span class="text-sm font-bold text-gray-700">Subtotal</span>
+                  </div>
+                  <div class="col-span-1 text-center">
+                    <span class="text-sm font-bold text-gray-700">Acción</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Filas de productos -->
+              <div class="divide-y divide-gray-200">
+                <div *ngFor="let detalle of detallesPedido; let i = index" 
+                     class="px-6 py-4 hover:bg-gray-50 transition-colors duration-200">
+                  <div class="grid grid-cols-12 gap-4 items-center">
+                    <!-- Número de producto -->
+                    <div class="col-span-1 text-center">
+                      <div class="w-8 h-8 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-lg flex items-center justify-center mx-auto">
+                        <span class="text-white font-bold text-sm">{{ i + 1 }}</span>
+                      </div>
+                    </div>
+
+                    <!-- Selector de Producto -->
+                    <div class="col-span-4">
+                      <mat-form-field appearance="outline" class="w-full">
+                        <mat-select [value]="detalle.id_producto" (selectionChange)="onProductoChange($event, detalle)" 
+                                    class="text-gray-800 font-medium">
+                          <mat-option *ngFor="let producto of productosParaDropdown" [value]="producto.id_producto">
+                            <div class="flex items-center justify-between w-full">
+                              <span class="font-medium">{{ producto.nombre }}</span>
+                              <span class="text-sm text-gray-500">Stock: {{ producto.stock }}</span>
+                            </div>
+                          </mat-option>
+                        </mat-select>
+                      </mat-form-field>
+                    </div>
+
+                    <!-- Cantidad -->
+                    <div class="col-span-2">
+                      <mat-form-field appearance="outline" class="w-full">
+                        <input matInput 
+                               type="number" 
+                               [value]="detalle.cantidad" 
+                               (input)="onCantidadInput($event, detalle)" 
+                               min="1" 
+                               placeholder="Cantidad"
+                               class="text-gray-800 font-semibold text-center">
+                      </mat-form-field>
+                    </div>
+
+                    <!-- Costo Unitario -->
+                    <div class="col-span-2">
+                      <mat-form-field appearance="outline" class="w-full">
+                        <input matInput 
+                               type="number" 
+                               [value]="detalle.costo_unitario" 
+                               (input)="onCostoInput($event, detalle)" 
+                               min="0" 
+                               step="0.01" 
+                               placeholder="0.00"
+                               class="text-gray-800 font-semibold text-center pl-12">
+                        <span matPrefix class="text-gray-600 font-bold mr-4 ml-2">Q</span>
+                      </mat-form-field>
+                    </div>
+
+                    <!-- Subtotal -->
+                    <div class="col-span-2">
+                      <mat-form-field appearance="outline" class="w-full">
+                        <input matInput 
+                               [value]="calcularSubtotal(detalle) | number:'1.2-2'" 
+                               readonly
+                               class="text-gray-800 font-bold text-center bg-gradient-to-r from-orange-50 to-yellow-50 pl-12">
+                        <span matPrefix class="text-orange-600 font-bold mr-4 ml-2">Q</span>
+                      </mat-form-field>
+                    </div>
+
+                    <!-- Botón eliminar -->
+                    <div class="col-span-1 text-center">
+                      <button 
+                        type="button" 
+                        mat-icon-button 
+                        color="warn"
+                        (click)="eliminarDetalle(i)"
+                        class="text-red-500 hover:text-red-700 hover:bg-red-50 rounded-lg p-2 transition-all duration-200"
+                        matTooltip="Eliminar producto">
+                        <mat-icon>delete_outline</mat-icon>
+                      </button>
+                    </div>
+                  </div>
+
+                  <!-- Información del producto seleccionado (solo si hay producto) -->
+                  <div *ngIf="detalle.id_producto" class="mt-3 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                    <div class="flex items-center justify-between">
+                      <div class="flex items-center space-x-2">
+                        <mat-icon class="text-blue-600 text-sm">info</mat-icon>
+                        <span class="text-sm font-medium text-blue-900">{{ obtenerNombreProducto(detalle.id_producto) }}</span>
+                      </div>
+                      <span class="text-sm font-bold text-blue-900">Q {{ calcularSubtotal(detalle) | number:'1.2-2' }}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Estado vacío mejorado -->
+            <div *ngIf="detallesPedido.length === 0" class="text-center py-16 bg-gradient-to-br from-gray-50 to-gray-100 rounded-2xl border-2 border-dashed border-gray-300">
+              <div class="w-24 h-24 bg-gray-200 rounded-full flex items-center justify-center mx-auto mb-6">
+                <mat-icon class="text-6xl text-gray-400">shopping_cart_outlined</mat-icon>
+              </div>
+              <h4 class="text-2xl font-bold text-gray-700 mb-3">No hay productos agregados</h4>
+              <p class="text-gray-500 mb-8 text-lg">Comienza agregando productos a tu pedido</p>
+              <button 
+                type="button" 
+                mat-raised-button
+                (click)="agregarDetalle()"
+                class="bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white px-8 py-4 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 font-bold text-lg">
+                <mat-icon class="mr-2 text-xl">add_circle</mat-icon>
+                Agregar primer producto
+              </button>
+            </div>
+          </div>
+
+          <!-- Total del Pedido -->
+          <div class="bg-gradient-to-r from-emerald-50 to-green-50 rounded-2xl p-6 mb-8 border border-emerald-200 shadow-lg" *ngIf="detallesPedido.length > 0">
+            <div class="flex justify-between items-center">
+              <div class="flex items-center space-x-4">
+                <div class="w-12 h-12 bg-gradient-to-r from-emerald-500 to-green-600 rounded-xl flex items-center justify-center">
+                  <mat-icon class="text-white text-2xl">receipt</mat-icon>
+                </div>
+                <div>
+                  <h4 class="text-xl font-bold text-gray-900">Total del Pedido</h4>
+                  <p class="text-gray-600">{{ detallesPedido.length }} producto{{ detallesPedido.length !== 1 ? 's' : '' }} agregado{{ detallesPedido.length !== 1 ? 's' : '' }}</p>
+                </div>
+              </div>
+              <div class="text-right">
+                <p class="text-sm text-gray-600 mb-1">Monto total</p>
+                <p class="text-4xl font-bold text-emerald-600">Q{{ calcularTotalPedido() | number:'1.2-2' }}</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Botones de acción -->
+          <div class="flex justify-end gap-4 pt-6 border-t border-gray-200">
+            <button 
+              type="button" 
+              mat-button 
+              (click)="cerrarModalPedido()"
+              class="px-8 py-3 text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-xl font-semibold transition-all duration-200">
+              <mat-icon class="mr-2">close</mat-icon>
+              Cancelar
+            </button>
+            <button 
+              type="submit" 
+              mat-raised-button 
+              color="primary"
+              [disabled]="pedidoForm.invalid || (detallesPedido.length === 0 && !pedidoEditando)"
+              class="bg-gradient-to-r from-blue-600 to-indigo-700 hover:from-blue-700 hover:to-indigo-800 text-white px-8 py-3 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 font-bold text-lg disabled:opacity-50 disabled:transform-none disabled:shadow-none">
+              <mat-icon class="mr-2 text-xl">{{ pedidoEditando ? 'edit' : 'add_circle' }}</mat-icon>
+              {{ pedidoEditando ? 'Actualizar Pedido' : 'Crear Pedido' }}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>

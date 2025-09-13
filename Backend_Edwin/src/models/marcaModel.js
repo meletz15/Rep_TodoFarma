@@ -200,7 +200,7 @@ class MarcaModel {
         id_marca,
         nombre
       FROM marca 
-      WHERE activo = true
+      WHERE 1=1
       ORDER BY nombre ASC
     `;
 

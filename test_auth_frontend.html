@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Auth Frontend</title>
+</head>
+<body>
+    <h1>Test de Autenticación Frontend</h1>
+    <div id="status"></div>
+    <button onclick="testLogin()">Probar Login</button>
+    <button onclick="testPedidos()">Probar Pedidos</button>
+    <div id="result"></div>
+
+    <script>
+        let token = null;
+
+        async function testLogin() {
+            const status = document.getElementById('status');
+            const result = document.getElementById('result');
+            
+            try {
+                status.innerHTML = 'Haciendo login...';
+                
+                const response = await fetch('http://localhost:3002/api/auth/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        correo: 'admin@dominio.com',
+                        contrasena: 'Admin123!'
+                    })
+                });
+                
+                const data = await response.json();
+                console.log('Login response:', data);
+                
+                if (data.ok) {
+                    token = data.datos.token;
+                    localStorage.setItem('token', token);
+                    status.innerHTML = '✅ Login exitoso';
+                    result.innerHTML = '<pre>' + JSON.stringify(data, null, 2) + '</pre>';
+                } else {
+                    status.innerHTML = '❌ Error en login';
+                    result.innerHTML = '<pre>' + JSON.stringify(data, null, 2) + '</pre>';
+                }
+            } catch (error) {
+                status.innerHTML = '❌ Error de conexión';
+                result.innerHTML = 'Error: ' + error.message;
+            }
+        }
+
+        async function testPedidos() {
+            const status = document.getElementById('status');
+            const result = document.getElementById('result');
+            
+            if (!token) {
+                status.innerHTML = '❌ No hay token. Haz login primero.';
+                return;
+            }
+            
+            try {
+                status.innerHTML = 'Obteniendo pedidos...';
+                
+                const response = await fetch('http://localhost:3002/api/pedidos?pagina=1&limite=10', {
+                    headers: {
+                        'Authorization': 'Bearer ' + token
+                    }
+                });
+                
+                const data = await response.json();
+                console.log('Pedidos response:', data);
+                
+                if (data.ok) {
+                    status.innerHTML = '✅ Pedidos obtenidos: ' + data.datos.datos.length;
+                    result.innerHTML = '<pre>' + JSON.stringify(data, null, 2) + '</pre>';
+                } else {
+                    status.innerHTML = '❌ Error al obtener pedidos';
+                    result.innerHTML = '<pre>' + JSON.stringify(data, null, 2) + '</pre>';
+                }
+            } catch (error) {
+                status.innerHTML = '❌ Error de conexión';
+                result.innerHTML = 'Error: ' + error.message;
+            }
+        }
+
+        // Verificar si hay token guardado
+        window.onload = function() {
+            const savedToken = localStorage.getItem('token');
+            if (savedToken) {
+                token = savedToken;
+                document.getElementById('status').innerHTML = '✅ Token encontrado en localStorage';
+            } else {
+                document.getElementById('status').innerHTML = '❌ No hay token guardado';
+            }
+        };
+    </script>
+</body>
+</html>
