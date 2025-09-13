@@ -113,9 +113,19 @@ class VentaModel {
     const cliente = await pool.connect();
     try {
       
-      // Obtener la venta básica primero
+      // Obtener la venta con información del cliente y usuario
       const resultadoVenta = await cliente.query(
-        `SELECT * FROM venta WHERE id_venta = $1`,
+        `SELECT v.*, 
+                CASE 
+                  WHEN c.nombres IS NOT NULL AND c.apellidos IS NOT NULL 
+                  THEN CONCAT(c.nombres, ' ', c.apellidos)
+                  ELSE NULL
+                END as cliente_nombre, 
+                CONCAT(u.nombre, ' ', u.apellido) as usuario_nombre
+         FROM venta v
+         LEFT JOIN cliente c ON v.cliente_id = c.id_cliente
+         JOIN usuarios u ON v.usuario_id = u.id_usuario
+         WHERE v.id_venta = $1`,
         [idVenta]
       );
       
@@ -150,7 +160,12 @@ class VentaModel {
     try {
       let consulta = `
         SELECT v.id_venta, v.fecha, v.cliente_id, v.usuario_id, v.caja_id, v.estado, v.total, v.observacion, v.created_at, v.updated_at,
-               CONCAT(c.nombres, ' ', c.apellidos) as cliente_nombre, CONCAT(u.nombre, ' ', u.apellido) as usuario_nombre
+               CASE 
+                 WHEN c.nombres IS NOT NULL AND c.apellidos IS NOT NULL 
+                 THEN CONCAT(c.nombres, ' ', c.apellidos)
+                 ELSE NULL
+               END as cliente_nombre, 
+               CONCAT(u.nombre, ' ', u.apellido) as usuario_nombre
         FROM venta v
         LEFT JOIN cliente c ON v.cliente_id = c.id_cliente
         JOIN usuarios u ON v.usuario_id = u.id_usuario

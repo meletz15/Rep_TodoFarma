@@ -373,10 +373,10 @@
               <input matInput 
                      placeholder="Buscar cliente por nombre o email..." 
                      [matAutocomplete]="clienteAuto"
-                     [formControl]="clienteSearchControl"
-                     (optionSelected)="onClienteSelected($event)">
+                     [formControl]="clienteSearchControl">
               <mat-autocomplete #clienteAuto="matAutocomplete" 
-                                [displayWith]="displayClienteFn">
+                                [displayWith]="displayClienteFn"
+                                (optionSelected)="onClienteSelected($event)">
                 <mat-option *ngFor="let cliente of clientesFiltrados$ | async" [value]="cliente">
                   <div class="flex justify-between items-center">
                     <span>{{cliente.nombres}} {{cliente.apellidos}}</span>

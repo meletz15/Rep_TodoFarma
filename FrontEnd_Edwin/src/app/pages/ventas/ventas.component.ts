@@ -90,6 +90,7 @@ export class VentasComponent implements OnInit {
   // Autocomplete para cliente
   clienteSearchControl = new FormControl();
   clientesFiltrados$!: Observable<Cliente[]>;
+  clienteSeleccionado: Cliente | null = null;
   
   // Autocomplete para productos (múltiples controles)
   productoSearchControls: FormControl[] = [];
@@ -288,6 +289,7 @@ export class VentasComponent implements OnInit {
     });
     this.detallesVenta = [];
     this.clienteSearchControl.setValue('');
+    this.clienteSeleccionado = null;
     
     // Limpiar controles de productos
     this.productoSearchControls = [];
@@ -297,6 +299,8 @@ export class VentasComponent implements OnInit {
   guardarVenta(): void {
     if (this.ventaForm.valid && this.detallesVenta.length > 0) {
       const datosVenta = this.ventaForm.value;
+      console.log('💾 Datos del formulario:', datosVenta);
+      console.log('💾 cliente_id del formulario:', datosVenta.cliente_id);
       
       // Formatear fecha
       if (datosVenta.fecha) {
@@ -312,6 +316,8 @@ export class VentasComponent implements OnInit {
           precio_unitario: parseFloat(detalle.precio_unitario)
         }))
       };
+      
+      console.log('💾 Datos finales de la venta:', ventaData);
 
       if (this.ventaEditando) {
         // Solo permitir anular ventas
@@ -509,8 +515,12 @@ export class VentasComponent implements OnInit {
 
   onClienteSelected(event: any): void {
     const cliente = event.option.value;
+    console.log('👤 Cliente seleccionado:', cliente);
     if (cliente) {
+      this.clienteSeleccionado = cliente;
       this.ventaForm.patchValue({ cliente_id: cliente.id_cliente });
+      console.log('👤 cliente_id actualizado en formulario:', this.ventaForm.get('cliente_id')?.value);
+      console.log('👤 clienteSeleccionado actualizado:', this.clienteSeleccionado);
     }
   }
 
@@ -626,20 +636,11 @@ export class VentasComponent implements OnInit {
 
   // Método para cargar detalles de una venta específica
   cargarDetallesVenta(idVenta: number): void {
-    
     this.ventaService.obtenerVenta(idVenta)
       .subscribe({
         next: (response) => {
-          // Aquí podrías cargar los detalles específicos si el backend los devuelve
-          // Por ahora, simularemos algunos datos de ejemplo
-          this.detallesVentaSeleccionada = [
-            {
-              nombre_producto: 'Producto de Ejemplo',
-              sku: 'SKU-001',
-              cantidad: 2,
-              precio_unitario: 10.50
-            }
-          ];
+          // Usar los detalles reales de la venta que vienen del backend
+          this.detallesVentaSeleccionada = response.datos.detalles || [];
         },
         error: (error) => {
           this.snackBar.open('Error al cargar detalles de la venta', 'Cerrar', { duration: 3000 });
