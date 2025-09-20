@@ -278,6 +278,76 @@ class ClienteModel {
       cliente.release();
     }
   }
+
+  // ========================================
+  // MÉTODOS PARA REPORTES
+  // ========================================
+
+  // Obtener clientes más frecuentes
+  static async obtenerClientesMasFrecuentes(desde, hasta, limite = 10) {
+    const cliente = await pool.connect();
+    try {
+      const consulta = `
+        SELECT 
+          c.id_cliente,
+          CONCAT(c.nombres, ' ', COALESCE(c.apellidos, '')) as cliente_nombre,
+          c.email,
+          c.telefono,
+          COUNT(v.id_venta) as total_compras,
+          COALESCE(SUM(v.total), 0) as total_gastado,
+          COALESCE(AVG(v.total), 0) as ticket_promedio,
+          MAX(v.fecha) as ultima_compra
+        FROM cliente c
+        INNER JOIN venta v ON c.id_cliente = v.cliente_id 
+          AND v.fecha >= $1 
+          AND v.fecha <= $2 
+          AND v.estado = 'EMITIDA'
+        WHERE c.activo = true
+        GROUP BY c.id_cliente, c.nombres, c.apellidos, c.email, c.telefono
+        ORDER BY total_compras DESC, total_gastado DESC
+        LIMIT $3
+      `;
+      
+      const resultado = await cliente.query(consulta, [desde, hasta, limite]);
+      return resultado.rows;
+      
+    } finally {
+      cliente.release();
+    }
+  }
+
+  // Obtener clientes por valor de compras
+  static async obtenerClientesPorValorCompras(desde, hasta, limite = 10) {
+    const cliente = await pool.connect();
+    try {
+      const consulta = `
+        SELECT 
+          c.id_cliente,
+          CONCAT(c.nombres, ' ', COALESCE(c.apellidos, '')) as cliente_nombre,
+          c.email,
+          c.telefono,
+          COUNT(v.id_venta) as total_compras,
+          COALESCE(SUM(v.total), 0) as total_gastado,
+          COALESCE(AVG(v.total), 0) as ticket_promedio,
+          MAX(v.fecha) as ultima_compra
+        FROM cliente c
+        INNER JOIN venta v ON c.id_cliente = v.cliente_id 
+          AND v.fecha >= $1 
+          AND v.fecha <= $2 
+          AND v.estado = 'EMITIDA'
+        WHERE c.activo = true
+        GROUP BY c.id_cliente, c.nombres, c.apellidos, c.email, c.telefono
+        ORDER BY total_gastado DESC, total_compras DESC
+        LIMIT $3
+      `;
+      
+      const resultado = await cliente.query(consulta, [desde, hasta, limite]);
+      return resultado.rows;
+      
+    } finally {
+      cliente.release();
+    }
+  }
 }
 
 module.exports = ClienteModel;

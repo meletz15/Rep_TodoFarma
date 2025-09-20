@@ -365,6 +365,154 @@ class ProductoModel {
       cliente.release();
     }
   }
+
+  // ========================================
+  // MÉTODOS PARA REPORTES
+  // ========================================
+
+  // Obtener stock actual con filtros
+  static async obtenerStockActual(filtros = {}) {
+    const cliente = await pool.connect();
+    try {
+      let consulta = `
+        SELECT 
+          p.id_producto,
+          p.nombre,
+          p.sku,
+          p.codigo_barras,
+          p.precio_unitario,
+          p.stock,
+          p.fecha_vencimiento,
+          p.activo,
+          c.nombre as categoria_nombre,
+          m.nombre as marca_nombre,
+          CASE 
+            WHEN p.fecha_vencimiento IS NOT NULL AND p.fecha_vencimiento <= CURRENT_DATE + INTERVAL '30 days' 
+            THEN true 
+            ELSE false 
+          END as proximo_vencer
+        FROM producto p
+        LEFT JOIN categoria c ON p.id_categoria = c.id_categoria
+        LEFT JOIN marca m ON p.id_marca = m.id_marca
+        WHERE 1=1
+      `;
+      
+      const parametros = [];
+      let contadorParametros = 1;
+      
+      // Aplicar filtros
+      if (filtros.categoria_id) {
+        consulta += ` AND p.id_categoria = $${contadorParametros}`;
+        parametros.push(filtros.categoria_id);
+        contadorParametros++;
+      }
+      
+      if (filtros.marca_id) {
+        consulta += ` AND p.id_marca = $${contadorParametros}`;
+        parametros.push(filtros.marca_id);
+        contadorParametros++;
+      }
+      
+      if (filtros.stock_bajo) {
+        consulta += ` AND p.stock <= 10`;
+      }
+      
+      consulta += ` ORDER BY p.nombre ASC`;
+      
+      const resultado = await cliente.query(consulta, parametros);
+      return resultado.rows;
+      
+    } finally {
+      cliente.release();
+    }
+  }
+
+  // Obtener productos próximos a vencer
+  static async obtenerProductosProximosAVencer(dias = 30) {
+    const cliente = await pool.connect();
+    try {
+      const consulta = `
+        SELECT 
+          p.id_producto,
+          p.nombre,
+          p.sku,
+          p.stock,
+          p.fecha_vencimiento,
+          c.nombre as categoria_nombre,
+          m.nombre as marca_nombre,
+          (p.fecha_vencimiento - CURRENT_DATE) as dias_restantes
+        FROM producto p
+        LEFT JOIN categoria c ON p.id_categoria = c.id_categoria
+        LEFT JOIN marca m ON p.id_marca = m.id_marca
+        WHERE p.fecha_vencimiento IS NOT NULL 
+          AND p.fecha_vencimiento <= CURRENT_DATE + INTERVAL '${dias} days'
+          AND p.activo = true
+        ORDER BY p.fecha_vencimiento ASC
+      `;
+      
+      const resultado = await cliente.query(consulta);
+      return resultado.rows;
+      
+    } finally {
+      cliente.release();
+    }
+  }
+
+  // Obtener productos por categoría
+  static async obtenerProductosPorCategoria(activo = true) {
+    const cliente = await pool.connect();
+    try {
+      const consulta = `
+        SELECT 
+          c.id_categoria,
+          c.nombre as categoria_nombre,
+          c.descripcion as categoria_descripcion,
+          COUNT(p.id_producto) as total_productos,
+          COALESCE(SUM(p.stock), 0) as total_stock,
+          COALESCE(AVG(p.precio_unitario), 0) as precio_promedio,
+          COALESCE(SUM(p.stock * p.precio_unitario), 0) as valor_total_inventario
+        FROM categoria c
+        LEFT JOIN producto p ON c.id_categoria = p.id_categoria AND p.activo = $1
+        WHERE c.activo = true
+        GROUP BY c.id_categoria, c.nombre, c.descripcion
+        ORDER BY total_productos DESC
+      `;
+      
+      const resultado = await cliente.query(consulta, [activo]);
+      return resultado.rows;
+      
+    } finally {
+      cliente.release();
+    }
+  }
+
+  // Obtener productos por marca
+  static async obtenerProductosPorMarca(activo = true) {
+    const cliente = await pool.connect();
+    try {
+      const consulta = `
+        SELECT 
+          m.id_marca,
+          m.nombre as marca_nombre,
+          m.descripcion as marca_descripcion,
+          COUNT(p.id_producto) as total_productos,
+          COALESCE(SUM(p.stock), 0) as total_stock,
+          COALESCE(AVG(p.precio_unitario), 0) as precio_promedio,
+          COALESCE(SUM(p.stock * p.precio_unitario), 0) as valor_total_inventario
+        FROM marca m
+        LEFT JOIN producto p ON m.id_marca = p.id_marca AND p.activo = $1
+        WHERE m.activo = true
+        GROUP BY m.id_marca, m.nombre, m.descripcion
+        ORDER BY total_productos DESC
+      `;
+      
+      const resultado = await cliente.query(consulta, [activo]);
+      return resultado.rows;
+      
+    } finally {
+      cliente.release();
+    }
+  }
 }
 
 module.exports = ProductoModel;

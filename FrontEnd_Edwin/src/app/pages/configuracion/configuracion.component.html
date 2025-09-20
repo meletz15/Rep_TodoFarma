@@ -1,0 +1,291 @@
+<div class="min-h-screen bg-gray-50 p-6">
+  <div class="max-w-6xl mx-auto">
+    <!-- Header -->
+    <div class="mb-8">
+      <h1 class="text-3xl font-bold text-gray-900 mb-2">Configuración del Sistema</h1>
+      <p class="text-gray-600">Gestiona la configuración general del sistema, datos de facturación y información de la empresa</p>
+    </div>
+
+    <!-- Tabs de configuración -->
+    <div class="bg-white rounded-xl shadow-lg">
+      <!-- Tab Navigation -->
+      <div class="border-b border-gray-200">
+        <nav class="flex space-x-8 px-6" aria-label="Tabs">
+          <button 
+            *ngFor="let tab of tabs; let i = index"
+            (click)="tabActivo = i"
+            [class]="tabActivo === i ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'"
+            class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">
+            {{ tab.label }}
+          </button>
+        </nav>
+      </div>
+
+      <!-- Tab Content -->
+      <div class="p-6">
+        
+        <!-- Tab 1: Formato del Sistema -->
+        <div *ngIf="tabActivo === 0">
+          <div class="mb-6">
+            <h2 class="text-2xl font-semibold text-gray-900">Configuración de Formato</h2>
+          </div>
+          
+          <div class="bg-gray-50 rounded-lg p-6 mb-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+              
+              <!-- Formato de Fecha -->
+              <div class="space-y-2">
+                <label class="block text-sm font-medium text-gray-700">Formato de Fecha</label>
+                <select [(ngModel)]="formatoSistema.formatoFecha" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                  <option *ngFor="let opcion of opcionesFormatoFecha" [value]="opcion.value">
+                    {{ opcion.label }}
+                  </option>
+                </select>
+              </div>
+
+              <!-- Formato de Hora -->
+              <div class="space-y-2">
+                <label class="block text-sm font-medium text-gray-700">Formato de Hora</label>
+                <select [(ngModel)]="formatoSistema.formatoHora" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                  <option *ngFor="let opcion of opcionesFormatoHora" [value]="opcion.value">
+                    {{ opcion.label }}
+                  </option>
+                </select>
+              </div>
+
+              <!-- Formato de Moneda -->
+              <div class="space-y-2">
+                <label class="block text-sm font-medium text-gray-700">Formato de Moneda</label>
+                <select [(ngModel)]="formatoSistema.formatoMoneda" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                  <option *ngFor="let opcion of opcionesFormatoMoneda" [value]="opcion.value">
+                    {{ opcion.label }}
+                  </option>
+                </select>
+              </div>
+
+              <!-- Idioma -->
+              <div class="space-y-2">
+                <label class="block text-sm font-medium text-gray-700">Idioma</label>
+                <select [(ngModel)]="formatoSistema.idioma" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                  <option *ngFor="let opcion of opcionesIdioma" [value]="opcion.value">
+                    {{ opcion.label }}
+                  </option>
+                </select>
+              </div>
+
+              <!-- Separador Decimal -->
+              <div class="space-y-2">
+                <label class="block text-sm font-medium text-gray-700">Separador Decimal</label>
+                <input [(ngModel)]="formatoSistema.separadorDecimal" placeholder="," class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+              </div>
+
+              <!-- Separador de Miles -->
+              <div class="space-y-2">
+                <label class="block text-sm font-medium text-gray-700">Separador de Miles</label>
+                <input [(ngModel)]="formatoSistema.separadorMiles" placeholder="." class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+              </div>
+
+              <!-- Zona Horaria -->
+              <div class="space-y-2 md:col-span-2">
+                <label class="block text-sm font-medium text-gray-700">Zona Horaria</label>
+                <select [(ngModel)]="formatoSistema.zonaHoraria" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                  <option *ngFor="let opcion of opcionesZonaHoraria" [value]="opcion.value">
+                    {{ opcion.label }}
+                  </option>
+                </select>
+              </div>
+
+            </div>
+          </div>
+
+          <!-- Botones de acción -->
+          <div class="flex justify-end gap-3">
+            <button
+              (click)="resetearFormatoSistema()"
+              class="bg-gray-500 hover:bg-gray-600 text-white px-6 py-3 rounded-lg font-semibold transition-colors duration-200">
+              Restablecer
+            </button>
+            <button
+              (click)="guardarFormatoSistema()"
+              class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-semibold transition-colors duration-200 shadow-lg hover:shadow-xl">
+              Guardar Configuración
+            </button>
+          </div>
+        </div>
+
+        <!-- Tab 2: Datos de Facturación -->
+        <div *ngIf="tabActivo === 1">
+          <div class="mb-6">
+            <h2 class="text-2xl font-semibold text-gray-900">Configuración de Facturación</h2>
+          </div>
+          
+          <div class="bg-gray-50 rounded-lg p-6 mb-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+              
+              <!-- NIT -->
+              <div class="space-y-2">
+                <label class="block text-sm font-medium text-gray-700">NIT de la Empresa</label>
+                <input [(ngModel)]="datosFacturacion.nit" placeholder="12345678-9" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500">
+              </div>
+
+              <!-- Nombre de la Empresa -->
+              <div class="space-y-2">
+                <label class="block text-sm font-medium text-gray-700">Nombre de la Empresa</label>
+                <input [(ngModel)]="datosFacturacion.nombreEmpresa" placeholder="Farmacia TodoFarma" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500">
+              </div>
+
+
+              <!-- Mensaje de Factura -->
+              <div class="space-y-2 md:col-span-2">
+                <label class="block text-sm font-medium text-gray-700">Mensaje de Factura</label>
+                <textarea [(ngModel)]="datosFacturacion.mensajeFactura" rows="3" placeholder="Gracias por su compra. Vuelva pronto." class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500"></textarea>
+              </div>
+
+              <!-- Mensaje de Pie -->
+              <div class="space-y-2 md:col-span-2">
+                <label class="block text-sm font-medium text-gray-700">Mensaje de Pie</label>
+                <textarea [(ngModel)]="datosFacturacion.mensajePie" rows="3" placeholder="Conserve este comprobante para garantías" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500"></textarea>
+              </div>
+
+            </div>
+          </div>
+
+          <!-- Botones de acción -->
+          <div class="flex justify-end gap-3">
+            <button
+              (click)="resetearDatosFacturacion()"
+              class="bg-gray-500 hover:bg-gray-600 text-white px-6 py-3 rounded-lg font-semibold transition-colors duration-200">
+              Restablecer
+            </button>
+            <button
+              (click)="guardarDatosFacturacion()"
+              class="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg font-semibold transition-colors duration-200 shadow-lg hover:shadow-xl">
+              Guardar Datos
+            </button>
+          </div>
+        </div>
+
+        <!-- Tab 3: Dirección de la Empresa -->
+        <div *ngIf="tabActivo === 2">
+          <div class="mb-6">
+            <h2 class="text-2xl font-semibold text-gray-900">Información de Ubicación</h2>
+          </div>
+          
+          <div class="bg-gray-50 rounded-lg p-6 mb-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+              
+              <!-- Dirección -->
+              <div class="space-y-2 md:col-span-2">
+                <label class="block text-sm font-medium text-gray-700">Dirección</label>
+                <input [(ngModel)]="direccionEmpresa.direccion" placeholder="5ta Avenida 12-34, Zona 1" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-purple-500 focus:border-purple-500">
+              </div>
+
+              <!-- Ciudad -->
+              <div class="space-y-2">
+                <label class="block text-sm font-medium text-gray-700">Ciudad</label>
+                <input [(ngModel)]="direccionEmpresa.ciudad" placeholder="Guatemala" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-purple-500 focus:border-purple-500">
+              </div>
+
+              <!-- Departamento -->
+              <div class="space-y-2">
+                <label class="block text-sm font-medium text-gray-700">Departamento</label>
+                <input [(ngModel)]="direccionEmpresa.departamento" placeholder="Guatemala" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-purple-500 focus:border-purple-500">
+              </div>
+
+              <!-- Código Postal -->
+              <div class="space-y-2">
+                <label class="block text-sm font-medium text-gray-700">Código Postal</label>
+                <input [(ngModel)]="direccionEmpresa.codigoPostal" placeholder="01001" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-purple-500 focus:border-purple-500">
+              </div>
+
+              <!-- País -->
+              <div class="space-y-2">
+                <label class="block text-sm font-medium text-gray-700">País</label>
+                <input [(ngModel)]="direccionEmpresa.pais" placeholder="Guatemala" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-purple-500 focus:border-purple-500">
+              </div>
+
+            </div>
+          </div>
+
+          <!-- Botones de acción -->
+          <div class="flex justify-end gap-3">
+            <button
+              (click)="resetearDireccionEmpresa()"
+              class="bg-gray-500 hover:bg-gray-600 text-white px-6 py-3 rounded-lg font-semibold transition-colors duration-200">
+              Restablecer
+            </button>
+            <button
+              (click)="guardarDireccionEmpresa()"
+              class="bg-purple-600 hover:bg-purple-700 text-white px-6 py-3 rounded-lg font-semibold transition-colors duration-200 shadow-lg hover:shadow-xl">
+              Guardar Dirección
+            </button>
+          </div>
+        </div>
+
+        <!-- Tab 4: Teléfonos de la Empresa -->
+        <div *ngIf="tabActivo === 3">
+          <div class="mb-6">
+            <h2 class="text-2xl font-semibold text-gray-900">Información de Contacto</h2>
+          </div>
+          
+          <div class="bg-gray-50 rounded-lg p-6 mb-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+              
+              <!-- Teléfono Principal -->
+              <div class="space-y-2">
+                <label class="block text-sm font-medium text-gray-700">Teléfono Principal</label>
+                <input [(ngModel)]="telefonosEmpresa.telefonoPrincipal" placeholder="502-2251-2345" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-orange-500 focus:border-orange-500">
+              </div>
+
+              <!-- Teléfono Secundario -->
+              <div class="space-y-2">
+                <label class="block text-sm font-medium text-gray-700">Teléfono Secundario</label>
+                <input [(ngModel)]="telefonosEmpresa.telefonoSecundario" placeholder="502-2251-2346" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-orange-500 focus:border-orange-500">
+              </div>
+
+              <!-- Fax -->
+              <div class="space-y-2">
+                <label class="block text-sm font-medium text-gray-700">Fax</label>
+                <input [(ngModel)]="telefonosEmpresa.fax" placeholder="502-2251-2347" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-orange-500 focus:border-orange-500">
+              </div>
+
+              <!-- WhatsApp -->
+              <div class="space-y-2">
+                <label class="block text-sm font-medium text-gray-700">WhatsApp</label>
+                <input [(ngModel)]="telefonosEmpresa.whatsapp" placeholder="502-5555-1234" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-orange-500 focus:border-orange-500">
+              </div>
+
+              <!-- Email -->
+              <div class="space-y-2">
+                <label class="block text-sm font-medium text-gray-700">Correo Electrónico</label>
+                <input type="email" [(ngModel)]="telefonosEmpresa.email" placeholder="info@todofarma.com" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-orange-500 focus:border-orange-500">
+              </div>
+
+              <!-- Sitio Web -->
+              <div class="space-y-2">
+                <label class="block text-sm font-medium text-gray-700">Sitio Web</label>
+                <input [(ngModel)]="telefonosEmpresa.sitioWeb" placeholder="www.todofarma.com" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-orange-500 focus:border-orange-500">
+              </div>
+
+            </div>
+          </div>
+
+          <!-- Botones de acción -->
+          <div class="flex justify-end gap-3">
+            <button
+              (click)="resetearTelefonosEmpresa()"
+              class="bg-gray-500 hover:bg-gray-600 text-white px-6 py-3 rounded-lg font-semibold transition-colors duration-200">
+              Restablecer
+            </button>
+            <button
+              (click)="guardarTelefonosEmpresa()"
+              class="bg-orange-600 hover:bg-orange-700 text-white px-6 py-3 rounded-lg font-semibold transition-colors duration-200 shadow-lg hover:shadow-xl">
+              Guardar Contactos
+            </button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>

@@ -335,6 +335,108 @@ class PedidoModel {
       cliente.release();
     }
   }
+
+  // ========================================
+  // MÉTODOS PARA REPORTES
+  // ========================================
+
+  // Obtener análisis de proveedores
+  static async obtenerAnalisisProveedores(desde, hasta) {
+    const cliente = await pool.connect();
+    try {
+      const consulta = `
+        SELECT 
+          p.id as proveedor_id,
+          CONCAT(p.nombre, ' ', p.apellido) as proveedor_nombre,
+          p.empresa,
+          p.telefono,
+          p.correo,
+          COUNT(pe.id_pedido) as total_pedidos,
+          COALESCE(SUM(pe.total_costo), 0) as total_compras,
+          COALESCE(AVG(pe.total_costo), 0) as pedido_promedio,
+          COUNT(CASE WHEN pe.estado = 'RECIBIDO' THEN 1 END) as pedidos_recibidos,
+          COUNT(CASE WHEN pe.estado = 'CANCELADO' THEN 1 END) as pedidos_cancelados,
+          COUNT(CASE WHEN pe.estado = 'ENVIADO' THEN 1 END) as pedidos_enviados,
+          COUNT(CASE WHEN pe.estado = 'CREADO' THEN 1 END) as pedidos_creados,
+          MAX(pe.fecha_pedido) as ultimo_pedido
+        FROM proveedores p
+        LEFT JOIN pedido pe ON p.id = pe.proveedor_id 
+          AND pe.fecha_pedido >= $1 
+          AND pe.fecha_pedido <= $2
+        WHERE p.estado = 'ACTIVO'
+        GROUP BY p.id, p.nombre, p.apellido, p.empresa, p.telefono, p.correo
+        ORDER BY total_compras DESC
+      `;
+      
+      const resultado = await cliente.query(consulta, [desde, hasta]);
+      return resultado.rows;
+      
+    } finally {
+      cliente.release();
+    }
+  }
+
+  // Obtener gastos por compras
+  static async obtenerGastosPorCompras(desde, hasta) {
+    const cliente = await pool.connect();
+    try {
+      const consulta = `
+        SELECT 
+          DATE(pe.fecha_pedido) as fecha,
+          COUNT(pe.id_pedido) as total_pedidos,
+          COALESCE(SUM(pe.total_costo), 0) as total_gastos,
+          COALESCE(AVG(pe.total_costo), 0) as pedido_promedio
+        FROM pedido pe
+        WHERE pe.fecha_pedido >= $1 
+          AND pe.fecha_pedido <= $2 
+          AND pe.estado = 'RECIBIDO'
+        GROUP BY DATE(pe.fecha_pedido)
+        ORDER BY fecha ASC
+      `;
+      
+      const resultado = await cliente.query(consulta, [desde, hasta]);
+      return resultado.rows;
+      
+    } finally {
+      cliente.release();
+    }
+  }
+
+  // Obtener estadísticas para dashboard
+  static async obtenerEstadisticasDashboard(desde, hasta) {
+    const cliente = await pool.connect();
+    try {
+      const consulta = `
+        SELECT 
+          COUNT(pe.id_pedido) as total_pedidos,
+          COALESCE(SUM(pe.total_costo), 0) as total_compras,
+          COALESCE(AVG(pe.total_costo), 0) as pedido_promedio,
+          COUNT(CASE WHEN pe.estado = 'RECIBIDO' THEN 1 END) as pedidos_recibidos,
+          COUNT(CASE WHEN pe.estado = 'CANCELADO' THEN 1 END) as pedidos_cancelados,
+          COUNT(CASE WHEN pe.estado = 'ENVIADO' THEN 1 END) as pedidos_enviados,
+          COUNT(CASE WHEN pe.estado = 'CREADO' THEN 1 END) as pedidos_creados,
+          COUNT(DISTINCT pe.proveedor_id) as proveedores_activos
+        FROM pedido pe
+        WHERE pe.fecha_pedido >= $1 
+          AND pe.fecha_pedido <= $2
+      `;
+      
+      const resultado = await cliente.query(consulta, [desde, hasta]);
+      return resultado.rows[0] || {
+        total_pedidos: 0,
+        total_compras: 0,
+        pedido_promedio: 0,
+        pedidos_recibidos: 0,
+        pedidos_cancelados: 0,
+        pedidos_enviados: 0,
+        pedidos_creados: 0,
+        proveedores_activos: 0
+      };
+      
+    } finally {
+      cliente.release();
+    }
+  }
 }
 
 module.exports = PedidoModel;

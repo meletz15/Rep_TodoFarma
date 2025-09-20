@@ -85,7 +85,7 @@ export class MainLayoutComponent implements OnInit {
       description: 'Reportes y estadísticas del negocio',
       icon: 'analytics',
       route: '/reporte',
-      disponible: false
+      disponible: true
     },
     {
       title: 'Usuario',
@@ -99,7 +99,7 @@ export class MainLayoutComponent implements OnInit {
       description: 'Configuración del sistema y preferencias',
       icon: 'settings',
       route: '/configuracion',
-      disponible: false
+      disponible: true
     },
     {
       title: 'Menú Inicio',

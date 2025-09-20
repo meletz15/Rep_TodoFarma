@@ -11,14 +11,13 @@ import {
   getMatIconFailedToSanitizeUrlError,
   getMatIconNameNotFoundError,
   getMatIconNoHttpProviderError
-} from "./chunk-EJYOOYMQ.js";
-import "./chunk-LYPQHGNS.js";
-import "./chunk-GKYU46T3.js";
-import "./chunk-OQM7GJHN.js";
-import "./chunk-KDQPNQ2M.js";
-import "./chunk-SXWZPOHZ.js";
-import "./chunk-ARYSD6E7.js";
-import "./chunk-24ZYNOED.js";
+} from "./chunk-5KJKUHVV.js";
+import "./chunk-ZMKZXQHC.js";
+import "./chunk-P3HZPRKV.js";
+import "./chunk-A4JYRZN2.js";
+import "./chunk-YBCPKXH5.js";
+import "./chunk-JSFEMK6X.js";
+import "./chunk-E5ECCKE6.js";
 import "./chunk-3OV72XIM.js";
 export {
   ICON_REGISTRY_PROVIDER,

@@ -1,0 +1,410 @@
+<div class="min-h-screen bg-gray-50 p-6">
+  <!-- Header -->
+  <div class="mb-8">
+    <div class="flex justify-between items-center">
+      <div>
+        <h1 class="text-3xl font-bold text-gray-900">Sistema de Reportes</h1>
+        <p class="text-gray-600 mt-2">Análisis y estadísticas del negocio TodoFarma</p>
+      </div>
+      <div class="flex items-center gap-3">
+        <button
+          (click)="exportarAExcel()"
+          class="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg font-semibold flex items-center gap-2 transition-colors duration-200 shadow-lg hover:shadow-xl"
+          matTooltip="Exportar reporte actual a Excel"
+          [disabled]="datos.length === 0"
+        >
+          <mat-icon class="text-white">download</mat-icon>
+          Exportar Excel
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tabs de categorías de reportes -->
+  <div class="bg-white rounded-xl shadow-lg border border-gray-200 mb-6">
+    <mat-tab-group [(selectedIndex)]="tabActivo" class="reporte-tabs">
+      <mat-tab *ngFor="let tab of tabs; let i = index">
+        <ng-template mat-tab-label>
+          <div class="flex items-center gap-2 py-2">
+            <mat-icon [class]="tab.color">{{ tab.icon }}</mat-icon>
+            <span class="font-medium">{{ tab.label }}</span>
+          </div>
+        </ng-template>
+        
+        <!-- Contenido del tab -->
+        <div class="p-6">
+          <!-- Grid de reportes -->
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+            <div 
+              *ngFor="let reporte of obtenerReportesPorTab(i)" 
+              (click)="seleccionarReporte(reporte)"
+              class="bg-white border-2 rounded-xl p-6 cursor-pointer transition-all duration-200 hover:shadow-lg hover:border-blue-300"
+              [class]="reporteSeleccionado?.endpoint === reporte.endpoint ? 'border-blue-500 bg-blue-50' : 'border-gray-200'"
+            >
+              <div class="flex items-start gap-4">
+                <div class="p-3 rounded-lg bg-blue-100">
+                  <mat-icon class="text-blue-600 text-2xl">{{ reporte.icono }}</mat-icon>
+                </div>
+                <div class="flex-1">
+                  <h3 class="text-lg font-semibold text-gray-900 mb-2">{{ reporte.titulo }}</h3>
+                  <p class="text-gray-600 text-sm mb-3">{{ reporte.descripcion }}</p>
+                  <div class="flex flex-wrap gap-1">
+                    <span 
+                      *ngFor="let filtro of reporte.filtros" 
+                      class="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded-full"
+                    >
+                      {{ filtro }}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Panel de filtros y generación -->
+          <div *ngIf="reporteSeleccionado" class="bg-gray-50 rounded-xl p-6 mb-6" style="overflow: visible;">
+            <div class="flex items-center gap-3 mb-6">
+              <mat-icon class="text-blue-600">tune</mat-icon>
+              <h3 class="text-xl font-semibold text-gray-900">Filtros para {{ reporteSeleccionado.titulo }}</h3>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" style="overflow: visible;">
+              <!-- Fecha Desde -->
+              <div *ngIf="reporteSeleccionado.filtros.includes('desde')" class="space-y-2">
+                <label class="block text-sm font-medium text-gray-700">Fecha Desde</label>
+                <div class="relative">
+                  <input 
+                    type="date"
+                    [(ngModel)]="filtros.desde"
+                    (change)="onFechaDesdeChange($event)"
+                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200 bg-white text-gray-900 shadow-sm hover:border-gray-400"
+                    placeholder="Seleccionar fecha desde"
+                  >
+                  <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                    <mat-icon class="text-gray-400">calendar_today</mat-icon>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Fecha Hasta -->
+              <div *ngIf="reporteSeleccionado.filtros.includes('hasta')" class="space-y-2">
+                <label class="block text-sm font-medium text-gray-700">Fecha Hasta</label>
+                <div class="relative">
+                  <input 
+                    type="date"
+                    [(ngModel)]="filtros.hasta"
+                    (change)="onFechaHastaChange($event)"
+                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200 bg-white text-gray-900 shadow-sm hover:border-gray-400"
+                    placeholder="Seleccionar fecha hasta"
+                  >
+                  <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                    <mat-icon class="text-gray-400">calendar_today</mat-icon>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Fecha específica -->
+              <div *ngIf="reporteSeleccionado.filtros.includes('fecha')" class="space-y-2">
+                <label class="block text-sm font-medium text-gray-700">Fecha</label>
+                <div class="relative">
+                  <input 
+                    type="date"
+                    [(ngModel)]="filtros.fecha"
+                    (change)="onFechaEspecificaChange($event)"
+                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200 bg-white text-gray-900 shadow-sm hover:border-gray-400"
+                    placeholder="Seleccionar fecha"
+                  >
+                  <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                    <mat-icon class="text-gray-400">calendar_today</mat-icon>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Estado -->
+              <div *ngIf="reporteSeleccionado.filtros.includes('estado')" class="space-y-2">
+                <label class="block text-sm font-medium text-gray-700">Estado</label>
+                <mat-form-field appearance="outline" class="w-full">
+                  <mat-select [(ngModel)]="filtros.estado" class="text-gray-900">
+                    <mat-option value="">Todos los estados</mat-option>
+                    <mat-option *ngFor="let estado of estadosVenta" [value]="estado.valor">
+                      {{ estado.texto }}
+                    </mat-option>
+                    <mat-option *ngFor="let estado of estadosPedido" [value]="estado.valor">
+                      {{ estado.texto }}
+                    </mat-option>
+                    <mat-option *ngFor="let estado of estadosCaja" [value]="estado.valor">
+                      {{ estado.texto }}
+                    </mat-option>
+                    <mat-option *ngFor="let estado of estadosProveedor" [value]="estado.valor">
+                      {{ estado.texto }}
+                    </mat-option>
+                  </mat-select>
+                </mat-form-field>
+              </div>
+
+              <!-- Usuario -->
+              <div *ngIf="reporteSeleccionado.filtros.includes('usuario_id')" class="space-y-2">
+                <label class="block text-sm font-medium text-gray-700">Usuario</label>
+                <div class="relative">
+                  <input 
+                    type="text" 
+                    [(ngModel)]="busquedaUsuario"
+                    (input)="filtrarUsuarios($event)"
+                    (focus)="mostrarDropdownUsuarios = true"
+                    (blur)="ocultarDropdownUsuarios()"
+                    placeholder="Buscar usuario..."
+                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  >
+                  <div 
+                    *ngIf="mostrarDropdownUsuarios" 
+                    class="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-auto"
+                  >
+                    <div 
+                      (click)="seleccionarUsuario(null)"
+                      class="px-3 py-2 hover:bg-gray-100 cursor-pointer border-b border-gray-200"
+                    >
+                      Todos los usuarios
+                    </div>
+                    <div 
+                      *ngFor="let usuario of usuariosFiltrados" 
+                      (click)="seleccionarUsuario(usuario)"
+                      class="px-3 py-2 hover:bg-gray-100 cursor-pointer"
+                    >
+                      {{ usuario.nombre }} {{ usuario.apellido }} - {{ usuario.correo }}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Cliente -->
+              <div *ngIf="reporteSeleccionado.filtros.includes('cliente_id')" class="space-y-2">
+                <label class="block text-sm font-medium text-gray-700">Cliente</label>
+                <div class="relative">
+                  <input 
+                    type="text" 
+                    [(ngModel)]="busquedaCliente"
+                    (input)="filtrarClientes($event)"
+                    (focus)="mostrarDropdownClientes = true"
+                    (blur)="ocultarDropdownClientes()"
+                    placeholder="Buscar cliente..."
+                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  >
+                  <div 
+                    *ngIf="mostrarDropdownClientes" 
+                    class="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-auto"
+                  >
+                    <div 
+                      (click)="seleccionarCliente(null)"
+                      class="px-3 py-2 hover:bg-gray-100 cursor-pointer border-b border-gray-200"
+                    >
+                      Todos los clientes
+                    </div>
+                    <div 
+                      *ngFor="let cliente of clientesFiltrados" 
+                      (click)="seleccionarCliente(cliente)"
+                      class="px-3 py-2 hover:bg-gray-100 cursor-pointer"
+                    >
+                      {{ cliente.nombres }} {{ cliente.apellidos }} - {{ cliente.nit || 'Sin NIT' }}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Proveedor -->
+              <div *ngIf="reporteSeleccionado.filtros.includes('proveedor_id')" class="space-y-2">
+                <label class="block text-sm font-medium text-gray-700">Proveedor</label>
+                <div class="relative">
+                  <input 
+                    type="text" 
+                    [(ngModel)]="busquedaProveedor"
+                    (input)="filtrarProveedores($event)"
+                    (focus)="mostrarDropdownProveedores = true"
+                    (blur)="ocultarDropdownProveedores()"
+                    placeholder="Buscar proveedor..."
+                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  >
+                  <div 
+                    *ngIf="mostrarDropdownProveedores" 
+                    class="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-auto"
+                  >
+                    <div 
+                      (click)="seleccionarProveedor(null)"
+                      class="px-3 py-2 hover:bg-gray-100 cursor-pointer border-b border-gray-200"
+                    >
+                      Todos los proveedores
+                    </div>
+                    <div 
+                      *ngFor="let proveedor of proveedoresFiltrados" 
+                      (click)="seleccionarProveedor(proveedor)"
+                      class="px-3 py-2 hover:bg-gray-100 cursor-pointer"
+                    >
+                      {{ proveedor.nombre }} {{ proveedor.apellido }} - {{ proveedor.empresa }}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Categoría -->
+              <div *ngIf="reporteSeleccionado.filtros.includes('categoria_id')" class="space-y-2">
+                <label class="block text-sm font-medium text-gray-700">Categoría</label>
+                <mat-form-field appearance="outline" class="w-full">
+                  <mat-select [(ngModel)]="filtros.categoria_id" class="text-gray-900">
+                    <mat-option value="">Todas las categorías</mat-option>
+                    <mat-option *ngFor="let categoria of categorias" [value]="categoria.id_categoria">
+                      {{ categoria.nombre }}
+                    </mat-option>
+                  </mat-select>
+                </mat-form-field>
+              </div>
+
+              <!-- Marca -->
+              <div *ngIf="reporteSeleccionado.filtros.includes('marca_id')" class="space-y-2">
+                <label class="block text-sm font-medium text-gray-700">Marca</label>
+                <mat-form-field appearance="outline" class="w-full">
+                  <mat-select [(ngModel)]="filtros.marca_id" class="text-gray-900">
+                    <mat-option value="">Todas las marcas</mat-option>
+                    <mat-option *ngFor="let marca of marcas" [value]="marca.id_marca">
+                      {{ marca.nombre }}
+                    </mat-option>
+                  </mat-select>
+                </mat-form-field>
+              </div>
+
+              <!-- Límite -->
+              <div *ngIf="reporteSeleccionado.filtros.includes('limite')" class="space-y-2">
+                <label class="block text-sm font-medium text-gray-700">Límite de registros</label>
+                <mat-form-field appearance="outline" class="w-full">
+                  <input 
+                    matInput 
+                    [(ngModel)]="filtros.limite" 
+                    type="number"
+                    min="1"
+                    max="100"
+                    class="text-gray-900"
+                  >
+                </mat-form-field>
+              </div>
+
+              <!-- Stock bajo -->
+              <div *ngIf="reporteSeleccionado.filtros.includes('stock_bajo')" class="space-y-2">
+                <label class="block text-sm font-medium text-gray-700">Solo stock bajo</label>
+                <mat-form-field appearance="outline" class="w-full">
+                  <mat-select [(ngModel)]="filtros.stock_bajo" class="text-gray-900">
+                    <mat-option [value]="false">Todos los productos</mat-option>
+                    <mat-option [value]="true">Solo stock bajo (≤10)</mat-option>
+                  </mat-select>
+                </mat-form-field>
+              </div>
+
+              <!-- Activo -->
+              <div *ngIf="reporteSeleccionado.filtros.includes('activo')" class="space-y-2">
+                <label class="block text-sm font-medium text-gray-700">Estado</label>
+                <mat-form-field appearance="outline" class="w-full">
+                  <mat-select [(ngModel)]="filtros.activo" class="text-gray-900">
+                    <mat-option [value]="true">Solo activos</mat-option>
+                    <mat-option [value]="false">Solo inactivos</mat-option>
+                  </mat-select>
+                </mat-form-field>
+              </div>
+            </div>
+
+            <!-- Botones de acción -->
+            <div class="flex justify-end gap-3 mt-6">
+              <button
+                (click)="limpiarFiltros()"
+                class="bg-gray-500 hover:bg-gray-600 text-white px-6 py-3 rounded-lg font-semibold flex items-center gap-2 transition-colors duration-200"
+              >
+                <mat-icon class="text-white">clear</mat-icon>
+                Limpiar
+              </button>
+              <button
+                (click)="generarReporte()"
+                [disabled]="cargando"
+                class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-semibold flex items-center gap-2 transition-colors duration-200 shadow-lg hover:shadow-xl disabled:opacity-50"
+              >
+                <mat-spinner *ngIf="cargando" diameter="20" class="mr-2"></mat-spinner>
+                <mat-icon *ngIf="!cargando" class="text-white">assessment</mat-icon>
+                {{ cargando ? 'Generando...' : 'Generar Reporte' }}
+              </button>
+            </div>
+          </div>
+        </div>
+      </mat-tab>
+    </mat-tab-group>
+  </div>
+
+  <!-- Resultados del reporte -->
+  <div *ngIf="reporteSeleccionado && datos.length > 0" class="bg-white rounded-xl shadow-lg border border-gray-200">
+    <div class="p-6 border-b border-gray-200">
+      <div class="flex justify-between items-center">
+        <div>
+          <h3 class="text-xl font-semibold text-gray-900">{{ reporteSeleccionado.titulo }}</h3>
+          <p class="text-gray-600 mt-1">{{ totalRegistros }} registros encontrados</p>
+        </div>
+        <div class="flex items-center gap-2">
+          <mat-icon class="text-green-600">check_circle</mat-icon>
+          <span class="text-green-600 font-medium">Reporte generado</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="overflow-x-auto">
+      <table mat-table [dataSource]="datos" class="w-full">
+        <ng-container *ngFor="let columna of columnas" [matColumnDef]="columna.key">
+          <th mat-header-cell *matHeaderCellDef class="font-semibold text-gray-900">
+            {{ columna.label }}
+          </th>
+          <td mat-cell *matCellDef="let elemento" class="text-gray-700">
+            <span *ngIf="columna.key.includes('ingresos') || columna.key.includes('precio') || columna.key.includes('monto') || columna.key.includes('promedio') || columna.key.includes('valor')">
+              {{ formatearValor(elemento[columna.key], 'moneda') }}
+            </span>
+            <span *ngIf="columna.key.includes('fecha')">
+              {{ formatearValor(elemento[columna.key], 'fecha') }}
+            </span>
+            <span *ngIf="columna.key.includes('stock') || columna.key.includes('cantidad') || columna.key.includes('total_ventas')">
+              {{ formatearValor(elemento[columna.key], 'numero') }}
+            </span>
+            <span *ngIf="!columna.key.includes('ingresos') && !columna.key.includes('precio') && !columna.key.includes('monto') && !columna.key.includes('promedio') && !columna.key.includes('valor') && !columna.key.includes('fecha') && !columna.key.includes('stock') && !columna.key.includes('cantidad') && !columna.key.includes('total_ventas')">
+              {{ formatearValor(elemento[columna.key]) }}
+            </span>
+          </td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="columnasMostradas" class="bg-gray-50"></tr>
+        <tr mat-row *matRowDef="let row; columns: columnasMostradas;" class="hover:bg-gray-50"></tr>
+      </table>
+    </div>
+
+    <div class="p-4 border-t border-gray-200">
+      <mat-paginator
+        [length]="totalRegistros"
+        [pageSize]="tamanioPagina"
+        [pageSizeOptions]="[5, 10, 25, 50]"
+        (page)="paginaActual = $event.pageIndex; tamanioPagina = $event.pageSize"
+        showFirstLastButtons>
+      </mat-paginator>
+    </div>
+  </div>
+
+  <!-- Mensaje cuando no hay datos -->
+  <div *ngIf="reporteSeleccionado && !cargando && datos.length === 0" class="bg-white rounded-xl shadow-lg border border-gray-200 p-12 text-center">
+    <mat-icon class="text-gray-400 text-6xl mb-4">assessment</mat-icon>
+    <h3 class="text-xl font-semibold text-gray-900 mb-2">No hay datos para mostrar</h3>
+    <p class="text-gray-600 mb-6">Ajusta los filtros y genera el reporte nuevamente</p>
+    <button
+      (click)="generarReporte()"
+      class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-semibold flex items-center gap-2 transition-colors duration-200 mx-auto"
+    >
+      <mat-icon class="text-white">refresh</mat-icon>
+      Generar Reporte
+    </button>
+  </div>
+
+  <!-- Mensaje inicial -->
+  <div *ngIf="!reporteSeleccionado" class="bg-white rounded-xl shadow-lg border border-gray-200 p-12 text-center">
+    <mat-icon class="text-blue-400 text-6xl mb-4">analytics</mat-icon>
+    <h3 class="text-xl font-semibold text-gray-900 mb-2">Selecciona un reporte</h3>
+    <p class="text-gray-600">Elige uno de los reportes disponibles en las pestañas superiores para comenzar</p>
+  </div>
+</div>
+

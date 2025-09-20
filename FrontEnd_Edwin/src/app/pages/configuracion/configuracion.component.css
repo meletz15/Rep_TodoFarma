@@ -1,0 +1,111 @@
+/* Estilos personalizados para el módulo de configuración */
+
+/* Animaciones suaves para tabs */
+.tab-content {
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Estilos para textarea */
+textarea {
+  resize: vertical;
+  min-height: 80px;
+}
+
+/* Estilos para campos de número */
+input[type="number"] {
+  -moz-appearance: textfield;
+}
+
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+/* Estilos para campos de email */
+input[type="email"] {
+  text-transform: lowercase;
+}
+
+/* Hover effects para botones */
+button {
+  transition: all 0.2s ease-in-out;
+}
+
+button:hover {
+  transform: translateY(-1px);
+}
+
+button:active {
+  transform: translateY(0);
+}
+
+/* Estilos para el header */
+h1 {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .flex {
+    flex-direction: column;
+    gap: 12px;
+  }
+  
+  .flex button {
+    width: 100%;
+  }
+  
+  .grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Estilos para focus en inputs */
+input:focus,
+select:focus,
+textarea:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+/* Estilos para labels */
+label {
+  font-weight: 500;
+  color: #374151;
+}
+
+/* Estilos para placeholders */
+input::placeholder,
+textarea::placeholder {
+  color: #9ca3af;
+  opacity: 1;
+}
+
+/* Estilos para selects */
+select {
+  /* Usar la flecha nativa del navegador */
+  appearance: auto;
+  -webkit-appearance: menulist;
+  -moz-appearance: menulist;
+}
+
+/* Estilos para iconos de emoji */
+.emoji-icon {
+  font-size: 1.5rem;
+  line-height: 1;
+}

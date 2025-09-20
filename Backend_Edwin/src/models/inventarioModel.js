@@ -357,6 +357,42 @@ class InventarioModel {
       cliente.release();
     }
   }
+
+  // ========================================
+  // MÉTODOS PARA REPORTES
+  // ========================================
+
+  // Obtener estadísticas para dashboard
+  static async obtenerEstadisticasDashboard() {
+    const cliente = await pool.connect();
+    try {
+      const consulta = `
+        SELECT 
+          COUNT(im.id_mov) as total_movimientos,
+          COUNT(CASE WHEN im.signo = 1 THEN 1 END) as total_entradas,
+          COUNT(CASE WHEN im.signo = -1 THEN 1 END) as total_salidas,
+          COALESCE(SUM(CASE WHEN im.signo = 1 THEN im.cantidad ELSE 0 END), 0) as cantidad_entradas,
+          COALESCE(SUM(CASE WHEN im.signo = -1 THEN im.cantidad ELSE 0 END), 0) as cantidad_salidas,
+          COUNT(DISTINCT im.producto_id) as productos_con_movimientos,
+          COUNT(DISTINCT im.usuario_id) as usuarios_activos
+        FROM inventario_movimiento im
+      `;
+      
+      const resultado = await cliente.query(consulta);
+      return resultado.rows[0] || {
+        total_movimientos: 0,
+        total_entradas: 0,
+        total_salidas: 0,
+        cantidad_entradas: 0,
+        cantidad_salidas: 0,
+        productos_con_movimientos: 0,
+        usuarios_activos: 0
+      };
+      
+    } finally {
+      cliente.release();
+    }
+  }
 }
 
 module.exports = InventarioModel;

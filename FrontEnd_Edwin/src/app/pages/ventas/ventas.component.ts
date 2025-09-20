@@ -304,11 +304,18 @@ export class VentasComponent implements OnInit {
       
       // Formatear fecha
       if (datosVenta.fecha) {
-        datosVenta.fecha = datosVenta.fecha.toISOString();
+        // Si la fecha es un string, convertirla a Date primero
+        if (typeof datosVenta.fecha === 'string') {
+          datosVenta.fecha = new Date(datosVenta.fecha).toISOString();
+        } else if (datosVenta.fecha instanceof Date) {
+          datosVenta.fecha = datosVenta.fecha.toISOString();
+        }
       }
 
       const ventaData: VentaCreate = {
         ...datosVenta,
+        cliente_id: datosVenta.cliente_id ? parseInt(datosVenta.cliente_id) : null,
+        usuario_id: parseInt(datosVenta.usuario_id),
         estado: 'EMITIDA', // Siempre EMITIDA para nuevas ventas
         detalles: this.detallesVenta.map(detalle => ({
           id_producto: parseInt(detalle.id_producto),

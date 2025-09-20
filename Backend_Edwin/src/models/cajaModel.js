@@ -317,22 +317,109 @@ class CajaModel {
     try {
       const resultado = await cliente.query(
         `SELECT 
-           c.id_caja,
-           c.fecha_apertura,
-           c.saldo_inicial,
-           c.saldo_cierre,
+           DATE(v.fecha) as fecha,
            COUNT(v.id_venta) as total_ventas,
            COALESCE(SUM(v.total), 0) as total_ventas_monto,
-           COALESCE(AVG(v.total), 0) as promedio_venta
-         FROM caja c
-         LEFT JOIN venta v ON c.id_caja = v.caja_id AND v.estado = 'EMITIDA'
-         WHERE DATE(c.fecha_apertura) = $1
-         GROUP BY c.id_caja, c.fecha_apertura, c.saldo_inicial, c.saldo_cierre
-         ORDER BY c.fecha_apertura`,
+           COALESCE(AVG(v.total), 0) as promedio_venta,
+           COALESCE(SUM(v.total), 0) as total_ingresos
+         FROM venta v
+         WHERE DATE(v.fecha) = $1 AND v.estado = 'EMITIDA'
+         GROUP BY DATE(v.fecha)
+         ORDER BY DATE(v.fecha)`,
         [fecha]
       );
       
       return resultado.rows;
+    } finally {
+      cliente.release();
+    }
+  }
+
+  // ========================================
+  // MÉTODOS PARA REPORTES
+  // ========================================
+
+  // Obtener histórico de cajas
+  static async obtenerHistorico(filtros = {}) {
+    const cliente = await pool.connect();
+    try {
+      let consulta = `
+        SELECT 
+          c.id_caja,
+          c.fecha_apertura,
+          c.fecha_cierre,
+          c.saldo_inicial,
+          c.saldo_cierre,
+          c.estado,
+          c.observacion,
+          CONCAT(ua.nombre, ' ', ua.apellido) as usuario_apertura_nombre,
+          CONCAT(uc.nombre, ' ', uc.apellido) as usuario_cierre_nombre,
+          (c.saldo_cierre - c.saldo_inicial) as diferencia
+        FROM caja c
+        LEFT JOIN usuarios ua ON c.usuario_apertura = ua.id_usuario
+        LEFT JOIN usuarios uc ON c.usuario_cierre = uc.id_usuario
+        WHERE 1=1
+      `;
+      
+      const parametros = [];
+      let contadorParametros = 1;
+      
+      // Aplicar filtros
+      if (filtros.fecha_desde) {
+        consulta += ` AND c.fecha_apertura >= $${contadorParametros}`;
+        parametros.push(filtros.fecha_desde);
+        contadorParametros++;
+      }
+      
+      if (filtros.fecha_hasta) {
+        consulta += ` AND c.fecha_apertura <= $${contadorParametros}`;
+        parametros.push(filtros.fecha_hasta);
+        contadorParametros++;
+      }
+      
+      if (filtros.estado) {
+        consulta += ` AND c.estado = $${contadorParametros}`;
+        parametros.push(filtros.estado);
+        contadorParametros++;
+      }
+      
+      consulta += ` ORDER BY c.fecha_apertura DESC`;
+      
+      const resultado = await cliente.query(consulta, parametros);
+      return resultado.rows;
+      
+    } finally {
+      cliente.release();
+    }
+  }
+
+  // Obtener estadísticas para dashboard
+  static async obtenerEstadisticasDashboard(desde, hasta) {
+    const cliente = await pool.connect();
+    try {
+      const consulta = `
+        SELECT 
+          COUNT(c.id_caja) as total_cajas,
+          COUNT(CASE WHEN c.estado = 'ABIERTO' THEN 1 END) as cajas_abiertas,
+          COUNT(CASE WHEN c.estado = 'CERRADO' THEN 1 END) as cajas_cerradas,
+          COALESCE(SUM(c.saldo_inicial), 0) as total_saldo_inicial,
+          COALESCE(SUM(c.saldo_cierre), 0) as total_saldo_cierre,
+          COALESCE(SUM(c.saldo_cierre - c.saldo_inicial), 0) as total_diferencia
+        FROM caja c
+        WHERE c.fecha_apertura >= $1 
+          AND c.fecha_apertura <= $2
+      `;
+      
+      const resultado = await cliente.query(consulta, [desde, hasta]);
+      return resultado.rows[0] || {
+        total_cajas: 0,
+        cajas_abiertas: 0,
+        cajas_cerradas: 0,
+        total_saldo_inicial: 0,
+        total_saldo_cierre: 0,
+        total_diferencia: 0
+      };
+      
     } finally {
       cliente.release();
     }

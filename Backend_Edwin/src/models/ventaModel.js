@@ -403,6 +403,165 @@ class VentaModel {
       cliente.release();
     }
   }
+
+  // ========================================
+  // MÉTODOS PARA REPORTES
+  // ========================================
+
+  // Obtener ventas por usuario
+  static async obtenerVentasPorUsuario(desde, hasta) {
+    const cliente = await pool.connect();
+    try {
+      const consulta = `
+        SELECT 
+          u.id_usuario,
+          CONCAT(u.nombre, ' ', u.apellido) as usuario_nombre,
+          COUNT(v.id_venta) as total_ventas,
+          COALESCE(SUM(v.total), 0) as total_monto,
+          COALESCE(AVG(v.total), 0) as ticket_promedio
+        FROM usuarios u
+        LEFT JOIN venta v ON u.id_usuario = v.usuario_id 
+          AND v.fecha >= $1 
+          AND v.fecha <= $2 
+          AND v.estado = 'EMITIDA'
+        WHERE u.estado = 'ACTIVO'
+        GROUP BY u.id_usuario, u.nombre, u.apellido
+        ORDER BY total_monto DESC
+      `;
+      
+      const resultado = await cliente.query(consulta, [desde, hasta]);
+      return resultado.rows;
+      
+    } finally {
+      cliente.release();
+    }
+  }
+
+  // Obtener ventas por cliente
+  static async obtenerVentasPorCliente(desde, hasta, limite = 10) {
+    const cliente = await pool.connect();
+    try {
+      const consulta = `
+        SELECT 
+          c.id_cliente,
+          CONCAT(c.nombres, ' ', COALESCE(c.apellidos, '')) as cliente_nombre,
+          c.email,
+          c.telefono,
+          COUNT(v.id_venta) as total_ventas,
+          COALESCE(SUM(v.total), 0) as total_monto,
+          COALESCE(AVG(v.total), 0) as ticket_promedio
+        FROM cliente c
+        INNER JOIN venta v ON c.id_cliente = v.cliente_id 
+          AND v.fecha >= $1 
+          AND v.fecha <= $2 
+          AND v.estado = 'EMITIDA'
+        WHERE c.activo = true
+        GROUP BY c.id_cliente, c.nombres, c.apellidos, c.email, c.telefono
+        ORDER BY total_monto DESC
+        LIMIT $3
+      `;
+      
+      const resultado = await cliente.query(consulta, [desde, hasta, limite]);
+      return resultado.rows;
+      
+    } finally {
+      cliente.release();
+    }
+  }
+
+  // Obtener productos más vendidos
+  static async obtenerProductosMasVendidos(desde, hasta, limite = 10) {
+    const cliente = await pool.connect();
+    try {
+      const consulta = `
+        SELECT 
+          p.id_producto,
+          p.nombre as producto_nombre,
+          p.sku,
+          cat.nombre as categoria_nombre,
+          m.nombre as marca_nombre,
+          SUM(vd.cantidad) as total_vendido,
+          COUNT(DISTINCT v.id_venta) as total_ventas,
+          COALESCE(SUM(vd.subtotal), 0) as total_monto,
+          COALESCE(AVG(vd.precio_unitario), 0) as precio_promedio
+        FROM producto p
+        INNER JOIN venta_detalle vd ON p.id_producto = vd.id_producto
+        INNER JOIN venta v ON vd.id_venta = v.id_venta
+        LEFT JOIN categoria cat ON p.id_categoria = cat.id_categoria
+        LEFT JOIN marca m ON p.id_marca = m.id_marca
+        WHERE v.fecha >= $1 
+          AND v.fecha <= $2 
+          AND v.estado = 'EMITIDA'
+          AND p.activo = true
+        GROUP BY p.id_producto, p.nombre, p.sku, cat.nombre, m.nombre
+        ORDER BY total_vendido DESC
+        LIMIT $3
+      `;
+      
+      const resultado = await cliente.query(consulta, [desde, hasta, limite]);
+      return resultado.rows;
+      
+    } finally {
+      cliente.release();
+    }
+  }
+
+  // Obtener ingresos por período
+  static async obtenerIngresosPorPeriodo(desde, hasta) {
+    const cliente = await pool.connect();
+    try {
+      const consulta = `
+        SELECT 
+          DATE(v.fecha) as fecha,
+          COUNT(v.id_venta) as total_ventas,
+          COALESCE(SUM(v.total), 0) as total_ingresos,
+          COALESCE(AVG(v.total), 0) as ticket_promedio
+        FROM venta v
+        WHERE v.fecha >= $1 
+          AND v.fecha <= $2 
+          AND v.estado = 'EMITIDA'
+        GROUP BY DATE(v.fecha)
+        ORDER BY fecha ASC
+      `;
+      
+      const resultado = await cliente.query(consulta, [desde, hasta]);
+      return resultado.rows;
+      
+    } finally {
+      cliente.release();
+    }
+  }
+
+  // Obtener estadísticas para dashboard
+  static async obtenerEstadisticasDashboard(desde, hasta) {
+    const cliente = await pool.connect();
+    try {
+      const consulta = `
+        SELECT 
+          COUNT(v.id_venta) as total_ventas,
+          COALESCE(SUM(v.total), 0) as total_ingresos,
+          COALESCE(AVG(v.total), 0) as ticket_promedio,
+          COUNT(DISTINCT v.cliente_id) as clientes_unicos,
+          COUNT(DISTINCT v.usuario_id) as usuarios_activos
+        FROM venta v
+        WHERE v.fecha >= $1 
+          AND v.fecha <= $2 
+          AND v.estado = 'EMITIDA'
+      `;
+      
+      const resultado = await cliente.query(consulta, [desde, hasta]);
+      return resultado.rows[0] || {
+        total_ventas: 0,
+        total_ingresos: 0,
+        ticket_promedio: 0,
+        clientes_unicos: 0,
+        usuarios_activos: 0
+      };
+      
+    } finally {
+      cliente.release();
+    }
+  }
 }
 
 module.exports = VentaModel;

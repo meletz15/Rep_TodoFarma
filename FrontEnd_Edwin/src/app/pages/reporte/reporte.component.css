@@ -1,0 +1,83 @@
+/* Estilos esenciales para Angular Material */
+::ng-deep .mat-mdc-form-field {
+  width: 100%;
+}
+
+::ng-deep .mat-mdc-form-field-appearance-outline .mat-mdc-form-field-outline {
+  border-radius: 8px;
+}
+
+::ng-deep .mat-mdc-form-field-appearance-outline.mat-focused .mat-mdc-form-field-outline-thick {
+  color: #3b82f6;
+}
+
+::ng-deep .mat-mdc-form-field.mat-focused .mat-mdc-form-field-label {
+  color: #3b82f6;
+}
+
+::ng-deep .mat-mdc-table {
+  background: transparent;
+}
+
+::ng-deep .mat-mdc-header-cell {
+  border-bottom: 1px solid #e5e7eb;
+}
+
+::ng-deep .mat-mdc-cell {
+  border-bottom: 1px solid #f3f4f6;
+}
+
+::ng-deep .mat-mdc-paginator {
+  background: transparent;
+}
+
+::ng-deep .mat-mdc-progress-spinner circle {
+  stroke: #3b82f6;
+}
+
+::ng-deep .mat-mdc-select-value {
+  color: #1f2937;
+}
+
+::ng-deep .mat-mdc-select-arrow {
+  color: #6b7280;
+}
+
+::ng-deep .mat-mdc-tab-group {
+  border-radius: 12px;
+}
+
+::ng-deep .mat-mdc-tab-header {
+  border-bottom: 1px solid #e5e7eb;
+}
+
+::ng-deep .mat-mdc-tab-label {
+  font-weight: 500;
+  color: #6b7280;
+}
+
+::ng-deep .mat-mdc-tab-label.mat-mdc-tab-label-active {
+  color: #3b82f6;
+}
+
+::ng-deep .mat-mdc-ink-bar {
+  background-color: #3b82f6;
+}
+
+::ng-deep .mat-mdc-tab-body-content {
+  padding: 0;
+}
+
+@media (max-width: 768px) {
+  ::ng-deep .mat-mdc-form-field {
+    font-size: 16px;
+  }
+  
+  ::ng-deep .mat-mdc-table {
+    font-size: 14px;
+  }
+
+  ::ng-deep .mat-mdc-tab {
+    min-width: 100px;
+  }
+}
