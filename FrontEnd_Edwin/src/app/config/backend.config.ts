@@ -19,7 +19,7 @@ export interface BackendConfig {
 export const BACKEND_CONFIG: BackendConfig = {
   development: {
     baseUrl: 'http://localhost',
-    port: 3000,
+    port: 3002,
     apiUrl: 'http://localhost:3002/api'
   },
   production: {

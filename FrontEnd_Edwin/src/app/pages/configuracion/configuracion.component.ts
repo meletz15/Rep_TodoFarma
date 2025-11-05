@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatSnackBar } from '@angular/material/snack-bar';
+import { ConfiguracionService, FormatoSistema, DatosFacturacion, DireccionEmpresa, TelefonosEmpresa } from '../../services/configuracion.service';
 
 @Component({
   selector: 'app-configuracion',
@@ -24,8 +25,10 @@ export class ConfiguracionComponent implements OnInit {
     { label: 'Teléfonos de la Empresa' }
   ];
   
+  cargando = false;
+  
   // Configuración de formato del sistema
-  formatoSistema = {
+  formatoSistema: FormatoSistema = {
     formatoFecha: 'DD/MM/YYYY',
     formatoHora: '24h',
     formatoMoneda: 'Q',
@@ -36,30 +39,30 @@ export class ConfiguracionComponent implements OnInit {
   };
 
   // Configuración de datos de NIT y mensaje de factura
-  datosFacturacion = {
-    nit: '12345678-9',
+  datosFacturacion: DatosFacturacion = {
+    nit: '',
     nombreEmpresa: 'Farmacia TodoFarma',
     mensajeFactura: 'Gracias por su compra. Vuelva pronto.',
     mensajePie: 'Conserve este comprobante para garantías'
   };
 
   // Dirección de la empresa
-  direccionEmpresa = {
-    direccion: '5ta Avenida 12-34, Zona 1',
-    ciudad: 'Guatemala',
-    departamento: 'Guatemala',
-    codigoPostal: '01001',
+  direccionEmpresa: DireccionEmpresa = {
+    direccion: '',
+    ciudad: '',
+    departamento: '',
+    codigoPostal: '',
     pais: 'Guatemala'
   };
 
   // Números telefónicos de la empresa
-  telefonosEmpresa = {
-    telefonoPrincipal: '502-2251-2345',
-    telefonoSecundario: '502-2251-2346',
-    fax: '502-2251-2347',
-    whatsapp: '502-5555-1234',
-    email: 'info@todofarma.com',
-    sitioWeb: 'www.todofarma.com'
+  telefonosEmpresa: TelefonosEmpresa = {
+    telefonoPrincipal: '',
+    telefonoSecundario: '',
+    fax: '',
+    whatsapp: '',
+    email: '',
+    sitioWeb: ''
   };
 
   // Opciones para selects
@@ -91,40 +94,101 @@ export class ConfiguracionComponent implements OnInit {
     { value: 'America/New_York', label: 'Nueva York (GMT-5)' }
   ];
 
-  constructor(private snackBar: MatSnackBar) {}
+  constructor(
+    private snackBar: MatSnackBar,
+    private configuracionService: ConfiguracionService
+  ) {}
 
   ngOnInit() {
-    // Cargar configuraciones guardadas (simulado)
     this.cargarConfiguraciones();
   }
 
   cargarConfiguraciones() {
-    // Simular carga de configuraciones desde localStorage o base de datos
-    console.log('Cargando configuraciones del sistema...');
+    this.cargando = true;
+    this.configuracionService.obtenerConfiguracion().subscribe({
+      next: (response) => {
+        if (response.ok && response.datos) {
+          this.formatoSistema = response.datos.formatoSistema || this.formatoSistema;
+          this.datosFacturacion = response.datos.datosFacturacion || this.datosFacturacion;
+          this.direccionEmpresa = response.datos.direccionEmpresa || this.direccionEmpresa;
+          this.telefonosEmpresa = response.datos.telefonosEmpresa || this.telefonosEmpresa;
+        }
+        this.cargando = false;
+      },
+      error: (error) => {
+        console.error('Error al cargar configuraciones:', error);
+        this.snackBar.open('Error al cargar la configuración', 'Cerrar', { duration: 3000 });
+        this.cargando = false;
+      }
+    });
   }
 
   guardarFormatoSistema() {
-    // Simular guardado de configuración de formato
-    console.log('Guardando formato del sistema:', this.formatoSistema);
-    this.snackBar.open('Configuración de formato guardada exitosamente', 'Cerrar', { duration: 3000 });
+    this.cargando = true;
+    this.configuracionService.actualizarFormato(this.formatoSistema).subscribe({
+      next: (response) => {
+        if (response.ok) {
+          this.snackBar.open('Configuración de formato guardada exitosamente', 'Cerrar', { duration: 3000 });
+        }
+        this.cargando = false;
+      },
+      error: (error) => {
+        console.error('Error al guardar formato:', error);
+        this.snackBar.open('Error al guardar la configuración de formato', 'Cerrar', { duration: 3000 });
+        this.cargando = false;
+      }
+    });
   }
 
   guardarDatosFacturacion() {
-    // Simular guardado de datos de facturación
-    console.log('Guardando datos de facturación:', this.datosFacturacion);
-    this.snackBar.open('Datos de facturación guardados exitosamente', 'Cerrar', { duration: 3000 });
+    this.cargando = true;
+    this.configuracionService.actualizarFacturacion(this.datosFacturacion).subscribe({
+      next: (response) => {
+        if (response.ok) {
+          this.snackBar.open('Datos de facturación guardados exitosamente', 'Cerrar', { duration: 3000 });
+        }
+        this.cargando = false;
+      },
+      error: (error) => {
+        console.error('Error al guardar facturación:', error);
+        this.snackBar.open('Error al guardar los datos de facturación', 'Cerrar', { duration: 3000 });
+        this.cargando = false;
+      }
+    });
   }
 
   guardarDireccionEmpresa() {
-    // Simular guardado de dirección
-    console.log('Guardando dirección de empresa:', this.direccionEmpresa);
-    this.snackBar.open('Dirección de empresa guardada exitosamente', 'Cerrar', { duration: 3000 });
+    this.cargando = true;
+    this.configuracionService.actualizarDireccion(this.direccionEmpresa).subscribe({
+      next: (response) => {
+        if (response.ok) {
+          this.snackBar.open('Dirección de empresa guardada exitosamente', 'Cerrar', { duration: 3000 });
+        }
+        this.cargando = false;
+      },
+      error: (error) => {
+        console.error('Error al guardar dirección:', error);
+        this.snackBar.open('Error al guardar la dirección de empresa', 'Cerrar', { duration: 3000 });
+        this.cargando = false;
+      }
+    });
   }
 
   guardarTelefonosEmpresa() {
-    // Simular guardado de teléfonos
-    console.log('Guardando teléfonos de empresa:', this.telefonosEmpresa);
-    this.snackBar.open('Teléfonos de empresa guardados exitosamente', 'Cerrar', { duration: 3000 });
+    this.cargando = true;
+    this.configuracionService.actualizarTelefonos(this.telefonosEmpresa).subscribe({
+      next: (response) => {
+        if (response.ok) {
+          this.snackBar.open('Teléfonos de empresa guardados exitosamente', 'Cerrar', { duration: 3000 });
+        }
+        this.cargando = false;
+      },
+      error: (error) => {
+        console.error('Error al guardar teléfonos:', error);
+        this.snackBar.open('Error al guardar los teléfonos de empresa', 'Cerrar', { duration: 3000 });
+        this.cargando = false;
+      }
+    });
   }
 
   resetearFormatoSistema() {

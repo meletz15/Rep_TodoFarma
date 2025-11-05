@@ -6,6 +6,11 @@
       <p class="text-gray-600">Gestiona la configuración general del sistema, datos de facturación y información de la empresa</p>
     </div>
 
+    <!-- Indicador de carga -->
+    <div *ngIf="cargando" class="mb-4 bg-blue-100 border border-blue-400 text-blue-700 px-4 py-3 rounded">
+      <p class="text-center">Cargando configuración...</p>
+    </div>
+
     <!-- Tabs de configuración -->
     <div class="bg-white rounded-xl shadow-lg">
       <!-- Tab Navigation -->

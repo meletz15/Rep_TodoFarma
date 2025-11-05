@@ -9,7 +9,10 @@ const pool = new Pool({
   password: process.env.DB_PASSWORD || 'admin123',
   max: 20,
   idleTimeoutMillis: 30000,
-  connectionTimeoutMillis: 2000,
+  connectionTimeoutMillis: 10000,
+  ssl: process.env.DB_HOST && process.env.DB_HOST.includes('amazonaws.com') ? {
+    rejectUnauthorized: false
+  } : false,
 });
 
 // Evento para manejar errores de conexión

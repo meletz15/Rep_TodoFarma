@@ -1,13 +1,13 @@
 import {
-  DomPortalOutlet,
-  PortalModule,
-  TemplatePortal
-} from "./chunk-MCQ46PNW.js";
-import {
   ScrollDispatcher,
   ScrollingModule,
   ViewportRuler
 } from "./chunk-AO5JBJ5A.js";
+import {
+  DomPortalOutlet,
+  PortalModule,
+  TemplatePortal
+} from "./chunk-MCQ46PNW.js";
 import {
   BidiModule,
   Directionality,
@@ -2816,4 +2816,4 @@ export {
   CdkConnectedOverlay,
   OverlayModule
 };
-//# sourceMappingURL=chunk-VJJ3EE5I.js.map
+//# sourceMappingURL=chunk-G4KOU5CY.js.map
