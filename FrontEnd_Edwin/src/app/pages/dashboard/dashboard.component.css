@@ -208,3 +208,9 @@
 .info-card mat-card-content {
   padding: 0;
 }
+
+/* Spinner inline */
+.inline-spinner {
+  display: inline-block;
+  vertical-align: middle;
+}

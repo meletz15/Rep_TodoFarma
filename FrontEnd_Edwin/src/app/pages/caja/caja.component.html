@@ -64,7 +64,7 @@
       <div class="space-y-2">
         <label class="block text-sm font-medium text-gray-700">Estado</label>
         <mat-form-field appearance="outline" class="w-full">
-          <mat-select>
+          <mat-select [(ngModel)]="cajaFiltros.estado">
             <mat-option value="">Todos</mat-option>
             <mat-option value="ABIERTO">Abierto</mat-option>
             <mat-option value="CERRADO">Cerrado</mat-option>
@@ -75,26 +75,36 @@
       <div class="space-y-2">
         <label class="block text-sm font-medium text-gray-700">Usuario Apertura</label>
         <mat-form-field appearance="outline" class="w-full">
-          <mat-select>
-            <mat-option value="">Todos</mat-option>
+          <mat-select [(ngModel)]="cajaFiltros.usuario_apertura">
+            <mat-option [value]="undefined">Todos</mat-option>
+            <mat-option *ngFor="let usuario of usuariosParaDropdown" [value]="usuario.id_usuario">
+              {{usuario.nombre}} {{usuario.apellido}}
+            </mat-option>
           </mat-select>
-        </mat-form-field>
-      </div>
-
-      <div class="space-y-2">
-        <label class="block text-sm font-medium text-gray-700">Búsqueda</label>
-        <mat-form-field appearance="outline" class="w-full">
-          <input matInput placeholder="Observación...">
-          <mat-icon matSuffix class="text-gray-400">search</mat-icon>
         </mat-form-field>
       </div>
 
       <div class="space-y-2">
         <label class="block text-sm font-medium text-gray-700">Fecha Desde</label>
         <mat-form-field appearance="outline" class="w-full">
-          <input matInput [matDatepicker]="pickerDesde">
+          <input matInput 
+                 [matDatepicker]="pickerDesde"
+                 [(ngModel)]="cajaFiltros.fecha_desde"
+                 placeholder="Seleccionar fecha">
           <mat-datepicker-toggle matSuffix [for]="pickerDesde"></mat-datepicker-toggle>
           <mat-datepicker #pickerDesde></mat-datepicker>
+        </mat-form-field>
+      </div>
+
+      <div class="space-y-2">
+        <label class="block text-sm font-medium text-gray-700">Fecha Hasta</label>
+        <mat-form-field appearance="outline" class="w-full">
+          <input matInput 
+                 [matDatepicker]="pickerHasta"
+                 [(ngModel)]="cajaFiltros.fecha_hasta"
+                 placeholder="Seleccionar fecha">
+          <mat-datepicker-toggle matSuffix [for]="pickerHasta"></mat-datepicker-toggle>
+          <mat-datepicker #pickerHasta></mat-datepicker>
         </mat-form-field>
       </div>
     </div>
@@ -102,6 +112,7 @@
     <div class="flex justify-end gap-3 mt-6">
       <button 
         mat-button 
+        (click)="limpiarFiltros()"
         class="text-gray-600 hover:text-gray-800">
         <mat-icon>clear</mat-icon>
         Limpiar
@@ -109,6 +120,7 @@
       <button 
         mat-raised-button 
         color="primary" 
+        (click)="aplicarFiltros()"
         class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg">
         <mat-icon>search</mat-icon>
         Buscar
@@ -300,6 +312,175 @@
           </button>
         </div>
       </form>
+    </div>
+  </div>
+
+  <!-- Modal de Detalles de Caja -->
+  <div *ngIf="cajaDetalleModalAbierto" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4" data-modal>
+    <div class="bg-white rounded-xl shadow-2xl w-full max-w-6xl mx-4 max-h-[90vh] overflow-y-auto" style="z-index: 9999 !important;">
+      <!-- Header del Modal -->
+      <div class="p-6 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-indigo-50">
+        <div class="flex items-center justify-between">
+          <div>
+            <h3 class="text-2xl font-bold text-gray-900">Detalles de Caja #{{ cajaSeleccionada?.id_caja }}</h3>
+            <p class="text-gray-600 mt-1">Información completa de la caja y sus ventas</p>
+          </div>
+          <button 
+            (click)="cerrarModalDetalles()"
+            class="text-gray-400 hover:text-gray-600 transition-colors">
+            <mat-icon>close</mat-icon>
+          </button>
+        </div>
+      </div>
+
+      <!-- Loading -->
+      <div *ngIf="cajaDetalleCargando" class="p-12 text-center">
+        <mat-spinner diameter="50" class="mx-auto"></mat-spinner>
+        <p class="text-gray-500 mt-4">Cargando detalles...</p>
+      </div>
+
+      <!-- Contenido del Modal -->
+      <div *ngIf="!cajaDetalleCargando && cajaSeleccionada" class="p-6">
+        <!-- Información General de la Caja -->
+        <div class="bg-white rounded-xl border border-gray-200 p-6 mb-6">
+          <h4 class="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+            <mat-icon class="text-blue-600">info</mat-icon>
+            Información General
+          </h4>
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div>
+              <label class="block text-sm font-medium text-gray-500 mb-1">Estado</label>
+              <span class="inline-flex px-3 py-1 text-sm font-semibold rounded-full"
+                    [ngClass]="{
+                      'bg-green-100 text-green-800': cajaSeleccionada.estado === 'ABIERTO',
+                      'bg-red-100 text-red-800': cajaSeleccionada.estado === 'CERRADO'
+                    }">
+                {{ cajaSeleccionada.estado }}
+              </span>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-500 mb-1">Usuario Apertura</label>
+              <p class="text-gray-900 font-medium">{{ cajaSeleccionada.usuario_nombre || 'N/A' }}</p>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-500 mb-1">Fecha Apertura</label>
+              <p class="text-gray-900 font-medium">{{ formatearFecha(cajaSeleccionada.fecha_apertura) }}</p>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-500 mb-1">Saldo Inicial</label>
+              <p class="text-gray-900 font-semibold text-lg">{{ formatearPrecio(cajaSeleccionada.saldo_inicial) }}</p>
+            </div>
+            <div *ngIf="cajaSeleccionada.fecha_cierre">
+              <label class="block text-sm font-medium text-gray-500 mb-1">Fecha Cierre</label>
+              <p class="text-gray-900 font-medium">{{ formatearFecha(cajaSeleccionada.fecha_cierre) }}</p>
+            </div>
+            <div *ngIf="cajaSeleccionada.saldo_cierre">
+              <label class="block text-sm font-medium text-gray-500 mb-1">Saldo Cierre</label>
+              <p class="text-gray-900 font-semibold text-lg">{{ formatearPrecio(cajaSeleccionada.saldo_cierre) }}</p>
+            </div>
+            <div *ngIf="cajaSeleccionada.observacion" class="md:col-span-2 lg:col-span-3">
+              <label class="block text-sm font-medium text-gray-500 mb-1">Observación</label>
+              <p class="text-gray-900">{{ cajaSeleccionada.observacion }}</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Estadísticas -->
+        <div *ngIf="cajaSeleccionada.estadisticas" class="bg-gradient-to-r from-emerald-50 to-green-50 rounded-xl border border-emerald-200 p-6 mb-6">
+          <h4 class="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+            <mat-icon class="text-emerald-600">analytics</mat-icon>
+            Estadísticas
+          </h4>
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div class="bg-white rounded-lg p-4 shadow-sm">
+              <label class="block text-sm font-medium text-gray-500 mb-1">Total Ventas</label>
+              <p class="text-2xl font-bold text-emerald-600">{{ cajaSeleccionada.estadisticas.total_ventas }}</p>
+            </div>
+            <div class="bg-white rounded-lg p-4 shadow-sm">
+              <label class="block text-sm font-medium text-gray-500 mb-1">Monto Total Ventas</label>
+              <p class="text-2xl font-bold text-emerald-600">{{ formatearPrecio(cajaSeleccionada.estadisticas.total_ventas_monto) }}</p>
+            </div>
+            <div class="bg-white rounded-lg p-4 shadow-sm">
+              <label class="block text-sm font-medium text-gray-500 mb-1">Promedio por Venta</label>
+              <p class="text-2xl font-bold text-emerald-600">{{ formatearPrecio(cajaSeleccionada.estadisticas.promedio_venta) }}</p>
+            </div>
+            <div class="bg-white rounded-lg p-4 shadow-sm">
+              <label class="block text-sm font-medium text-gray-500 mb-1">Saldo Actual</label>
+              <p class="text-2xl font-bold text-emerald-600">{{ formatearPrecio(cajaSeleccionada.estadisticas.saldo_actual) }}</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Lista de Ventas -->
+        <div class="bg-white rounded-xl border border-gray-200">
+          <div class="p-4 border-b border-gray-200 bg-gray-50">
+            <h4 class="text-lg font-semibold text-gray-900 flex items-center gap-2">
+              <mat-icon class="text-blue-600">shopping_cart</mat-icon>
+              Ventas de la Caja
+              <span class="ml-2 text-sm font-normal text-gray-500">
+                ({{ cajaSeleccionada.ventas?.length || 0 }} venta{{ (cajaSeleccionada.ventas?.length || 0) !== 1 ? 's' : '' }})
+              </span>
+            </h4>
+          </div>
+          
+          <div *ngIf="!cajaSeleccionada.ventas || cajaSeleccionada.ventas.length === 0" class="p-12 text-center">
+            <mat-icon class="text-6xl text-gray-300 mb-4">shopping_cart_outlined</mat-icon>
+            <p class="text-gray-500 text-lg">No hay ventas registradas en esta caja</p>
+          </div>
+
+          <div *ngIf="cajaSeleccionada.ventas && cajaSeleccionada.ventas.length > 0" class="overflow-x-auto">
+            <table class="w-full">
+              <thead class="bg-gray-50">
+                <tr>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID Venta</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Fecha</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Cliente</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Usuario</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Estado</th>
+                  <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Total</th>
+                </tr>
+              </thead>
+              <tbody class="bg-white divide-y divide-gray-200">
+                <tr *ngFor="let venta of cajaSeleccionada.ventas" class="hover:bg-gray-50">
+                  <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                    #{{ venta.id_venta }}
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    {{ formatearFecha(venta.fecha) }}
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    {{ venta.cliente_nombre || 'Cliente General' }}
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    {{ venta.usuario_nombre }}
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap">
+                    <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full"
+                          [ngClass]="{
+                            'bg-green-100 text-green-800': venta.estado === 'EMITIDA',
+                            'bg-red-100 text-red-800': venta.estado === 'ANULADA'
+                          }">
+                      {{ venta.estado }}
+                    </span>
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900 text-right">
+                    {{ formatearPrecio(venta.total) }}
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Botón Cerrar -->
+        <div class="flex justify-end mt-6 pt-6 border-t border-gray-200">
+          <button
+            (click)="cerrarModalDetalles()"
+            class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+            Cerrar
+          </button>
+        </div>
+      </div>
     </div>
   </div>
 </div>

@@ -18,6 +18,7 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { UsuarioService } from '../../services/usuario.service';
 import { Usuario, UsuarioCreate, UsuarioUpdate } from '../../models/usuario.model';
+import { ConfirmDialogComponent } from '../../components/confirm-dialog.component';
 import * as XLSX from 'xlsx';
 import { saveAs } from 'file-saver';
 
@@ -253,24 +254,35 @@ export class UsuariosComponent implements OnInit {
   }
 
   eliminarUsuario(usuario: Usuario): void {
-    if (confirm(`¿Está seguro de que desea eliminar al usuario ${usuario.nombre} ${usuario.apellido}?`)) {
-      this.usuarioService.eliminarUsuario(usuario.id_usuario)
-        .subscribe({
-          next: (response) => {
-            if (response.ok) {
-              this.snackBar.open('Usuario eliminado correctamente', 'Cerrar', {
+    const dialogRef = this.dialog.open(ConfirmDialogComponent, {
+      data: {
+        titulo: 'Eliminar Usuario',
+        mensaje: `¿Está seguro de que desea eliminar al usuario ${usuario.nombre} ${usuario.apellido}?`,
+        confirmarTexto: 'Eliminar',
+        cancelarTexto: 'Cancelar'
+      }
+    });
+
+    dialogRef.afterClosed().subscribe(result => {
+      if (result) {
+        this.usuarioService.eliminarUsuario(usuario.id_usuario)
+          .subscribe({
+            next: (response) => {
+              if (response.ok) {
+                this.snackBar.open('Usuario eliminado correctamente', 'Cerrar', {
+                  duration: 3000
+                });
+                this.cargarUsuarios();
+              }
+            },
+            error: (error) => {
+              this.snackBar.open(error.error?.mensaje || 'Error al eliminar usuario', 'Cerrar', {
                 duration: 3000
               });
-              this.cargarUsuarios();
             }
-          },
-          error: (error) => {
-            this.snackBar.open(error.error?.mensaje || 'Error al eliminar usuario', 'Cerrar', {
-              duration: 3000
-            });
-          }
-        });
-    }
+          });
+      }
+    });
   }
 
   cerrarDialogo(): void {

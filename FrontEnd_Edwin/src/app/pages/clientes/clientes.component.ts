@@ -18,6 +18,7 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { ClienteService } from '../../services/cliente.service';
 import { Cliente, ClienteCreate, ClienteUpdate } from '../../models/cliente.model';
+import { ConfirmDialogComponent } from '../../components/confirm-dialog.component';
 import * as XLSX from 'xlsx';
 import { saveAs } from 'file-saver';
 
@@ -285,24 +286,35 @@ export class ClientesComponent implements OnInit {
   }
 
   eliminarCliente(cliente: Cliente): void {
-    if (confirm(`¿Está seguro de que desea eliminar al cliente ${cliente.nombres} ${cliente.apellidos || ''}?`)) {
-      this.clienteService.eliminarCliente(cliente.id_cliente)
-        .subscribe({
-          next: (response) => {
-            if (response.ok) {
-              this.snackBar.open('Cliente eliminado correctamente', 'Cerrar', {
+    const dialogRef = this.dialog.open(ConfirmDialogComponent, {
+      data: {
+        titulo: 'Eliminar Cliente',
+        mensaje: `¿Está seguro de que desea eliminar al cliente ${cliente.nombres} ${cliente.apellidos || ''}?`,
+        confirmarTexto: 'Eliminar',
+        cancelarTexto: 'Cancelar'
+      }
+    });
+
+    dialogRef.afterClosed().subscribe(result => {
+      if (result) {
+        this.clienteService.eliminarCliente(cliente.id_cliente)
+          .subscribe({
+            next: (response) => {
+              if (response.ok) {
+                this.snackBar.open('Cliente eliminado correctamente', 'Cerrar', {
+                  duration: 3000
+                });
+                this.cargarClientes();
+              }
+            },
+            error: (error) => {
+              this.snackBar.open(error.error?.mensaje || 'Error al eliminar cliente', 'Cerrar', {
                 duration: 3000
               });
-              this.cargarClientes();
             }
-          },
-          error: (error) => {
-            this.snackBar.open(error.error?.mensaje || 'Error al eliminar cliente', 'Cerrar', {
-              duration: 3000
-            });
-          }
-        });
-    }
+          });
+      }
+    });
   }
 
   cerrarDialogo(): void {

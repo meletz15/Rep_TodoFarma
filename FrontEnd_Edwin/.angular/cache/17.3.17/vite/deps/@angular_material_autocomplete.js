@@ -2,18 +2,18 @@ import {
   Overlay,
   OverlayConfig,
   OverlayModule
-} from "./chunk-G4KOU5CY.js";
+} from "./chunk-HFKHT6LT.js";
+import {
+  TemplatePortal
+} from "./chunk-NFIYCVQY.js";
 import {
   CdkScrollableModule,
   ViewportRuler
-} from "./chunk-AO5JBJ5A.js";
-import {
-  TemplatePortal
-} from "./chunk-MCQ46PNW.js";
+} from "./chunk-NUJIQBJ3.js";
 import {
   MAT_FORM_FIELD,
   MatFormField
-} from "./chunk-RAFL57LA.js";
+} from "./chunk-5SDR7BGY.js";
 import {
   animate,
   group,
@@ -21,10 +21,10 @@ import {
   style,
   transition,
   trigger
-} from "./chunk-PU4OD3SX.js";
+} from "./chunk-AHRZLYP6.js";
 import {
   NG_VALUE_ACCESSOR
-} from "./chunk-WEXDXDMG.js";
+} from "./chunk-VY4JN76D.js";
 import {
   ActiveDescendantKeyManager,
   DOWN_ARROW,
@@ -47,11 +47,11 @@ import {
   addAriaReferencedId,
   hasModifierKey,
   removeAriaReferencedId
-} from "./chunk-4HSFNC6N.js";
+} from "./chunk-5VPVKRNZ.js";
 import {
   CommonModule,
   DOCUMENT
-} from "./chunk-YBCPKXH5.js";
+} from "./chunk-LZCN2ES2.js";
 import {
   ChangeDetectionStrategy,
   ChangeDetectorRef,
@@ -104,7 +104,7 @@ import {
   ɵɵrestoreView,
   ɵɵtemplate,
   ɵɵviewQuery
-} from "./chunk-JSFEMK6X.js";
+} from "./chunk-KG6KPI4G.js";
 import {
   Subject,
   Subscription,
@@ -120,7 +120,7 @@ import {
   take,
   tap
 } from "./chunk-E5ECCKE6.js";
-import "./chunk-3OV72XIM.js";
+import "./chunk-TXDUYLVM.js";
 
 // node_modules/@angular/material/fesm2022/autocomplete.mjs
 var _c0 = ["panel"];

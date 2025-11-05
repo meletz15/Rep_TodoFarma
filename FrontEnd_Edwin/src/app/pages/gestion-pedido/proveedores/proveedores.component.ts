@@ -18,6 +18,7 @@ import { MatTooltipModule } from "@angular/material/tooltip";
 import { Proveedor, ProveedorCreate, ProveedorUpdate,} from "../../../models/proveedor.model";
 import { MatSnackBar } from "@angular/material/snack-bar";
 import { ProveedorService } from "../../../services/proveedor.service";
+import { ConfirmDialogComponent } from "../../../components/confirm-dialog.component";
 import * as XLSX from "xlsx";
 import saveAs from "file-saver";
 
@@ -264,29 +265,36 @@ export class ProveedoresComponent implements OnInit {
   }
 
   eliminarProveedor(proveedor: Proveedor): void {
-    if (
-      confirm(
-        `¿Está seguro de que desea eliminar al proveedor ${proveedor.nombre}?`
-      )
-    ) {
-      this.proveedorService.eliminarProveedor(proveedor.id).subscribe({
-        next: (response) => {
-          if (response.ok) {
-            this.snackBar.open("Proveedor eliminado correctamente", "Cerrar", {
-              duration: 3000,
-            });
-            this.cargarProveedores();
-          }
-        },
-        error: (error) => {
-          this.snackBar.open(
-            error.error?.mensaje || "Error al eliminar proveedor",
-            "Cerrar",
-            { duration: 3000 }
-          );
-        },
-      });
-    }
+    const dialogRef = this.dialog.open(ConfirmDialogComponent, {
+      data: {
+        titulo: 'Eliminar Proveedor',
+        mensaje: `¿Está seguro de que desea eliminar al proveedor ${proveedor.nombre}?`,
+        confirmarTexto: 'Eliminar',
+        cancelarTexto: 'Cancelar'
+      }
+    });
+
+    dialogRef.afterClosed().subscribe(result => {
+      if (result) {
+        this.proveedorService.eliminarProveedor(proveedor.id).subscribe({
+          next: (response) => {
+            if (response.ok) {
+              this.snackBar.open("Proveedor eliminado correctamente", "Cerrar", {
+                duration: 3000,
+              });
+              this.cargarProveedores();
+            }
+          },
+          error: (error) => {
+            this.snackBar.open(
+              error.error?.mensaje || "Error al eliminar proveedor",
+              "Cerrar",
+              { duration: 3000 }
+            );
+          },
+        });
+      }
+    });
   }
 
   cerrarDialogo(): void {

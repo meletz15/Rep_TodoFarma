@@ -13,7 +13,12 @@
             <mat-icon>people</mat-icon>
           </div>
           <div class="stat-info">
-            <h3 class="stat-number">150</h3>
+            <h3 class="stat-number">
+              <span *ngIf="cargandoUsuarios">
+                <mat-spinner diameter="24" class="inline-spinner"></mat-spinner>
+              </span>
+              <span *ngIf="!cargandoUsuarios">{{ formatearNumero(usuariosActivos) }}</span>
+            </h3>
             <p class="stat-label">Usuarios Activos</p>
           </div>
         </div>
@@ -27,7 +32,12 @@
             <mat-icon>inventory</mat-icon>
           </div>
           <div class="stat-info">
-            <h3 class="stat-number">2,450</h3>
+            <h3 class="stat-number">
+              <span *ngIf="cargandoProductos">
+                <mat-spinner diameter="24" class="inline-spinner"></mat-spinner>
+              </span>
+              <span *ngIf="!cargandoProductos">{{ formatearNumero(totalProductos) }}</span>
+            </h3>
             <p class="stat-label">Productos</p>
           </div>
         </div>
@@ -41,7 +51,12 @@
             <mat-icon>point_of_sale</mat-icon>
           </div>
           <div class="stat-info">
-            <h3 class="stat-number">89</h3>
+            <h3 class="stat-number">
+              <span *ngIf="cargandoVentas">
+                <mat-spinner diameter="24" class="inline-spinner"></mat-spinner>
+              </span>
+              <span *ngIf="!cargandoVentas">{{ formatearNumero(ventasHoy) }}</span>
+            </h3>
             <p class="stat-label">Ventas Hoy</p>
           </div>
         </div>
@@ -55,7 +70,12 @@
             <mat-icon>trending_up</mat-icon>
           </div>
           <div class="stat-info">
-            <h3 class="stat-number">Q12,450</h3>
+            <h3 class="stat-number">
+              <span *ngIf="cargandoVentas">
+                <mat-spinner diameter="24" class="inline-spinner"></mat-spinner>
+              </span>
+              <span *ngIf="!cargandoVentas">{{ formatearPrecio(ingresosHoy) }}</span>
+            </h3>
             <p class="stat-label">Ingresos del Día</p>
           </div>
         </div>

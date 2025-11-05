@@ -36,7 +36,7 @@ export class CajaService {
     return this.http.get<ApiResponse<Caja | null>>(`${this.apiUrl}/abierta`);
   }
 
-  // Obtener todas las cajas con paginación y filtros
+  // Obtener todas las cajas con paginación y filtros (para compatibilidad con otros componentes)
   obtenerCajas(pagina: number = 1, limite: number = 10, filtros?: CajaFiltros): Observable<ApiResponse<PaginatedResponse<Caja>>> {
     let params = new HttpParams()
       .set('pagina', pagina.toString())
@@ -49,12 +49,34 @@ export class CajaService {
       if (filtros.usuario_apertura) {
         params = params.set('usuario_apertura', filtros.usuario_apertura.toString());
       }
-      if (filtros.fecha_desde) {
-        params = params.set('fecha_desde', filtros.fecha_desde);
+      // NO enviar fechas al backend - se filtran en el frontend
+      // if (filtros.fecha_desde) {
+      //   params = params.set('fecha_desde', filtros.fecha_desde);
+      // }
+      // if (filtros.fecha_hasta) {
+      //   params = params.set('fecha_hasta', filtros.fecha_hasta);
+      // }
+    }
+
+    return this.http.get<ApiResponse<PaginatedResponse<Caja>>>(this.apiUrl, { params });
+  }
+
+  // Obtener todas las cajas sin paginación (para filtrado y paginación en frontend)
+  obtenerTodasLasCajas(filtros?: CajaFiltros): Observable<ApiResponse<PaginatedResponse<Caja>>> {
+    let params = new HttpParams();
+    
+    // El backend tiene un límite máximo de 100 según validarPaginacion
+    // Usamos el límite máximo permitido para obtener la mayor cantidad de cajas
+    params = params.set('pagina', '1').set('limite', '100');
+
+    if (filtros) {
+      if (filtros.estado) {
+        params = params.set('estado', filtros.estado);
       }
-      if (filtros.fecha_hasta) {
-        params = params.set('fecha_hasta', filtros.fecha_hasta);
+      if (filtros.usuario_apertura) {
+        params = params.set('usuario_apertura', filtros.usuario_apertura.toString());
       }
+      // NO enviar fechas al backend - se filtran en el frontend
     }
 
     return this.http.get<ApiResponse<PaginatedResponse<Caja>>>(this.apiUrl, { params });

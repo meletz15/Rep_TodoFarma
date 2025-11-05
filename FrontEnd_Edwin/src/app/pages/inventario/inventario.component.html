@@ -35,7 +35,7 @@
       <div class="space-y-2">
         <label class="block text-sm font-medium text-gray-700">Tipo de Movimiento</label>
         <mat-form-field appearance="outline" class="w-full">
-          <mat-select>
+          <mat-select [(ngModel)]="movimientoFiltros.tipo">
             <mat-option value="">Todos</mat-option>
             <mat-option value="ENTRADA_COMPRA">Entrada por Compra</mat-option>
             <mat-option value="SALIDA_VENTA">Salida por Venta</mat-option>
@@ -50,8 +50,11 @@
       <div class="space-y-2">
         <label class="block text-sm font-medium text-gray-700">Producto</label>
         <mat-form-field appearance="outline" class="w-full">
-          <mat-select>
-            <mat-option value="">Todos</mat-option>
+          <mat-select [(ngModel)]="movimientoFiltros.producto_id">
+            <mat-option [value]="undefined">Todos</mat-option>
+            <mat-option *ngFor="let producto of productosParaDropdown" [value]="producto.id_producto">
+              {{ producto.nombre }}
+            </mat-option>
           </mat-select>
         </mat-form-field>
       </div>
@@ -59,7 +62,7 @@
       <div class="space-y-2">
         <label class="block text-sm font-medium text-gray-700">Búsqueda</label>
         <mat-form-field appearance="outline" class="w-full">
-          <input matInput placeholder="Referencia, observación...">
+          <input matInput [(ngModel)]="movimientoFiltros.busqueda" placeholder="Referencia, observación...">
           <mat-icon matSuffix class="text-gray-400">search</mat-icon>
         </mat-form-field>
       </div>
@@ -67,9 +70,20 @@
       <div class="space-y-2">
         <label class="block text-sm font-medium text-gray-700">Fecha Desde</label>
         <mat-form-field appearance="outline" class="w-full">
-          <input matInput [matDatepicker]="pickerDesde">
+          <input matInput [matDatepicker]="pickerDesde" [(ngModel)]="movimientoFiltros.fecha_desde">
           <mat-datepicker-toggle matSuffix [for]="pickerDesde"></mat-datepicker-toggle>
           <mat-datepicker #pickerDesde></mat-datepicker>
+        </mat-form-field>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mt-4">
+      <div class="space-y-2">
+        <label class="block text-sm font-medium text-gray-700">Fecha Hasta</label>
+        <mat-form-field appearance="outline" class="w-full">
+          <input matInput [matDatepicker]="pickerHasta" [(ngModel)]="movimientoFiltros.fecha_hasta">
+          <mat-datepicker-toggle matSuffix [for]="pickerHasta"></mat-datepicker-toggle>
+          <mat-datepicker #pickerHasta></mat-datepicker>
         </mat-form-field>
       </div>
     </div>
@@ -77,6 +91,7 @@
     <div class="flex justify-end gap-3 mt-6">
       <button 
         mat-button 
+        (click)="limpiarFiltrosMovimiento()"
         class="text-gray-600 hover:text-gray-800">
         <mat-icon>clear</mat-icon>
         Limpiar
@@ -84,6 +99,7 @@
       <button 
         mat-raised-button 
         color="primary" 
+        (click)="aplicarFiltrosMovimiento()"
         class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg">
         <mat-icon>search</mat-icon>
         Buscar

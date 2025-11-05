@@ -226,8 +226,15 @@ class CajaModel {
       
       const resultado = await cliente.query(consulta, parametros);
       
+      // Mapear campos para el frontend
+      const cajasMapeadas = resultado.rows.map(caja => ({
+        ...caja,
+        usuario_nombre: caja.usuario_apertura_nombre || 'N/A',
+        usuario_cierre_nombre: caja.usuario_cierre_nombre || null
+      }));
+      
       return {
-        cajas: resultado.rows,
+        cajas: cajasMapeadas,
         total
       };
     } finally {
@@ -259,7 +266,14 @@ class CajaModel {
       // Obtener ventas de la caja
       const ventasResultado = await cliente.query(
         `SELECT v.id_venta, v.fecha, v.total, v.estado, v.observacion,
-                c.nombre as cliente_nombre, u.nombre as usuario_nombre
+                CASE 
+                  WHEN c.nombres IS NOT NULL AND c.apellidos IS NOT NULL 
+                  THEN CONCAT(c.nombres, ' ', c.apellidos)
+                  WHEN c.nombres IS NOT NULL 
+                  THEN c.nombres
+                  ELSE NULL
+                END as cliente_nombre, 
+                CONCAT(u.nombre, ' ', u.apellido) as usuario_nombre
          FROM venta v
          LEFT JOIN cliente c ON v.cliente_id = c.id_cliente
          JOIN usuarios u ON v.usuario_id = u.id_usuario
@@ -269,6 +283,23 @@ class CajaModel {
       );
 
       caja.ventas = ventasResultado.rows;
+      
+      // Mapear campos para el frontend
+      caja.usuario_nombre = caja.usuario_apertura_nombre || 'N/A';
+      caja.usuario_cierre_nombre = caja.usuario_cierre_nombre || null;
+      
+      // Calcular estadísticas
+      const totalVentas = caja.ventas.length;
+      const totalVentasMonto = caja.ventas.reduce((sum, v) => sum + parseFloat(v.total || 0), 0);
+      const promedioVenta = totalVentas > 0 ? totalVentasMonto / totalVentas : 0;
+      const saldoActual = parseFloat(caja.saldo_inicial || 0) + totalVentasMonto;
+      
+      caja.estadisticas = {
+        total_ventas: totalVentas,
+        total_ventas_monto: totalVentasMonto,
+        promedio_venta: promedioVenta,
+        saldo_actual: saldoActual
+      };
 
       return caja;
     } finally {

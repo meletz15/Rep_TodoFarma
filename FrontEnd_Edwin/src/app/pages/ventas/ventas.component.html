@@ -367,9 +367,19 @@
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
           <!-- Cliente -->
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2">
-              Cliente (Opcional)
-            </label>
+            <div class="flex items-center justify-between mb-2">
+              <label class="block text-sm font-medium text-gray-700">
+                Cliente (Opcional)
+              </label>
+              <button 
+                type="button"
+                (click)="abrirModalCliente()"
+                mat-icon-button
+                class="text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-full p-2 transition-colors duration-200"
+                matTooltip="Agregar nuevo cliente">
+                <mat-icon>person_add</mat-icon>
+              </button>
+            </div>
             <mat-form-field appearance="outline" class="w-full">
               <input matInput 
                      placeholder="Buscar cliente por nombre o email..." 
@@ -549,3 +559,148 @@
       </form>
     </div>
   </div>
+
+  <!-- Modal para Crear Cliente -->
+  <div *ngIf="clienteModalAbierto" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4" 
+       style="z-index: 10000 !important;"
+       (click)="cerrarModalCliente()">
+    <div class="bg-white rounded-xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto" 
+         style="z-index: 10001 !important;"
+         (click)="$event.stopPropagation()">
+      <!-- Header del dialog -->
+      <div class="flex justify-between items-center p-6 border-b border-gray-200">
+        <h2 class="text-xl font-semibold text-gray-900">
+          Crear Nuevo Cliente
+        </h2>
+        <button 
+          (click)="cerrarModalCliente()"
+          class="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors duration-200"
+        >
+          <mat-icon>close</mat-icon>
+        </button>
+      </div>
+
+      <!-- Contenido del dialog -->
+      <div class="p-6">
+        <form [formGroup]="clienteForm" (ngSubmit)="guardarCliente()" class="space-y-6">
+          <!-- Nombres y Apellidos -->
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="space-y-2">
+              <label class="block text-sm font-medium text-gray-700">Nombres *</label>
+              <mat-form-field appearance="outline" class="w-full">
+                <input matInput formControlName="nombres" placeholder="Ingrese los nombres">
+                <mat-error *ngIf="clienteForm.get('nombres')?.hasError('required')">
+                  Los nombres son requeridos
+                </mat-error>
+                <mat-error *ngIf="clienteForm.get('nombres')?.hasError('minlength')">
+                  Los nombres deben tener al menos 2 caracteres
+                </mat-error>
+              </mat-form-field>
+            </div>
+
+            <div class="space-y-2">
+              <label class="block text-sm font-medium text-gray-700">Apellidos</label>
+              <mat-form-field appearance="outline" class="w-full">
+                <input matInput formControlName="apellidos" placeholder="Ingrese los apellidos">
+                <mat-error *ngIf="clienteForm.get('apellidos')?.hasError('minlength')">
+                  Los apellidos deben tener al menos 2 caracteres
+                </mat-error>
+              </mat-form-field>
+            </div>
+          </div>
+
+          <!-- NIT y Email -->
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="space-y-2">
+              <label class="block text-sm font-medium text-gray-700">NIT</label>
+              <mat-form-field appearance="outline" class="w-full">
+                <input matInput formControlName="nit" placeholder="Número de Identificación Tributaria">
+                <mat-error *ngIf="clienteForm.get('nit')?.hasError('maxlength')">
+                  El NIT no puede exceder 20 caracteres
+                </mat-error>
+              </mat-form-field>
+            </div>
+
+            <div class="space-y-2">
+              <label class="block text-sm font-medium text-gray-700">Email</label>
+              <mat-form-field appearance="outline" class="w-full">
+                <input matInput formControlName="email" type="email" placeholder="ejemplo@correo.com">
+                <mat-error *ngIf="clienteForm.get('email')?.hasError('email')">
+                  Ingrese un email válido
+                </mat-error>
+                <mat-error *ngIf="clienteForm.get('email')?.hasError('maxlength')">
+                  El email no puede exceder 160 caracteres
+                </mat-error>
+              </mat-form-field>
+            </div>
+          </div>
+
+          <!-- Teléfono y Dirección -->
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="space-y-2">
+              <label class="block text-sm font-medium text-gray-700">Teléfono</label>
+              <mat-form-field appearance="outline" class="w-full">
+                <input matInput formControlName="telefono" placeholder="Número de teléfono">
+                <mat-error *ngIf="clienteForm.get('telefono')?.hasError('maxlength')">
+                  El teléfono no puede exceder 25 caracteres
+                </mat-error>
+              </mat-form-field>
+            </div>
+
+            <div class="space-y-2">
+              <label class="block text-sm font-medium text-gray-700">Dirección</label>
+              <mat-form-field appearance="outline" class="w-full">
+                <input matInput formControlName="direccion" placeholder="Dirección del cliente">
+                <mat-error *ngIf="clienteForm.get('direccion')?.hasError('maxlength')">
+                  La dirección no puede exceder 200 caracteres
+                </mat-error>
+              </mat-form-field>
+            </div>
+          </div>
+
+          <!-- Observaciones -->
+          <div class="space-y-2">
+            <label class="block text-sm font-medium text-gray-700">Observaciones</label>
+            <mat-form-field appearance="outline" class="w-full">
+              <textarea 
+                matInput 
+                formControlName="observaciones" 
+                placeholder="Notas adicionales sobre el cliente"
+                rows="3"
+              ></textarea>
+              <mat-error *ngIf="clienteForm.get('observaciones')?.hasError('maxlength')">
+                Las observaciones no pueden exceder 300 caracteres
+              </mat-error>
+            </mat-form-field>
+          </div>
+
+          <!-- Estado -->
+          <div class="space-y-2">
+            <label class="block text-sm font-medium text-gray-700">Estado</label>
+            <mat-checkbox formControlName="activo" class="text-gray-700">
+              Cliente activo
+            </mat-checkbox>
+          </div>
+
+          <!-- Botones de acción -->
+          <div class="flex justify-end gap-4 pt-6 border-t border-gray-200">
+            <button 
+              type="button" 
+              (click)="cerrarModalCliente()"
+              class="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors duration-200"
+            >
+              Cancelar
+            </button>
+            <button 
+              type="submit" 
+              [disabled]="clienteForm.invalid || clienteCargando"
+              class="px-6 py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white rounded-lg font-medium transition-colors duration-200 flex items-center gap-2">
+              <mat-spinner *ngIf="clienteCargando" diameter="20" class="text-white"></mat-spinner>
+              {{ clienteCargando ? 'Creando...' : 'Crear Cliente' }}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>

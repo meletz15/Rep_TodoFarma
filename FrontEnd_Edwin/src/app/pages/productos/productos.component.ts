@@ -276,20 +276,31 @@ export class ProductosComponent implements OnInit {
   }
 
   eliminarCategoria(categoria: Categoria): void {
-    if (confirm(`¿Estás seguro de que deseas eliminar la categoría "${categoria.nombre}"?`)) {
-      this.categoriaService.eliminarCategoria(categoria.id_categoria)
-        .subscribe({
-          next: (response) => {
-            this.snackBar.open('Categoría eliminada correctamente', 'Cerrar', { duration: 3000 });
-            this.cargarCategorias();
-            this.cargarCategoriasActivas();
-          },
-          error: (error) => {
-            console.error('Error al eliminar categoría:', error);
-            this.snackBar.open('Error al eliminar categoría', 'Cerrar', { duration: 3000 });
-          }
-        });
-    }
+    const dialogRef = this.dialog.open(ConfirmDialogComponent, {
+      data: {
+        titulo: 'Eliminar Categoría',
+        mensaje: `¿Estás seguro de que deseas eliminar la categoría "${categoria.nombre}"?`,
+        confirmarTexto: 'Eliminar',
+        cancelarTexto: 'Cancelar'
+      }
+    });
+
+    dialogRef.afterClosed().subscribe(result => {
+      if (result) {
+        this.categoriaService.eliminarCategoria(categoria.id_categoria)
+          .subscribe({
+            next: (response) => {
+              this.snackBar.open('Categoría eliminada correctamente', 'Cerrar', { duration: 3000 });
+              this.cargarCategorias();
+              this.cargarCategoriasActivas();
+            },
+            error: (error) => {
+              console.error('Error al eliminar categoría:', error);
+              this.snackBar.open('Error al eliminar categoría', 'Cerrar', { duration: 3000 });
+            }
+          });
+      }
+    });
   }
 
   aplicarFiltrosCategoria(): void {
@@ -428,19 +439,30 @@ export class ProductosComponent implements OnInit {
   }
 
   eliminarProducto(producto: Producto): void {
-    if (confirm(`¿Estás seguro de que deseas eliminar el producto "${producto.nombre}"?`)) {
-      this.productoService.eliminarProducto(producto.id_producto)
-        .subscribe({
-          next: (response) => {
-            this.snackBar.open('Producto eliminado correctamente', 'Cerrar', { duration: 3000 });
-            this.cargarProductos();
-          },
-          error: (error) => {
-            console.error('Error al eliminar producto:', error);
-            this.snackBar.open('Error al eliminar producto', 'Cerrar', { duration: 3000 });
-          }
-        });
-    }
+    const dialogRef = this.dialog.open(ConfirmDialogComponent, {
+      data: {
+        titulo: 'Eliminar Producto',
+        mensaje: `¿Estás seguro de que deseas eliminar el producto "${producto.nombre}"?`,
+        confirmarTexto: 'Eliminar',
+        cancelarTexto: 'Cancelar'
+      }
+    });
+
+    dialogRef.afterClosed().subscribe(result => {
+      if (result) {
+        this.productoService.eliminarProducto(producto.id_producto)
+          .subscribe({
+            next: (response) => {
+              this.snackBar.open('Producto eliminado correctamente', 'Cerrar', { duration: 3000 });
+              this.cargarProductos();
+            },
+            error: (error) => {
+              console.error('Error al eliminar producto:', error);
+              this.snackBar.open('Error al eliminar producto', 'Cerrar', { duration: 3000 });
+            }
+          });
+      }
+    });
   }
 
   aplicarFiltrosProducto(): void {
@@ -636,16 +658,16 @@ export class ProductosComponent implements OnInit {
 
   formatearPrecio(precio: any): string {
     if (precio === null || precio === undefined || precio === '') {
-      return '$0.00';
+      return 'Q0.00';
     }
     
     const precioNumero = typeof precio === 'string' ? parseFloat(precio) : Number(precio);
     
     if (isNaN(precioNumero)) {
-      return '$0.00';
+      return 'Q0.00';
     }
     
-    return `$${precioNumero.toFixed(2)}`;
+    return `Q${precioNumero.toFixed(2)}`;
   }
 
   obtenerEstadoStock(stock: number): string {

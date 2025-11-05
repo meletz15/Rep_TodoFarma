@@ -78,6 +78,8 @@ export class InventarioComponent implements OnInit {
 
   // Variables para movimientos
   movimientos: InventarioMovimiento[] = [];
+  todasLasMovimientos: InventarioMovimiento[] = []; // Todos los movimientos cargados
+  movimientosFiltrados: InventarioMovimiento[] = []; // Movimientos después de filtrar
   movimientosDataSource = new MatTableDataSource<InventarioMovimiento>();
   movimientosDisplayedColumns = ['fecha', 'producto', 'tipo', 'cantidad', 'referencia', 'usuario', 'observacion'];
   movimientoForm!: FormGroup;
@@ -182,33 +184,19 @@ export class InventarioComponent implements OnInit {
   // Métodos para movimientos
   cargarMovimientos(): void {
     this.movimientoCargando = true;
-    console.log('🔍 Cargando movimientos...', {
-      pagina: this.movimientoPagina,
-      limite: this.movimientoLimite,
-      filtros: this.movimientoFiltros
-    });
+    console.log('🔍 Cargando todos los movimientos...');
     
-    this.inventarioService.obtenerMovimientos(this.movimientoPagina, this.movimientoLimite, this.movimientoFiltros)
+    // Cargar todos los movimientos (sin filtros, con límite alto)
+    this.inventarioService.obtenerMovimientos(1, 100, {})
       .subscribe({
         next: (response) => {
           console.log('✅ Respuesta del backend:', response);
           const movimientos = response.datos.datos || [];
-          let total = response.datos.paginacion?.total || 0;
           
-          // WORKAROUND: Si el backend devuelve total=0 pero hay datos
-          if (total === 0 && movimientos.length > 0) {
-            if (movimientos.length === this.movimientoLimite) {
-              total = this.movimientoPagina * this.movimientoLimite + 1;
-            } else {
-              total = (this.movimientoPagina - 1) * this.movimientoLimite + movimientos.length;
-            }
-          }
-          
-          this.movimientos = movimientos;
-          this.movimientosDataSource.data = this.movimientos;
-          this.movimientoTotal = total;
+          this.todasLasMovimientos = movimientos;
+          this.aplicarFiltrosFrontend();
           this.movimientoCargando = false;
-          console.log('📊 Movimientos cargados:', this.movimientos.length);
+          console.log('📊 Movimientos cargados:', this.todasLasMovimientos.length);
         },
         error: (error) => {
           console.error('❌ Error al cargar movimientos:', error);
@@ -216,6 +204,70 @@ export class InventarioComponent implements OnInit {
           this.movimientoCargando = false;
         }
       });
+  }
+
+  aplicarFiltrosFrontend(): void {
+    let movimientosFiltrados = [...this.todasLasMovimientos];
+
+    // Filtro por tipo
+    if (this.movimientoFiltros.tipo && this.movimientoFiltros.tipo !== '') {
+      movimientosFiltrados = movimientosFiltrados.filter(m => m.tipo === this.movimientoFiltros.tipo);
+    }
+
+    // Filtro por producto_id
+    if (this.movimientoFiltros.producto_id) {
+      movimientosFiltrados = movimientosFiltrados.filter(m => m.producto_id === this.movimientoFiltros.producto_id);
+    }
+
+    // Filtro por búsqueda (referencia, observación, producto_nombre)
+    if (this.movimientoFiltros.busqueda && this.movimientoFiltros.busqueda.trim() !== '') {
+      const busqueda = this.movimientoFiltros.busqueda.toLowerCase().trim();
+      movimientosFiltrados = movimientosFiltrados.filter(m => 
+        (m.referencia && m.referencia.toLowerCase().includes(busqueda)) ||
+        (m.observacion && m.observacion.toLowerCase().includes(busqueda)) ||
+        (m.producto_nombre && m.producto_nombre.toLowerCase().includes(busqueda)) ||
+        (m.sku && m.sku.toLowerCase().includes(busqueda))
+      );
+    }
+
+    // Filtro por fecha desde
+    if (this.movimientoFiltros.fecha_desde) {
+      const fechaDesdeValor: any = this.movimientoFiltros.fecha_desde;
+      const fechaDesde = fechaDesdeValor instanceof Date 
+        ? fechaDesdeValor 
+        : new Date(fechaDesdeValor);
+      fechaDesde.setHours(0, 0, 0, 0);
+      movimientosFiltrados = movimientosFiltrados.filter(m => {
+        const fechaMovimiento = new Date(m.fecha);
+        fechaMovimiento.setHours(0, 0, 0, 0);
+        return fechaMovimiento >= fechaDesde;
+      });
+    }
+
+    // Filtro por fecha hasta
+    if (this.movimientoFiltros.fecha_hasta) {
+      const fechaHastaValor: any = this.movimientoFiltros.fecha_hasta;
+      const fechaHasta = fechaHastaValor instanceof Date 
+        ? fechaHastaValor 
+        : new Date(fechaHastaValor);
+      fechaHasta.setHours(23, 59, 59, 999);
+      movimientosFiltrados = movimientosFiltrados.filter(m => {
+        const fechaMovimiento = new Date(m.fecha);
+        return fechaMovimiento <= fechaHasta;
+      });
+    }
+
+    this.movimientosFiltrados = movimientosFiltrados;
+    this.aplicarPaginacionFrontend();
+  }
+
+  aplicarPaginacionFrontend(): void {
+    const total = this.movimientosFiltrados.length;
+    const inicio = (this.movimientoPagina - 1) * this.movimientoLimite;
+    const fin = inicio + this.movimientoLimite;
+    this.movimientos = this.movimientosFiltrados.slice(inicio, fin);
+    this.movimientosDataSource.data = this.movimientos;
+    this.movimientoTotal = total;
   }
 
   // Método para cargar inventario total
@@ -371,6 +423,7 @@ export class InventarioComponent implements OnInit {
           next: (response) => {
             this.snackBar.open('Movimiento creado correctamente', 'Cerrar', { duration: 3000 });
             this.cerrarModalMovimiento();
+            // Recargar todos los movimientos desde el backend
             this.cargarMovimientos();
             this.cargarEstadisticas();
             this.cargarAlertas();
@@ -388,7 +441,7 @@ export class InventarioComponent implements OnInit {
   // Métodos de filtros y paginación
   aplicarFiltrosMovimiento(): void {
     this.movimientoPagina = 1;
-    this.cargarMovimientos();
+    this.aplicarFiltrosFrontend();
   }
 
   limpiarFiltrosMovimiento(): void {
@@ -399,13 +452,14 @@ export class InventarioComponent implements OnInit {
       fecha_hasta: '',
       busqueda: ''
     };
-    this.aplicarFiltrosMovimiento();
+    this.movimientoPagina = 1;
+    this.aplicarFiltrosFrontend();
   }
 
   onMovimientoPageChange(event: PageEvent): void {
     this.movimientoPagina = event.pageIndex + 1;
     this.movimientoLimite = event.pageSize;
-    this.cargarMovimientos();
+    this.aplicarPaginacionFrontend();
   }
 
   onKardexPageChange(event: PageEvent): void {
@@ -602,6 +656,7 @@ export class InventarioComponent implements OnInit {
           // Resetear paginación a la primera página para ver el nuevo movimiento
           this.movimientoPagina = 1;
           console.log('🔄 Recargando movimientos después de crear uno nuevo...');
+          // Recargar todos los movimientos desde el backend
           this.cargarMovimientos();
           this.cargarEstadisticas();
           console.log('🔄 Recargando productos para actualizar stock en dropdown...');
@@ -631,6 +686,7 @@ export class InventarioComponent implements OnInit {
             this.cerrarModalNuevoMovimiento();
             // Resetear paginación a la primera página para ver el nuevo movimiento
             this.movimientoPagina = 1;
+            // Recargar todos los movimientos desde el backend
             this.cargarMovimientos();
             this.cargarEstadisticas();
             console.log('🔄 Recargando productos para actualizar stock en dropdown...');

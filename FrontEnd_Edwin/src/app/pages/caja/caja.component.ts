@@ -1,6 +1,6 @@
 import { Component, OnInit, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
+import { FormBuilder, FormGroup, Validators, ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatDialog } from '@angular/material/dialog';
 import { MatPaginator, PageEvent } from '@angular/material/paginator';
@@ -32,6 +32,7 @@ import {
   CajaFiltros
 } from '../../models/caja.model';
 import { Usuario } from '../../models/usuario.model';
+import { ConfirmDialogComponent } from '../../components/confirm-dialog.component';
 
 @Component({
   selector: 'app-caja',
@@ -39,6 +40,7 @@ import { Usuario } from '../../models/usuario.model';
   imports: [
     CommonModule,
     ReactiveFormsModule,
+    FormsModule,
     MatCardModule,
     MatChipsModule,
     MatStepperModule,
@@ -134,61 +136,114 @@ export class CajaComponent implements OnInit {
     });
   }
 
+  // Variables para almacenar todas las cajas (sin paginación del servidor)
+  todasLasCajas: Caja[] = [];
+  cajasFiltradas: Caja[] = [];
+
   // Métodos para cajas
   cargarCajas(): void {
     console.log('🔄 Cargando cajas...');
-    console.log('📋 Parámetros:', {
-      pagina: this.cajaPagina,
-      limite: this.cajaLimite,
-      filtros: this.cajaFiltros
-    });
     this.cajaCargando = true;
-    this.cajaService.obtenerCajas(this.cajaPagina, this.cajaLimite, this.cajaFiltros)
+    
+    // Preparar filtros para el backend (sin fechas, solo estado y usuario)
+    const filtrosBackend: CajaFiltros = {};
+    
+    // Solo incluir estado si tiene valor
+    if (this.cajaFiltros.estado && this.cajaFiltros.estado !== '') {
+      filtrosBackend.estado = this.cajaFiltros.estado;
+    }
+    
+    // Solo incluir usuario si tiene valor
+    if (this.cajaFiltros.usuario_apertura) {
+      filtrosBackend.usuario_apertura = this.cajaFiltros.usuario_apertura;
+    }
+    
+    // NO incluir fechas - se filtran en el frontend
+    
+    console.log('📋 Filtros enviados al backend (sin fechas):', filtrosBackend);
+    
+    // Cargar todas las cajas (el backend requiere paginación, usamos límite máximo de 100)
+    // Luego hacemos paginación y filtrado de fechas en el frontend
+    this.cajaService.obtenerTodasLasCajas(filtrosBackend)
       .subscribe({
         next: (response) => {
           console.log('✅ Respuesta completa de cajas:', response);
-          console.log('📊 Estructura de datos:', response.datos);
-          console.log('📊 Datos de cajas:', response.datos?.datos);
-          console.log('📊 Paginación:', response.datos?.paginacion);
           
           if (response.datos && response.datos.datos) {
-            const cajas = response.datos.datos || [];
-            let total = response.datos.paginacion?.total || 0;
+            // Guardar todas las cajas recibidas
+            this.todasLasCajas = response.datos.datos || [];
             
-            // WORKAROUND: Si el backend devuelve total=0 pero hay datos
-            if (total === 0 && cajas.length > 0) {
-              if (cajas.length === this.cajaLimite) {
-                total = this.cajaPagina * this.cajaLimite + 1;
-              } else {
-                total = (this.cajaPagina - 1) * this.cajaLimite + cajas.length;
-              }
-            }
+            console.log('📦 Total de cajas recibidas del backend:', this.todasLasCajas.length);
             
-            this.cajas = cajas;
-            this.cajasDataSource.data = this.cajas;
-            this.cajaTotal = total;
-            console.log('✅ Cajas cargadas exitosamente:', this.cajas.length);
-            console.log('✅ Total de cajas:', this.cajaTotal);
+            // Aplicar filtros de fecha en el frontend
+            this.aplicarFiltrosFrontend();
           } else {
             console.warn('⚠️ Estructura de respuesta inesperada:', response);
-            this.cajas = [];
-            this.cajasDataSource.data = [];
-            this.cajaTotal = 0;
+            this.todasLasCajas = [];
+            this.aplicarFiltrosFrontend();
           }
           this.cajaCargando = false;
         },
         error: (error) => {
           console.error('❌ Error al cargar cajas:', error);
-          console.error('❌ Detalles del error:', {
-            status: error.status,
-            statusText: error.statusText,
-            message: error.message,
-            error: error.error
-          });
-          this.snackBar.open(`Error al cargar cajas: ${error.message || 'Error desconocido'}`, 'Cerrar', { duration: 5000 });
+          console.error('❌ Detalles del error:', error);
+          this.snackBar.open(`Error al cargar cajas: ${error.error?.mensaje || error.message || 'Error desconocido'}`, 'Cerrar', { duration: 5000 });
           this.cajaCargando = false;
         }
       });
+  }
+
+  // Aplicar filtros de fecha en el frontend y paginación
+  aplicarFiltrosFrontend(): void {
+    let cajasFiltradas = [...this.todasLasCajas];
+
+    // Filtrar por fecha desde
+    if (this.cajaFiltros.fecha_desde) {
+      const fechaDesdeValor: any = this.cajaFiltros.fecha_desde;
+      const fechaDesde = fechaDesdeValor instanceof Date 
+        ? fechaDesdeValor 
+        : new Date(fechaDesdeValor);
+      fechaDesde.setHours(0, 0, 0, 0);
+      
+      cajasFiltradas = cajasFiltradas.filter(caja => {
+        const fechaApertura = new Date(caja.fecha_apertura);
+        fechaApertura.setHours(0, 0, 0, 0);
+        return fechaApertura >= fechaDesde;
+      });
+    }
+
+    // Filtrar por fecha hasta
+    if (this.cajaFiltros.fecha_hasta) {
+      const fechaHastaValor: any = this.cajaFiltros.fecha_hasta;
+      const fechaHasta = fechaHastaValor instanceof Date 
+        ? fechaHastaValor 
+        : new Date(fechaHastaValor);
+      fechaHasta.setHours(23, 59, 59, 999);
+      
+      cajasFiltradas = cajasFiltradas.filter(caja => {
+        const fechaApertura = new Date(caja.fecha_apertura);
+        return fechaApertura <= fechaHasta;
+      });
+    }
+
+    // Guardar cajas filtradas
+    this.cajasFiltradas = cajasFiltradas;
+    
+    // Aplicar paginación en el frontend
+    this.aplicarPaginacionFrontend();
+  }
+
+  // Aplicar paginación en el frontend
+  aplicarPaginacionFrontend(): void {
+    const total = this.cajasFiltradas.length;
+    const inicio = (this.cajaPagina - 1) * this.cajaLimite;
+    const fin = inicio + this.cajaLimite;
+    
+    this.cajas = this.cajasFiltradas.slice(inicio, fin);
+    this.cajasDataSource.data = this.cajas;
+    this.cajaTotal = total;
+    
+    console.log('✅ Cajas filtradas:', this.cajas.length, 'de', total);
   }
 
   cargarUsuariosActivos(): void {
@@ -320,40 +375,103 @@ export class CajaComponent implements OnInit {
     }
 
     console.log('✅ Caja está abierta, mostrando confirmación');
-    const confirmacion = confirm(`¿Estás seguro de que quieres cerrar la caja #${caja.id_caja}?`);
-    if (!confirmacion) {
-      console.log('❌ Usuario canceló el cierre');
-      return;
-    }
-
-    console.log('✅ Usuario confirmó, preparando datos de cierre');
-    // Obtener el ID del usuario actual (puedes ajustar esto según tu sistema de autenticación)
-    const usuarioActual = 1; // TODO: Obtener del servicio de autenticación
-
-    const datosCierre: CajaCerrar = {
-      usuario_cierre: usuarioActual,
-      observacion: `Caja cerrada el ${new Date().toLocaleString('es-GT')}`
-    };
-
-    console.log('📤 Enviando petición de cierre:', { idCaja: caja.id_caja, datosCierre });
     
-    this.cajaService.cerrarCaja(caja.id_caja, datosCierre).subscribe({
-      next: (response) => {
-        console.log('✅ Caja cerrada exitosamente:', response);
-        this.snackBar.open('Caja cerrada exitosamente', 'Cerrar', { duration: 3000 });
-        this.cargarCajas(); // Recargar la lista
-      },
-      error: (error) => {
-        console.error('❌ Error al cerrar caja:', error);
-        this.snackBar.open('Error al cerrar la caja', 'Cerrar', { duration: 3000 });
+    // Mostrar modal de confirmación
+    const dialogRef = this.dialog.open(ConfirmDialogComponent, {
+      data: {
+        titulo: 'Cerrar Caja',
+        mensaje: `¿Estás seguro de que quieres cerrar la caja #${caja.id_caja}?`,
+        confirmarTexto: 'Cerrar Caja',
+        cancelarTexto: 'Cancelar'
+      }
+    });
+
+    dialogRef.afterClosed().subscribe(result => {
+      if (result) {
+        console.log('✅ Usuario confirmó, preparando datos de cierre');
+        // Obtener el ID del usuario actual (puedes ajustar esto según tu sistema de autenticación)
+        const usuarioActual = 1; // TODO: Obtener del servicio de autenticación
+
+        const datosCierre: CajaCerrar = {
+          usuario_cierre: usuarioActual,
+          observacion: `Caja cerrada el ${new Date().toLocaleString('es-GT')}`
+        };
+
+        console.log('📤 Enviando petición de cierre:', { idCaja: caja.id_caja, datosCierre });
+        
+        this.cajaService.cerrarCaja(caja.id_caja, datosCierre).subscribe({
+          next: (response) => {
+            console.log('✅ Caja cerrada exitosamente:', response);
+            
+            // Convertir saldo_cierre a número si es necesario
+            const saldoCierre = response.datos?.saldo_cierre;
+            const saldoCierreNumero = saldoCierre !== null && saldoCierre !== undefined 
+              ? (typeof saldoCierre === 'string' ? parseFloat(saldoCierre) : Number(saldoCierre))
+              : 0;
+            const saldoCierreFormateado = !isNaN(saldoCierreNumero) ? saldoCierreNumero.toFixed(2) : '0.00';
+            
+            // Recargar datos inmediatamente
+            this.cargarCajas();
+            this.verificarCajaAbierta();
+            this.cargarEstadisticas();
+            
+            // Mostrar modal de éxito
+            const successDialog = this.dialog.open(ConfirmDialogComponent, {
+              data: {
+                titulo: 'Caja cerrada exitosamente',
+                mensaje: `La caja #${caja.id_caja} ha sido cerrada correctamente.\nSaldo de cierre: Q${saldoCierreFormateado}`,
+                confirmarTexto: 'Aceptar',
+                cancelarTexto: '' // Ocultar botón de cancelar
+              }
+            });
+
+            successDialog.afterClosed().subscribe(() => {
+              // Los datos ya se recargaron antes de mostrar el modal
+            });
+          },
+          error: (error) => {
+            console.error('❌ Error al cerrar caja:', error);
+            this.snackBar.open('Error al cerrar la caja', 'Cerrar', { duration: 3000 });
+          }
+        });
+      } else {
+        console.log('❌ Usuario canceló el cierre');
       }
     });
   }
 
+  // Variables para modal de detalles
+  cajaDetalleModalAbierto = false;
+  cajaSeleccionada: Caja | null = null;
+  cajaDetalleCargando = false;
+
   verDetalles(caja: Caja): void {
     console.log('👁️ Ver detalles de caja:', caja.id_caja);
-    // TODO: Implementar modal de detalles
-    this.snackBar.open('Funcionalidad de ver detalles pendiente de implementar', 'Cerrar', { duration: 3000 });
+    this.cajaDetalleCargando = true;
+    this.cajaDetalleModalAbierto = true;
+    
+    // Cargar detalles completos de la caja
+    this.cajaService.obtenerCaja(caja.id_caja)
+      .subscribe({
+        next: (response) => {
+          if (response.ok && response.datos) {
+            this.cajaSeleccionada = response.datos;
+            console.log('✅ Detalles de caja cargados:', this.cajaSeleccionada);
+          }
+          this.cajaDetalleCargando = false;
+        },
+        error: (error) => {
+          console.error('❌ Error al cargar detalles de caja:', error);
+          this.snackBar.open('Error al cargar los detalles de la caja', 'Cerrar', { duration: 3000 });
+          this.cajaDetalleCargando = false;
+          this.cerrarModalDetalles();
+        }
+      });
+  }
+
+  cerrarModalDetalles(): void {
+    this.cajaDetalleModalAbierto = false;
+    this.cajaSeleccionada = null;
   }
 
 
@@ -388,7 +506,28 @@ export class CajaComponent implements OnInit {
   onCajaPageChange(event: PageEvent): void {
     this.cajaPagina = event.pageIndex + 1;
     this.cajaLimite = event.pageSize;
+    this.aplicarPaginacionFrontend();
+  }
+
+  // Métodos para filtros
+  aplicarFiltros(): void {
+    this.cajaPagina = 1; // Resetear a la primera página
+    
+    // Siempre recargar desde el backend (sin fechas) y luego aplicar filtros de fecha en frontend
+    // Si hay filtros de estado o usuario, se enviarán al backend
+    // Las fechas siempre se filtran en el frontend
     this.cargarCajas();
+  }
+
+  limpiarFiltros(): void {
+    this.cajaFiltros = {
+      estado: '',
+      usuario_apertura: undefined,
+      fecha_desde: '',
+      fecha_hasta: ''
+    };
+    this.cajaPagina = 1;
+    this.cargarCajas(); // Recargar todas las cajas
   }
 
   // Métodos auxiliares
