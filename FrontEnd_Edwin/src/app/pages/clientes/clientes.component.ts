@@ -1,8 +1,8 @@
-import { Component, OnInit, ViewChild } from '@angular/core';
+import { Component, OnInit, ViewChild, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { MatTableModule, MatTableDataSource } from '@angular/material/table';
-import { MatPaginatorModule, MatPaginator } from '@angular/material/paginator';
+import { MatPaginatorModule, MatPaginator, PageEvent } from '@angular/material/paginator';
 import { MatSortModule, MatSort } from '@angular/material/sort';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
@@ -74,7 +74,8 @@ export class ClientesComponent implements OnInit {
     private clienteService: ClienteService,
     private fb: FormBuilder,
     private snackBar: MatSnackBar,
-    private dialog: MatDialog
+    private dialog: MatDialog,
+    private cdr: ChangeDetectorRef
   ) {
     this.clienteForm = this.fb.group({
       nombres: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(120)]],
@@ -93,25 +94,78 @@ export class ClientesComponent implements OnInit {
   }
 
   ngAfterViewInit() {
-    this.dataSource.paginator = this.paginator;
+    // NO conectar el paginator al DataSource para paginación del servidor
+    // this.dataSource.paginator = this.paginator; // REMOVIDO - usa paginación del servidor
     this.dataSource.sort = this.sort;
   }
 
   cargarClientes(): void {
     this.loading = true;
     
+    console.log('📋 Cargando clientes...', { 
+      pagina: this.currentPage, 
+      limite: this.pageSize, 
+      filtros: this.filtros 
+    });
+    
     this.clienteService.obtenerClientes(this.currentPage, this.pageSize, this.filtros)
       .subscribe({
         next: (response) => {
-          if (response.ok) {
-            this.dataSource.data = response.datos.datos;
-            this.totalClientes = response.datos.paginacion.total;
+          console.log('✅ [Frontend] Respuesta completa del backend:', JSON.stringify(response, null, 2));
+          
+          if (response.ok && response.datos) {
+            const clientes = response.datos.datos || [];
+            let total = response.datos.paginacion?.total || 0;
+            
+            // WORKAROUND: Si el backend devuelve total=0 pero hay datos, usar el tamaño de la página actual
+            // como mínimo, o inferir un total basado en si hay más datos disponibles
+            if (total === 0 && clientes.length > 0) {
+              console.warn('⚠️ [Frontend] Backend devolvió total=0 pero hay datos. Usando workaround...');
+              // Si tenemos datos y el límite es menor que el tamaño de página, asumimos que hay más datos
+              if (clientes.length === this.pageSize) {
+                // Hay más datos disponibles, establecer un total mínimo
+                total = this.currentPage * this.pageSize + 1; // Al menos una página más
+              } else {
+                // Es la última página o no hay más datos
+                total = (this.currentPage - 1) * this.pageSize + clientes.length;
+              }
+              console.log('⚠️ [Frontend] Total inferido:', total);
+            }
+            
+            console.log('📊 [Frontend] Datos procesados:', { 
+              clientesRecibidos: clientes.length, 
+              total: total,
+              currentPage: this.currentPage,
+              pageSize: this.pageSize
+            });
+            
+            this.dataSource.data = clientes;
+            this.totalClientes = total;
+            
+            console.log('✅ [Frontend] Estado final:', { 
+              totalClientes: this.totalClientes, 
+              currentPage: this.currentPage,
+              pageSize: this.pageSize,
+              dataSourceLength: this.dataSource.data.length,
+              pageIndexCalculado: this.currentPage - 1
+            });
+            
+            // Forzar detección de cambios para actualizar el paginator
+            this.cdr.detectChanges();
+            
             this.loading = false;
+          } else {
+            console.error('❌ [Frontend] Respuesta inválida:', response);
+            this.loading = false;
+            this.snackBar.open('Error: Respuesta inválida del servidor', 'Cerrar', {
+              duration: 3000
+            });
           }
         },
         error: (error) => {
+          console.error('❌ Error al cargar clientes:', error);
           this.loading = false;
-          this.snackBar.open('Error al cargar clientes', 'Cerrar', {
+          this.snackBar.open('Error al cargar clientes: ' + (error.error?.mensaje || error.message), 'Cerrar', {
             duration: 3000
           });
         }
@@ -131,7 +185,7 @@ export class ClientesComponent implements OnInit {
     this.aplicarFiltros();
   }
 
-  onPageChange(event: any): void {
+  onPageChange(event: PageEvent): void {
     this.currentPage = event.pageIndex + 1;
     this.pageSize = event.pageSize;
     this.cargarClientes();

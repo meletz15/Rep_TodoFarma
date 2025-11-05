@@ -133,6 +133,7 @@
               #categoriaPaginator
               [length]="categoriaTotal"
               [pageSize]="categoriaLimite"
+              [pageIndex]="categoriaPagina - 1"
               [pageSizeOptions]="[5, 10, 25, 50]"
               (page)="onCategoriaPageChange($event)"
               showFirstLastButtons
@@ -308,6 +309,7 @@
               #productoPaginator
               [length]="productoTotal"
               [pageSize]="productoLimite"
+              [pageIndex]="productoPagina - 1"
               [pageSizeOptions]="[5, 10, 25, 50]"
               (page)="onProductoPageChange($event)"
               showFirstLastButtons
@@ -441,6 +443,7 @@
               #marcaPaginator
               [length]="marcaTotal"
               [pageSize]="marcaLimite"
+              [pageIndex]="marcaPagina - 1"
               [pageSizeOptions]="[5, 10, 25, 50]"
               (page)="onMarcaPageChange($event)"
               showFirstLastButtons

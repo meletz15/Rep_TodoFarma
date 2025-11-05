@@ -183,6 +183,7 @@
       <mat-paginator 
         [length]="movimientoTotal"
         [pageSize]="movimientoLimite"
+        [pageIndex]="movimientoPagina - 1"
         [pageSizeOptions]="[5, 10, 25, 50]"
         (page)="onMovimientoPageChange($event)"
         class="bg-white border-t border-gray-200">
@@ -365,6 +366,7 @@
                 #inventarioTotalPaginator
                 [length]="inventarioTotalTotal"
                 [pageSize]="inventarioTotalLimite"
+                [pageIndex]="inventarioTotalPagina - 1"
                 [pageSizeOptions]="[5, 10, 25, 50]"
                 (page)="onInventarioTotalPageChange($event)"
                 class="bg-transparent">

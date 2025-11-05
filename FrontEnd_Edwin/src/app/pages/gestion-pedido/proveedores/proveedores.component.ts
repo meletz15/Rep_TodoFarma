@@ -9,7 +9,7 @@ import { MatDialog, MatDialogModule } from "@angular/material/dialog";
 import { MatFormFieldModule } from "@angular/material/form-field";
 import { MatIconModule } from "@angular/material/icon";
 import { MatInputModule } from "@angular/material/input";
-import { MatPaginator, MatPaginatorModule } from "@angular/material/paginator";
+import { MatPaginator, MatPaginatorModule, PageEvent } from "@angular/material/paginator";
 import { MatProgressSpinnerModule } from "@angular/material/progress-spinner";
 import { MatSelectModule } from "@angular/material/select";
 import { MatSort, MatSortModule } from "@angular/material/sort";
@@ -116,7 +116,8 @@ export class ProveedoresComponent implements OnInit {
   }
 
   ngAfterViewInit() {
-    this.dataSource.paginator = this.paginator;
+    // NO conectar el paginator al DataSource para paginación del servidor
+    // this.dataSource.paginator = this.paginator; // REMOVIDO - usa paginación del servidor
     this.dataSource.sort = this.sort;
   }
 
@@ -127,9 +128,21 @@ export class ProveedoresComponent implements OnInit {
       .obtenerProveedores(this.currentPage, this.pageSize, this.filtros)
       .subscribe({
         next: (response) => {
-          if (response.ok) {
-            this.dataSource.data = response.datos.datos;
-            this.totalProveedores = response.datos.paginacion.total;
+          if (response.ok && response.datos) {
+            const proveedores = response.datos.datos || [];
+            let total = response.datos.paginacion?.total || 0;
+            
+            // WORKAROUND: Si el backend devuelve total=0 pero hay datos
+            if (total === 0 && proveedores.length > 0) {
+              if (proveedores.length === this.pageSize) {
+                total = this.currentPage * this.pageSize + 1;
+              } else {
+                total = (this.currentPage - 1) * this.pageSize + proveedores.length;
+              }
+            }
+            
+            this.dataSource.data = proveedores;
+            this.totalProveedores = total;
             this.loading = false;
           }
         },
@@ -152,7 +165,7 @@ export class ProveedoresComponent implements OnInit {
     this.aplicarFiltros();
   }
 
-  onPageChange(event: any): void {
+  onPageChange(event: PageEvent): void {
     this.currentPage = event.pageIndex + 1;
     this.pageSize = event.pageSize;
     this.cargarProveedores();

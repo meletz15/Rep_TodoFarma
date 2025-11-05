@@ -152,9 +152,21 @@ export class CajaComponent implements OnInit {
           console.log('📊 Paginación:', response.datos?.paginacion);
           
           if (response.datos && response.datos.datos) {
-            this.cajas = response.datos.datos;
+            const cajas = response.datos.datos || [];
+            let total = response.datos.paginacion?.total || 0;
+            
+            // WORKAROUND: Si el backend devuelve total=0 pero hay datos
+            if (total === 0 && cajas.length > 0) {
+              if (cajas.length === this.cajaLimite) {
+                total = this.cajaPagina * this.cajaLimite + 1;
+              } else {
+                total = (this.cajaPagina - 1) * this.cajaLimite + cajas.length;
+              }
+            }
+            
+            this.cajas = cajas;
             this.cajasDataSource.data = this.cajas;
-            this.cajaTotal = response.datos.paginacion?.total || this.cajas.length;
+            this.cajaTotal = total;
             console.log('✅ Cajas cargadas exitosamente:', this.cajas.length);
             console.log('✅ Total de cajas:', this.cajaTotal);
           } else {

@@ -163,13 +163,22 @@ export class VentasComponent implements OnInit {
     this.ventaService.obtenerVentas(this.ventaPagina, this.ventaLimite, this.ventaFiltros)
       .subscribe({
         next: (response) => {
+          const ventas = response.datos.datos || [];
+          let total = response.datos.paginacion?.total || 0;
           
-          this.ventas = response.datos.datos;
+          // WORKAROUND: Si el backend devuelve total=0 pero hay datos
+          if (total === 0 && ventas.length > 0) {
+            if (ventas.length === this.ventaLimite) {
+              total = this.ventaPagina * this.ventaLimite + 1;
+            } else {
+              total = (this.ventaPagina - 1) * this.ventaLimite + ventas.length;
+            }
+          }
+          
+          this.ventas = ventas;
           this.ventasDataSource.data = this.ventas;
-          // Si el total de paginación es 0 pero hay datos, usar la longitud de los datos
-          this.ventaTotal = response.datos.paginacion.total > 0 ? response.datos.paginacion.total : this.ventas.length;
+          this.ventaTotal = total;
           this.ventaCargando = false;
-          
         },
         error: (error) => {
           this.snackBar.open('Error al cargar ventas', 'Cerrar', { duration: 3000 });

@@ -106,9 +106,15 @@ class ClienteModel {
       }
       
       // Contar total de registros
-      const consultaCount = consulta.replace(/SELECT.*FROM/, 'SELECT COUNT(*) as total FROM');
+      // Construir consulta de conteo correctamente (el regex debe manejar múltiples líneas)
+      const consultaCount = consulta.replace(/SELECT[\s\S]*?FROM/, 'SELECT COUNT(*) as total FROM');
       const resultadoCount = await cliente.query(consultaCount, parametros);
       const total = parseInt(resultadoCount.rows[0]?.total || 0);
+      
+      // Log para depuración
+      console.log('🔍 [ClienteModel] Consulta COUNT generada:', consultaCount);
+      console.log('🔍 [ClienteModel] Resultado COUNT:', resultadoCount.rows);
+      console.log('🔍 [ClienteModel] Total calculado:', total);
       
       // Aplicar paginación
       consulta += ` ORDER BY created_at DESC`;

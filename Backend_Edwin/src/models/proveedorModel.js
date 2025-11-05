@@ -81,9 +81,10 @@ class ProveedorModel {
       }
 
       // Conteo total
-      const consultaCount = consulta.replace(/SELECT[\s\S]*FROM/, 'SELECT COUNT(*) FROM');
+      // Construir consulta de conteo correctamente (el regex debe manejar múltiples líneas)
+      const consultaCount = consulta.replace(/SELECT[\s\S]*?FROM/, 'SELECT COUNT(*) as total FROM');
       const resultadoCount = await cliente.query(consultaCount, parametros);
-      const total = parseInt(resultadoCount.rows[0].count);
+      const total = parseInt(resultadoCount.rows[0]?.total || 0);
 
       // Paginación
       consulta += ` ORDER BY id DESC`;

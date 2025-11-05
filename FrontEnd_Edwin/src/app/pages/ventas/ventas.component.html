@@ -219,6 +219,7 @@
               </div>
               <mat-paginator [pageSizeOptions]="[5, 10, 25, 50]" 
                              [pageSize]="ventaLimite"
+                             [pageIndex]="ventaPagina - 1"
                              [length]="ventaTotal"
                              (page)="onVentaPageChange($event)"
                              showFirstLastButtons>

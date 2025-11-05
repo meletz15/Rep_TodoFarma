@@ -208,10 +208,11 @@
       </table>
 
       <!-- Paginación -->
-      <div class="border-t border-gray-200 bg-gray-50">
+      <div class="border-t border-gray-200 bg-gray-50" *ngIf="!loading">
         <mat-paginator
           [length]="totalClientes"
           [pageSize]="pageSize"
+          [pageIndex]="currentPage - 1"
           [pageSizeOptions]="[5, 10, 25, 50]"
           (page)="onPageChange($event)"
           showFirstLastButtons

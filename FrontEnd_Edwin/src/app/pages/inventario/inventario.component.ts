@@ -192,9 +192,21 @@ export class InventarioComponent implements OnInit {
       .subscribe({
         next: (response) => {
           console.log('✅ Respuesta del backend:', response);
-          this.movimientos = response.datos.datos;
+          const movimientos = response.datos.datos || [];
+          let total = response.datos.paginacion?.total || 0;
+          
+          // WORKAROUND: Si el backend devuelve total=0 pero hay datos
+          if (total === 0 && movimientos.length > 0) {
+            if (movimientos.length === this.movimientoLimite) {
+              total = this.movimientoPagina * this.movimientoLimite + 1;
+            } else {
+              total = (this.movimientoPagina - 1) * this.movimientoLimite + movimientos.length;
+            }
+          }
+          
+          this.movimientos = movimientos;
           this.movimientosDataSource.data = this.movimientos;
-          this.movimientoTotal = response.datos.paginacion.total;
+          this.movimientoTotal = total;
           this.movimientoCargando = false;
           console.log('📊 Movimientos cargados:', this.movimientos.length);
         },
@@ -218,19 +230,28 @@ export class InventarioComponent implements OnInit {
       .subscribe({
         next: (response) => {
           console.log('✅ Inventario total cargado:', response);
-          this.inventarioTotal = response.datos.datos;
+          const inventarioTotal = response.datos.datos || [];
+          let total = response.datos.paginacion?.total || 0;
+          
+          // WORKAROUND: Si el backend devuelve total=0 pero hay datos
+          if (total === 0 && inventarioTotal.length > 0) {
+            if (inventarioTotal.length === this.inventarioTotalLimite) {
+              total = this.inventarioTotalPagina * this.inventarioTotalLimite + 1;
+            } else {
+              total = (this.inventarioTotalPagina - 1) * this.inventarioTotalLimite + inventarioTotal.length;
+            }
+          }
+          
+          this.inventarioTotal = inventarioTotal;
+          this.inventarioTotalDataSource.data = this.inventarioTotal;
+          this.inventarioTotalTotal = total;
           console.log('📊 Productos en inventario total:', this.inventarioTotal);
+          console.log('📊 Total de productos calculado:', this.inventarioTotalTotal);
           console.log('🔍 Primer producto (ejemplo):', this.inventarioTotal[0]);
           if (this.inventarioTotal[0]) {
             console.log('💰 Precio unitario del primer producto:', this.inventarioTotal[0].precio_unitario);
             console.log('📦 Stock del primer producto:', this.inventarioTotal[0].stock);
-            console.log('🔍 Todos los campos del primer producto:', Object.keys(this.inventarioTotal[0]));
           }
-          this.inventarioTotalDataSource.data = this.inventarioTotal;
-          console.log('📊 Estructura de respuesta:', response);
-          console.log('📊 Paginación:', response.datos?.paginacion);
-          this.inventarioTotalTotal = response.datos?.paginacion?.total || this.inventarioTotal.length;
-          console.log('📊 Total de productos calculado:', this.inventarioTotalTotal);
           this.inventarioTotalCargando = false;
         },
         error: (error) => {

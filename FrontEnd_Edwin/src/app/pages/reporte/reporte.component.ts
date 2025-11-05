@@ -8,7 +8,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTableModule } from '@angular/material/table';
-import { MatPaginatorModule } from '@angular/material/paginator';
+import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatTooltipModule } from '@angular/material/tooltip';
@@ -614,6 +614,7 @@ export class ReporteComponent implements OnInit {
 
           this.datos = datosExtraidos;
           this.totalRegistros = this.datos.length;
+          this.paginaActual = 0; // Resetear a la primera página cuando se genera un nuevo reporte
           console.log('Datos finales asignados:', this.datos);
           console.log('Columnas configuradas:', this.columnas);
 
@@ -640,6 +641,11 @@ export class ReporteComponent implements OnInit {
         this.snackBar.open(mensajeError, 'Cerrar', { duration: 5000 });
       }
     });
+  }
+
+  onReportePageChange(event: PageEvent): void {
+    this.paginaActual = event.pageIndex;
+    this.tamanioPagina = event.pageSize;
   }
 
   limpiarFiltros() {

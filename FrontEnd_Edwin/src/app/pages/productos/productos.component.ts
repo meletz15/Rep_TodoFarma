@@ -171,9 +171,21 @@ export class ProductosComponent implements OnInit {
     this.categoriaService.obtenerCategorias(this.categoriaPagina, this.categoriaLimite, this.categoriaFiltros)
       .subscribe({
         next: (response) => {
-          this.categorias = response.datos.datos;
+          const categorias = response.datos.datos || [];
+          let total = response.datos.paginacion?.total || 0;
+          
+          // WORKAROUND: Si el backend devuelve total=0 pero hay datos
+          if (total === 0 && categorias.length > 0) {
+            if (categorias.length === this.categoriaLimite) {
+              total = this.categoriaPagina * this.categoriaLimite + 1;
+            } else {
+              total = (this.categoriaPagina - 1) * this.categoriaLimite + categorias.length;
+            }
+          }
+          
+          this.categorias = categorias;
           this.categoriasDataSource.data = this.categorias;
-          this.categoriaTotal = response.datos.paginacion.total;
+          this.categoriaTotal = total;
           this.categoriaCargando = false;
         },
         error: (error) => {
@@ -305,9 +317,21 @@ export class ProductosComponent implements OnInit {
     this.productoService.obtenerProductos(this.productoPagina, this.productoLimite, this.productoFiltros)
       .subscribe({
         next: (response) => {
-          this.productos = response.datos.datos;
+          const productos = response.datos.datos || [];
+          let total = response.datos.paginacion?.total || 0;
+          
+          // WORKAROUND: Si el backend devuelve total=0 pero hay datos
+          if (total === 0 && productos.length > 0) {
+            if (productos.length === this.productoLimite) {
+              total = this.productoPagina * this.productoLimite + 1;
+            } else {
+              total = (this.productoPagina - 1) * this.productoLimite + productos.length;
+            }
+          }
+          
+          this.productos = productos;
           this.productosDataSource.data = this.productos;
-          this.productoTotal = response.datos.paginacion.total;
+          this.productoTotal = total;
           this.productoCargando = false;
         },
         error: (error) => {
@@ -446,9 +470,21 @@ export class ProductosComponent implements OnInit {
     this.marcaService.obtenerMarcas(this.marcaPagina, this.marcaLimite, this.marcaFiltros)
       .subscribe({
         next: (response) => {
-          this.marcas = response.datos.datos;
+          const marcas = response.datos.datos || [];
+          let total = response.datos.paginacion?.total || 0;
+          
+          // WORKAROUND: Si el backend devuelve total=0 pero hay datos
+          if (total === 0 && marcas.length > 0) {
+            if (marcas.length === this.marcaLimite) {
+              total = this.marcaPagina * this.marcaLimite + 1;
+            } else {
+              total = (this.marcaPagina - 1) * this.marcaLimite + marcas.length;
+            }
+          }
+          
+          this.marcas = marcas;
           this.marcasDataSource.data = this.marcas;
-          this.marcaTotal = response.datos.paginacion.total;
+          this.marcaTotal = total;
           this.marcaCargando = false;
         },
         error: (error) => {

@@ -2,7 +2,7 @@ import { Component, OnInit, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { MatTableModule, MatTableDataSource } from '@angular/material/table';
-import { MatPaginatorModule, MatPaginator } from '@angular/material/paginator';
+import { MatPaginatorModule, MatPaginator, PageEvent } from '@angular/material/paginator';
 import { MatSortModule, MatSort } from '@angular/material/sort';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
@@ -99,7 +99,8 @@ export class UsuariosComponent implements OnInit {
   }
 
   ngAfterViewInit() {
-    this.dataSource.paginator = this.paginator;
+    // NO conectar el paginator al DataSource para paginación del servidor
+    // this.dataSource.paginator = this.paginator; // REMOVIDO - usa paginación del servidor
     this.dataSource.sort = this.sort;
   }
 
@@ -109,9 +110,21 @@ export class UsuariosComponent implements OnInit {
     this.usuarioService.obtenerUsuarios(this.currentPage, this.pageSize, this.filtros)
       .subscribe({
         next: (response) => {
-          if (response.ok) {
-            this.dataSource.data = response.datos.datos;
-            this.totalUsuarios = response.datos.paginacion.total;
+          if (response.ok && response.datos) {
+            const usuarios = response.datos.datos || [];
+            let total = response.datos.paginacion?.total || 0;
+            
+            // WORKAROUND: Si el backend devuelve total=0 pero hay datos
+            if (total === 0 && usuarios.length > 0) {
+              if (usuarios.length === this.pageSize) {
+                total = this.currentPage * this.pageSize + 1;
+              } else {
+                total = (this.currentPage - 1) * this.pageSize + usuarios.length;
+              }
+            }
+            
+            this.dataSource.data = usuarios;
+            this.totalUsuarios = total;
             this.loading = false;
           }
         },
@@ -138,7 +151,7 @@ export class UsuariosComponent implements OnInit {
     this.aplicarFiltros();
   }
 
-  onPageChange(event: any): void {
+  onPageChange(event: PageEvent): void {
     this.currentPage = event.pageIndex + 1;
     this.pageSize = event.pageSize;
     this.cargarUsuarios();

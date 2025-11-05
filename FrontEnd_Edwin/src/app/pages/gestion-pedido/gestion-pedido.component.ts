@@ -73,7 +73,7 @@ export class GestionPedidoComponent implements OnInit {
   // Variables para pedidos
   pedidos: Pedido[] = [];
   pedidosDataSource = new MatTableDataSource<Pedido>();
-  pedidosDisplayedColumns = ['id_pedido', 'proveedor_nombre', 'fecha_pedido', 'estado', 'total_costo', 'usuario_nombre', 'acciones'];
+  pedidosDisplayedColumns = ['id_pedido', 'proveedor_nombre', 'fecha_pedido', 'estado', 'pendiente', 'total_costo', 'usuario_nombre', 'acciones'];
   pedidoForm!: FormGroup;
   pedidoEditando: Pedido | null = null;
   pedidoModalAbierto = false;
@@ -151,9 +151,21 @@ export class GestionPedidoComponent implements OnInit {
       .subscribe({
         next: (response) => {
           console.log('Respuesta de pedidos:', response);
-          this.pedidos = response.datos.datos;
+          const pedidos = response.datos.datos || [];
+          let total = response.datos.paginacion?.total || 0;
+          
+          // WORKAROUND: Si el backend devuelve total=0 pero hay datos
+          if (total === 0 && pedidos.length > 0) {
+            if (pedidos.length === this.pedidoLimite) {
+              total = this.pedidoPagina * this.pedidoLimite + 1;
+            } else {
+              total = (this.pedidoPagina - 1) * this.pedidoLimite + pedidos.length;
+            }
+          }
+          
+          this.pedidos = pedidos;
           this.pedidosDataSource.data = this.pedidos;
-          this.pedidoTotal = response.datos.paginacion.total;
+          this.pedidoTotal = total;
           this.pedidoCargando = false;
           console.log('Pedidos cargados:', this.pedidos.length);
         },

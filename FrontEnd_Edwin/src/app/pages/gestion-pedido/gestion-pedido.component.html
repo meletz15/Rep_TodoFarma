@@ -173,6 +173,40 @@
           </td>
         </ng-container>
 
+        <!-- Columna Pendiente -->
+        <ng-container matColumnDef="pendiente">
+          <th mat-header-cell *matHeaderCellDef class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Pendiente</th>
+          <td mat-cell *matCellDef="let pedido" class="px-6 py-4 whitespace-nowrap">
+            <!-- Estado CREADO: Mostrar botón para enviar -->
+            <div *ngIf="pedido.estado === 'CREADO'" class="flex items-center gap-2">
+              <button 
+                mat-icon-button 
+                (click)="actualizarEstadoPedido(pedido, 'ENVIADO')"
+                class="text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-full p-2 transition-colors duration-200"
+                matTooltip="Enviar pedido">
+                <mat-icon>send</mat-icon>
+              </button>
+            </div>
+            
+            <!-- Estado ENVIADO: Mostrar "Pendiente de recibir" y botón para recibir -->
+            <div *ngIf="pedido.estado === 'ENVIADO'" class="flex items-center gap-2">
+              <span class="text-sm text-gray-600 font-medium">Pendiente de recibir</span>
+              <button 
+                mat-icon-button 
+                (click)="actualizarEstadoPedido(pedido, 'RECIBIDO')"
+                class="text-green-600 hover:text-green-800 hover:bg-green-50 rounded-full p-2 transition-colors duration-200"
+                matTooltip="Marcar como recibido">
+                <mat-icon>check_circle</mat-icon>
+              </button>
+            </div>
+            
+            <!-- Estado RECIBIDO o CANCELADO: No mostrar nada -->
+            <div *ngIf="pedido.estado === 'RECIBIDO' || pedido.estado === 'CANCELADO'" class="text-sm text-gray-400">
+              -
+            </div>
+          </td>
+        </ng-container>
+
         <!-- Columna Total -->
         <ng-container matColumnDef="total_costo">
           <th mat-header-cell *matHeaderCellDef class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total</th>
@@ -201,16 +235,6 @@
                       matTooltip="Editar pedido">
                 <mat-icon>edit</mat-icon>
               </button>
-              
-              <!-- Botones de acción dinámicos -->
-              <ng-container *ngFor="let accion of obtenerAccionesDisponibles(pedido)">
-                <button mat-icon-button 
-                        (click)="actualizarEstadoPedido(pedido, accion.estado)"
-                        [class]="'text-' + accion.color + '-600 hover:text-' + accion.color + '-800 hover:bg-' + accion.color + '-50 rounded-full p-2 transition-colors duration-200'"
-                        [matTooltip]="accion.texto">
-                  <mat-icon>{{ accion.icono }}</mat-icon>
-                </button>
-              </ng-container>
             </div>
           </td>
         </ng-container>
@@ -225,6 +249,7 @@
       <mat-paginator #pedidoPaginator
                      [length]="pedidoTotal"
                      [pageSize]="pedidoLimite"
+                     [pageIndex]="pedidoPagina - 1"
                      [pageSizeOptions]="[5, 10, 25, 50]"
                      (page)="onPedidoPageChange($event)"
                      showFirstLastButtons>
