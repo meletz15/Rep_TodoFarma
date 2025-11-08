@@ -31,4 +31,6 @@ router.get('/por-vencer', InventarioController.obtenerProductosPorVencer);
 // GET /api/inventario/resumen-categoria - Obtener resumen de inventario por categoría
 router.get('/resumen-categoria', InventarioController.obtenerResumenPorCategoria);
 
+router.get('/producto/:id_producto/lotes', InventarioController.obtenerLotesProducto);
+
 module.exports = router;

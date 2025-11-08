@@ -359,8 +359,6 @@ export class VentasComponent implements OnInit {
   guardarVenta(): void {
     if (this.ventaForm.valid && this.detallesVenta.length > 0) {
       const datosVenta = this.ventaForm.value;
-      console.log('💾 Datos del formulario:', datosVenta);
-      console.log('💾 cliente_id del formulario:', datosVenta.cliente_id);
       
       // Formatear fecha
       if (datosVenta.fecha) {
@@ -383,8 +381,6 @@ export class VentasComponent implements OnInit {
           precio_unitario: parseFloat(detalle.precio_unitario)
         }))
       };
-      
-      console.log('💾 Datos finales de la venta:', ventaData);
 
       if (this.ventaEditando) {
         // Solo permitir anular ventas
@@ -626,12 +622,9 @@ export class VentasComponent implements OnInit {
 
   onClienteSelected(event: any): void {
     const cliente = event.option.value;
-    console.log('👤 Cliente seleccionado:', cliente);
     if (cliente) {
       this.clienteSeleccionado = cliente;
       this.ventaForm.patchValue({ cliente_id: cliente.id_cliente });
-      console.log('👤 cliente_id actualizado en formulario:', this.ventaForm.get('cliente_id')?.value);
-      console.log('👤 clienteSeleccionado actualizado:', this.clienteSeleccionado);
     }
   }
 

@@ -12,12 +12,16 @@ export interface AppConfig {
   };
 }
 
+// Usar configuración de desarrollo para desarrollo local, producción para producción
+const environment = (typeof window !== 'undefined' && window.location.hostname === 'localhost') ? 'development' : 'production';
+const backendConfig = getBackendConfig(environment);
+
 // Configuración centralizada del backend
 export const APP_CONFIG: AppConfig = {
   backend: {
-    baseUrl: BACKEND_CONFIG.development.baseUrl,
-    port: BACKEND_CONFIG.development.port,
-    apiUrl: BACKEND_CONFIG.development.apiUrl
+    baseUrl: backendConfig.baseUrl,
+    port: backendConfig.port,
+    apiUrl: backendConfig.apiUrl
   },
   app: {
     name: 'TodoFarma',

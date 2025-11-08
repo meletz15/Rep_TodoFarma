@@ -111,9 +111,6 @@ export class CajaComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    console.log('🚀 Inicializando componente de caja...');
-    console.log('🔑 Token de autenticación:', localStorage.getItem('token'));
-    console.log('🔍 Método cerrarCaja disponible:', typeof this.cerrarCaja);
     this.cargarCajas();
     this.cargarUsuariosActivos();
     this.cargarEstadisticas();
@@ -142,7 +139,6 @@ export class CajaComponent implements OnInit {
 
   // Métodos para cajas
   cargarCajas(): void {
-    console.log('🔄 Cargando cajas...');
     this.cajaCargando = true;
     
     // Preparar filtros para el backend (sin fechas, solo estado y usuario)
@@ -160,33 +156,25 @@ export class CajaComponent implements OnInit {
     
     // NO incluir fechas - se filtran en el frontend
     
-    console.log('📋 Filtros enviados al backend (sin fechas):', filtrosBackend);
-    
     // Cargar todas las cajas (el backend requiere paginación, usamos límite máximo de 100)
     // Luego hacemos paginación y filtrado de fechas en el frontend
     this.cajaService.obtenerTodasLasCajas(filtrosBackend)
       .subscribe({
         next: (response) => {
-          console.log('✅ Respuesta completa de cajas:', response);
-          
           if (response.datos && response.datos.datos) {
             // Guardar todas las cajas recibidas
             this.todasLasCajas = response.datos.datos || [];
             
-            console.log('📦 Total de cajas recibidas del backend:', this.todasLasCajas.length);
-            
             // Aplicar filtros de fecha en el frontend
             this.aplicarFiltrosFrontend();
           } else {
-            console.warn('⚠️ Estructura de respuesta inesperada:', response);
             this.todasLasCajas = [];
             this.aplicarFiltrosFrontend();
           }
           this.cajaCargando = false;
         },
         error: (error) => {
-          console.error('❌ Error al cargar cajas:', error);
-          console.error('❌ Detalles del error:', error);
+          console.error('Error al cargar cajas:', error);
           this.snackBar.open(`Error al cargar cajas: ${error.error?.mensaje || error.message || 'Error desconocido'}`, 'Cerrar', { duration: 5000 });
           this.cajaCargando = false;
         }
@@ -242,8 +230,6 @@ export class CajaComponent implements OnInit {
     this.cajas = this.cajasFiltradas.slice(inicio, fin);
     this.cajasDataSource.data = this.cajas;
     this.cajaTotal = total;
-    
-    console.log('✅ Cajas filtradas:', this.cajas.length, 'de', total);
   }
 
   cargarUsuariosActivos(): void {
@@ -271,22 +257,16 @@ export class CajaComponent implements OnInit {
   }
 
   verificarCajaAbierta(): void {
-    console.log('🔍 Verificando si hay caja abierta...');
     this.cajaService.verificarCajaAbierta()
       .subscribe({
         next: (response) => {
-          console.log('📋 Respuesta de verificarCajaAbierta:', response);
           this.hayCajaAbierta = response.datos.hay_caja_abierta;
-          console.log('📋 hayCajaAbierta:', this.hayCajaAbierta);
           if (this.hayCajaAbierta) {
-            console.log('✅ Hay caja abierta, obteniendo detalles...');
             this.obtenerCajaAbierta();
-          } else {
-            console.log('❌ No hay caja abierta');
           }
         },
         error: (error) => {
-          console.error('❌ Error al verificar caja abierta:', error);
+          console.error('Error al verificar caja abierta:', error);
         }
       });
   }
@@ -318,10 +298,8 @@ export class CajaComponent implements OnInit {
 
   // Métodos para apertura de caja
   abrirCaja(): void {
-    console.log('🔧 Abriendo modal de caja...');
     this.cajaModalAbierto = true;
     this.cajaForm.reset();
-    console.log('📋 Modal abierto:', this.cajaModalAbierto);
   }
 
   cerrarModalCaja(): void {
@@ -330,10 +308,6 @@ export class CajaComponent implements OnInit {
   }
 
   guardarCaja(): void {
-    console.log('🔧 Intentando abrir caja...');
-    console.log('📋 Formulario válido:', this.cajaForm.valid);
-    console.log('📋 Valores del formulario:', this.cajaForm.value);
-    
     if (this.cajaForm.valid) {
       const cajaData: CajaCreate = {
         usuario_apertura: this.cajaForm.value.usuario_apertura,
@@ -341,12 +315,9 @@ export class CajaComponent implements OnInit {
         observacion: this.cajaForm.value.observacion || ''
       };
 
-      console.log('📤 Datos de caja a enviar:', cajaData);
-
       this.cajaService.abrirCaja(cajaData)
         .subscribe({
           next: (response) => {
-            console.log('✅ Caja abierta exitosamente:', response);
             this.snackBar.open('Caja abierta correctamente', 'Cerrar', { duration: 3000 });
             this.cerrarModalCaja();
             this.verificarCajaAbierta();
@@ -354,27 +325,21 @@ export class CajaComponent implements OnInit {
             this.cargarEstadisticas();
           },
           error: (error) => {
-            console.error('❌ Error al abrir caja:', error);
+            console.error('Error al abrir caja:', error);
             this.snackBar.open('Error al abrir caja', 'Cerrar', { duration: 3000 });
           }
         });
     } else {
-      console.log('❌ Formulario inválido');
       this.snackBar.open('Por favor, complete todos los campos requeridos', 'Cerrar', { duration: 3000 });
     }
   }
 
   // Métodos para cierre de caja
   cerrarCaja(caja: Caja): void {
-    console.log('🔒 Intentando cerrar caja:', caja);
-    
     if (caja.estado === 'CERRADO') {
-      console.log('❌ Caja ya está cerrada');
       this.snackBar.open('Esta caja ya está cerrada', 'Cerrar', { duration: 3000 });
       return;
     }
-
-    console.log('✅ Caja está abierta, mostrando confirmación');
     
     // Mostrar modal de confirmación
     const dialogRef = this.dialog.open(ConfirmDialogComponent, {
@@ -388,7 +353,6 @@ export class CajaComponent implements OnInit {
 
     dialogRef.afterClosed().subscribe(result => {
       if (result) {
-        console.log('✅ Usuario confirmó, preparando datos de cierre');
         // Obtener el ID del usuario actual (puedes ajustar esto según tu sistema de autenticación)
         const usuarioActual = 1; // TODO: Obtener del servicio de autenticación
 
@@ -396,13 +360,9 @@ export class CajaComponent implements OnInit {
           usuario_cierre: usuarioActual,
           observacion: `Caja cerrada el ${new Date().toLocaleString('es-GT')}`
         };
-
-        console.log('📤 Enviando petición de cierre:', { idCaja: caja.id_caja, datosCierre });
         
         this.cajaService.cerrarCaja(caja.id_caja, datosCierre).subscribe({
           next: (response) => {
-            console.log('✅ Caja cerrada exitosamente:', response);
-            
             // Convertir saldo_cierre a número si es necesario
             const saldoCierre = response.datos?.saldo_cierre;
             const saldoCierreNumero = saldoCierre !== null && saldoCierre !== undefined 
@@ -424,18 +384,12 @@ export class CajaComponent implements OnInit {
                 cancelarTexto: '' // Ocultar botón de cancelar
               }
             });
-
-            successDialog.afterClosed().subscribe(() => {
-              // Los datos ya se recargaron antes de mostrar el modal
-            });
           },
           error: (error) => {
-            console.error('❌ Error al cerrar caja:', error);
+            console.error('Error al cerrar caja:', error);
             this.snackBar.open('Error al cerrar la caja', 'Cerrar', { duration: 3000 });
           }
         });
-      } else {
-        console.log('❌ Usuario canceló el cierre');
       }
     });
   }
@@ -446,7 +400,6 @@ export class CajaComponent implements OnInit {
   cajaDetalleCargando = false;
 
   verDetalles(caja: Caja): void {
-    console.log('👁️ Ver detalles de caja:', caja.id_caja);
     this.cajaDetalleCargando = true;
     this.cajaDetalleModalAbierto = true;
     
@@ -456,12 +409,11 @@ export class CajaComponent implements OnInit {
         next: (response) => {
           if (response.ok && response.datos) {
             this.cajaSeleccionada = response.datos;
-            console.log('✅ Detalles de caja cargados:', this.cajaSeleccionada);
           }
           this.cajaDetalleCargando = false;
         },
         error: (error) => {
-          console.error('❌ Error al cargar detalles de caja:', error);
+          console.error('Error al cargar detalles de caja:', error);
           this.snackBar.open('Error al cargar los detalles de la caja', 'Cerrar', { duration: 3000 });
           this.cajaDetalleCargando = false;
           this.cerrarModalDetalles();

@@ -127,7 +127,7 @@ class ProductoController {
   // Obtener todos los productos con paginación y filtros
   static async obtenerTodos(req, res, next) {
     try {
-      const { pagina, limite, activo, id_categoria, busqueda } = req.query;
+      const { pagina, limite, activo, id_categoria, busqueda, proximos_a_vencer, dias_vencimiento } = req.query;
       
       // Validar parámetros de paginación
       const paginacionValida = validarPaginacion(pagina, limite);
@@ -138,6 +138,10 @@ class ProductoController {
       if (activo !== undefined) filtros.activo = activo;
       if (id_categoria) filtros.id_categoria = parseInt(id_categoria);
       if (busqueda) filtros.busqueda = busqueda;
+      if (proximos_a_vencer === 'true' || proximos_a_vencer === true) {
+        filtros.proximos_a_vencer = true;
+        filtros.dias_vencimiento = dias_vencimiento ? parseInt(dias_vencimiento) : 30; // Por defecto 30 días
+      }
       
       // Obtener productos
       const resultado = await ProductoModel.obtenerTodos(filtros, paginacion);

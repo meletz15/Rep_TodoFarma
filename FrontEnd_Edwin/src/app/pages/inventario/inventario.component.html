@@ -167,6 +167,30 @@
           </td>
         </ng-container>
 
+        <!-- Columna Fecha de Vencimiento -->
+        <ng-container matColumnDef="fecha_vencimiento">
+          <th mat-header-cell *matHeaderCellDef class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Fecha Vencimiento</th>
+          <td mat-cell *matCellDef="let movimiento" class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+            <span *ngIf="movimiento.fecha_vencimiento" 
+                  [ngClass]="{
+                    'text-red-600 font-semibold': esFechaVencida(movimiento.fecha_vencimiento),
+                    'text-orange-600 font-semibold': esFechaPorVencer(movimiento.fecha_vencimiento),
+                    'text-gray-900': !esFechaVencida(movimiento.fecha_vencimiento) && !esFechaPorVencer(movimiento.fecha_vencimiento)
+                  }">
+              {{ formatearFecha(movimiento.fecha_vencimiento) }}
+            </span>
+            <span *ngIf="!movimiento.fecha_vencimiento" class="text-gray-400">-</span>
+          </td>
+        </ng-container>
+
+        <!-- Columna Número de Lote -->
+        <ng-container matColumnDef="numero_lote">
+          <th mat-header-cell *matHeaderCellDef class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Número de Lote</th>
+          <td mat-cell *matCellDef="let movimiento" class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+            {{ movimiento.numero_lote || '-' }}
+          </td>
+        </ng-container>
+
         <!-- Columna Referencia -->
         <ng-container matColumnDef="referencia">
           <th mat-header-cell *matHeaderCellDef class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Referencia</th>
@@ -286,6 +310,74 @@
       </mat-tab>
       <mat-tab label="Inventario Total">
         <div class="p-6">
+          <!-- Filtros de Inventario Total -->
+          <div class="bg-white rounded-xl shadow-lg border border-gray-200 p-6 mb-6">
+            <div class="flex items-center gap-3 mb-6">
+              <mat-icon class="text-blue-600">filter_list</mat-icon>
+              <h3 class="text-xl font-semibold text-gray-900">Filtros de Búsqueda</h3>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              <!-- Búsqueda -->
+              <div class="space-y-2">
+                <label class="block text-sm font-medium text-gray-700">Buscar</label>
+                <mat-form-field appearance="outline" class="w-full">
+                  <input matInput [(ngModel)]="inventarioTotalFiltros.busqueda" placeholder="Nombre, SKU, código...">
+                  <mat-icon matSuffix class="text-gray-400">search</mat-icon>
+                </mat-form-field>
+              </div>
+
+              <!-- Categoría -->
+              <div class="space-y-2">
+                <label class="block text-sm font-medium text-gray-700">Categoría</label>
+                <mat-form-field appearance="outline" class="w-full">
+                  <mat-select [(ngModel)]="inventarioTotalFiltros.id_categoria">
+                    <mat-option [value]="''">Todas las categorías</mat-option>
+                    <mat-option *ngFor="let categoria of categoriasParaDropdown" [value]="categoria.id_categoria.toString()">
+                      {{ categoria.nombre }}
+                    </mat-option>
+                  </mat-select>
+                  <mat-icon matSuffix class="text-gray-400">category</mat-icon>
+                </mat-form-field>
+              </div>
+
+              <!-- Stock Bajo -->
+              <div class="space-y-2">
+                <label class="block text-sm font-medium text-gray-700">Stock Bajo</label>
+                <mat-form-field appearance="outline" class="w-full">
+                  <mat-select [(ngModel)]="inventarioTotalFiltros.stock_bajo" (selectionChange)="aplicarFiltrosInventarioTotal()">
+                    <mat-option [value]="''">Ninguno</mat-option>
+                    <mat-option value="10">≤ 10 unidades</mat-option>
+                    <mat-option value="20">≤ 20 unidades</mat-option>
+                    <mat-option value="30">≤ 30 unidades</mat-option>
+                    <mat-option value="40">≤ 40 unidades</mat-option>
+                    <mat-option value="50">≤ 50 unidades</mat-option>
+                  </mat-select>
+                  <mat-icon matSuffix class="text-gray-400">inventory_2</mat-icon>
+                </mat-form-field>
+              </div>
+
+              <!-- Botones de acción -->
+              <div class="space-y-2">
+                <label class="block text-sm font-medium text-gray-700 opacity-0">Acciones</label>
+                <div class="flex gap-3">
+                  <button
+                    (click)="aplicarFiltrosInventarioTotal()"
+                    class="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-4 py-3 rounded-lg font-medium flex items-center justify-center gap-2 transition-colors duration-200 shadow-md hover:shadow-lg">
+                    <mat-icon class="text-white text-lg">filter_list</mat-icon>
+                    Filtrar
+                  </button>
+                  <button
+                    (click)="limpiarFiltrosInventarioTotal()"
+                    class="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-3 rounded-lg font-medium flex items-center justify-center gap-2 transition-colors duration-200 border border-gray-300">
+                    <mat-icon class="text-gray-600 text-lg">clear</mat-icon>
+                    Limpiar
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
           <!-- Tabla de Inventario Total -->
           <div class="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
             <div class="p-6 border-b border-gray-200">
@@ -310,12 +402,24 @@
                   <td mat-cell *matCellDef="let producto" class="px-6 py-4 whitespace-nowrap">
                     <div class="flex items-center">
                       <div class="flex-shrink-0 h-10 w-10">
-                        <div class="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center">
-                          <mat-icon class="text-blue-600">inventory</mat-icon>
+                        <div class="h-10 w-10 rounded-full flex items-center justify-center"
+                             [ngClass]="{
+                               'bg-red-100': tieneStockBajo(producto.stock),
+                               'bg-blue-100': !tieneStockBajo(producto.stock)
+                             }">
+                          <mat-icon 
+                            [ngClass]="{
+                              'text-red-600': tieneStockBajo(producto.stock),
+                              'text-blue-600': !tieneStockBajo(producto.stock)
+                            }">inventory</mat-icon>
                         </div>
                       </div>
                       <div class="ml-4">
-                        <div class="text-sm font-medium text-gray-900">{{ producto.nombre }}</div>
+                        <div class="text-sm font-medium"
+                             [ngClass]="{
+                               'text-red-900 font-semibold': tieneStockBajo(producto.stock),
+                               'text-gray-900': !tieneStockBajo(producto.stock)
+                             }">{{ producto.nombre }}</div>
                         <div class="text-sm text-gray-500">ID: {{ producto.id_producto }}</div>
                       </div>
                     </div>
@@ -372,7 +476,10 @@
 
                 <tr mat-header-row *matHeaderRowDef="inventarioTotalDisplayedColumns" class="bg-gray-50"></tr>
                 <tr mat-row *matRowDef="let row; columns: inventarioTotalDisplayedColumns;" 
-                    class="hover:bg-gray-50 border-b border-gray-200"></tr>
+                    [ngClass]="{
+                      'hover:bg-gray-50 border-b border-gray-200': !tieneStockBajo(row.stock),
+                      'bg-red-50 hover:bg-red-100 border-b border-red-200': tieneStockBajo(row.stock)
+                    }"></tr>
               </table>
             </div>
 

@@ -9,6 +9,7 @@ class InventarioModel {
       let consulta = `
         SELECT im.id_mov, im.producto_id, im.fecha, im.tipo, im.cantidad, im.signo, im.referencia,
                im.pedido_id, im.venta_id, im.usuario_id, im.observacion, im.created_at,
+               im.fecha_vencimiento, im.numero_lote,
                p.nombre as producto_nombre, p.sku, p.codigo_barras,
                u.nombre as usuario_nombre
         FROM inventario_movimiento im
@@ -261,15 +262,51 @@ class InventarioModel {
     const cliente = await pool.connect();
     try {
       const consulta = `
-        SELECT p.id_producto, p.nombre, p.sku, p.stock, p.fecha_vencimiento,
-               (p.fecha_vencimiento - CURRENT_DATE) as dias_para_vencer
+        SELECT DISTINCT
+          p.id_producto, 
+          p.nombre, 
+          p.sku, 
+          p.stock,
+          im.fecha_vencimiento,
+          im.numero_lote,
+          SUM(CASE WHEN im.signo = 1 THEN im.cantidad ELSE -im.cantidad END) OVER (PARTITION BY p.id_producto, im.fecha_vencimiento, im.numero_lote) as cantidad_lote,
+          (im.fecha_vencimiento - CURRENT_DATE) as dias_para_vencer
         FROM producto p
-        WHERE p.fecha_vencimiento IS NOT NULL 
-        AND p.fecha_vencimiento <= (CURRENT_DATE + INTERVAL '${dias} days')
-        ORDER BY p.fecha_vencimiento ASC, p.nombre ASC
+        INNER JOIN inventario_movimiento im ON p.id_producto = im.producto_id
+        WHERE im.fecha_vencimiento IS NOT NULL 
+          AND im.fecha_vencimiento <= (CURRENT_DATE + INTERVAL '${dias} days')
+          AND im.fecha_vencimiento > CURRENT_DATE
+        ORDER BY im.fecha_vencimiento ASC, p.nombre ASC
       `;
       
       const resultado = await cliente.query(consulta);
+      return resultado.rows;
+    } finally {
+      cliente.release();
+    }
+  }
+
+  // Obtener lotes de un producto con sus fechas de vencimiento
+  static async obtenerLotesProducto(idProducto) {
+    const cliente = await pool.connect();
+    try {
+      const consulta = `
+        SELECT 
+          im.fecha_vencimiento,
+          im.numero_lote,
+          SUM(CASE WHEN im.signo = 1 THEN im.cantidad ELSE -im.cantidad END) as cantidad_lote,
+          MIN(im.fecha) as fecha_ingreso,
+          MAX(im.fecha) as fecha_ultimo_movimiento,
+          (im.fecha_vencimiento - CURRENT_DATE) as dias_para_vencer
+        FROM inventario_movimiento im
+        WHERE im.producto_id = $1
+          AND im.fecha_vencimiento IS NOT NULL
+        GROUP BY im.producto_id, im.fecha_vencimiento, im.numero_lote
+        HAVING SUM(CASE WHEN im.signo = 1 THEN im.cantidad ELSE -im.cantidad END) > 0
+        ORDER BY im.fecha_vencimiento ASC
+      `;
+      
+      const resultado = await cliente.query(consulta, [idProducto]);
       return resultado.rows;
     } finally {
       cliente.release();
@@ -334,8 +371,8 @@ class InventarioModel {
     try {
       const consulta = `
         INSERT INTO inventario_movimiento 
-        (producto_id, tipo, cantidad, signo, referencia, pedido_id, venta_id, usuario_id, observacion)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+        (producto_id, tipo, cantidad, signo, referencia, pedido_id, venta_id, usuario_id, observacion, fecha_vencimiento, numero_lote)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
         RETURNING *
       `;
       
@@ -348,7 +385,9 @@ class InventarioModel {
         datos.pedido_id || null,
         datos.venta_id || null,
         datos.usuario_id || null,
-        datos.observacion || null
+        datos.observacion || null,
+        datos.fecha_vencimiento || null,
+        datos.numero_lote || null
       ];
       
       const resultado = await cliente.query(consulta, parametros);

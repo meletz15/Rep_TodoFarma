@@ -24,6 +24,7 @@ import { MatStepperModule } from '@angular/material/stepper';
 import { InventarioService } from '../../services/inventario.service';
 import { ProductoService } from '../../services/producto.service';
 import { UsuarioService } from '../../services/usuario.service';
+import { CategoriaService } from '../../services/categoria.service';
 import { 
   InventarioMovimiento, 
   KardexProducto,
@@ -81,7 +82,7 @@ export class InventarioComponent implements OnInit {
   todasLasMovimientos: InventarioMovimiento[] = []; // Todos los movimientos cargados
   movimientosFiltrados: InventarioMovimiento[] = []; // Movimientos después de filtrar
   movimientosDataSource = new MatTableDataSource<InventarioMovimiento>();
-  movimientosDisplayedColumns = ['fecha', 'producto', 'tipo', 'cantidad', 'referencia', 'usuario', 'observacion'];
+  movimientosDisplayedColumns = ['fecha', 'producto', 'tipo', 'cantidad', 'fecha_vencimiento', 'numero_lote', 'referencia', 'usuario', 'observacion'];
   movimientoForm!: FormGroup;
   movimientoModalAbierto = false;
   movimientoCargando = false;
@@ -98,12 +99,19 @@ export class InventarioComponent implements OnInit {
 
   // Variables para inventario total
   inventarioTotal: any[] = [];
+  todasLasInventarioTotal: any[] = []; // Todos los productos cargados
+  inventarioTotalFiltrados: any[] = []; // Productos después de filtrar
   inventarioTotalDataSource = new MatTableDataSource<any>();
   inventarioTotalDisplayedColumns = ['producto', 'stock_actual', 'precio_compra', 'precio_venta', 'valor_total'];
   inventarioTotalCargando = false;
   inventarioTotalPagina = 1;
   inventarioTotalLimite = 10;
   inventarioTotalTotal = 0;
+  inventarioTotalFiltros = {
+    busqueda: '',
+    id_categoria: '',
+    stock_bajo: '' // '10', '20', '30', '40', '50' o '' para ninguno
+  };
 
   // Variables para nuevo movimiento
   nuevoMovimientoModalAbierto = false;
@@ -130,6 +138,7 @@ export class InventarioComponent implements OnInit {
   // Variables para formularios
   productosParaDropdown: Producto[] = [];
   usuariosParaDropdown: Usuario[] = [];
+  categoriasParaDropdown: any[] = [];
 
   // Variables para estadísticas
   estadisticas: InventarioEstadisticas | null = null;
@@ -142,12 +151,23 @@ export class InventarioComponent implements OnInit {
     private inventarioService: InventarioService,
     private productoService: ProductoService,
     private usuarioService: UsuarioService,
+    private categoriaService: CategoriaService,
     private snackBar: MatSnackBar,
     private dialog: MatDialog
   ) {
-    console.log('🔧 Inicializando componente Inventario...');
     this.inicializarFormularios();
-    console.log('✅ Formularios inicializados');
+  }
+
+  cargarCategoriasActivas(): void {
+    this.categoriaService.obtenerCategorias(1, 100, { activo: 'true' })
+      .subscribe({
+        next: (response) => {
+          this.categoriasParaDropdown = response.datos.datos || [];
+        },
+        error: (error) => {
+          console.error('Error al cargar categorías:', error);
+        }
+      });
   }
 
   ngOnInit(): void {
@@ -155,6 +175,7 @@ export class InventarioComponent implements OnInit {
     this.cargarInventarioTotal();
     this.cargarProductosActivos();
     this.cargarUsuariosActivos();
+    this.cargarCategoriasActivas();
     this.cargarEstadisticas();
     this.cargarAlertas();
   }
@@ -184,22 +205,19 @@ export class InventarioComponent implements OnInit {
   // Métodos para movimientos
   cargarMovimientos(): void {
     this.movimientoCargando = true;
-    console.log('🔍 Cargando todos los movimientos...');
     
     // Cargar todos los movimientos (sin filtros, con límite alto)
     this.inventarioService.obtenerMovimientos(1, 100, {})
       .subscribe({
         next: (response) => {
-          console.log('✅ Respuesta del backend:', response);
           const movimientos = response.datos.datos || [];
           
           this.todasLasMovimientos = movimientos;
           this.aplicarFiltrosFrontend();
           this.movimientoCargando = false;
-          console.log('📊 Movimientos cargados:', this.todasLasMovimientos.length);
         },
         error: (error) => {
-          console.error('❌ Error al cargar movimientos:', error);
+          console.error('Error al cargar movimientos:', error);
           this.snackBar.open('Error al cargar movimientos', 'Cerrar', { duration: 3000 });
           this.movimientoCargando = false;
         }
@@ -273,44 +291,84 @@ export class InventarioComponent implements OnInit {
   // Método para cargar inventario total
   cargarInventarioTotal(): void {
     this.inventarioTotalCargando = true;
-    console.log('🔍 Cargando inventario total...', {
-      pagina: this.inventarioTotalPagina,
-      limite: this.inventarioTotalLimite
-    });
     
-    this.productoService.obtenerProductos(this.inventarioTotalPagina, this.inventarioTotalLimite, { activo: 'true' })
+    // Cargar todos los productos activos (hasta 100) para filtrar en frontend
+    this.productoService.obtenerProductos(1, 100, { activo: 'true' })
       .subscribe({
         next: (response) => {
-          console.log('✅ Inventario total cargado:', response);
           const inventarioTotal = response.datos.datos || [];
-          let total = response.datos.paginacion?.total || 0;
           
-          // WORKAROUND: Si el backend devuelve total=0 pero hay datos
-          if (total === 0 && inventarioTotal.length > 0) {
-            if (inventarioTotal.length === this.inventarioTotalLimite) {
-              total = this.inventarioTotalPagina * this.inventarioTotalLimite + 1;
-            } else {
-              total = (this.inventarioTotalPagina - 1) * this.inventarioTotalLimite + inventarioTotal.length;
-            }
-          }
-          
-          this.inventarioTotal = inventarioTotal;
-          this.inventarioTotalDataSource.data = this.inventarioTotal;
-          this.inventarioTotalTotal = total;
-          console.log('📊 Productos en inventario total:', this.inventarioTotal);
-          console.log('📊 Total de productos calculado:', this.inventarioTotalTotal);
-          console.log('🔍 Primer producto (ejemplo):', this.inventarioTotal[0]);
-          if (this.inventarioTotal[0]) {
-            console.log('💰 Precio unitario del primer producto:', this.inventarioTotal[0].precio_unitario);
-            console.log('📦 Stock del primer producto:', this.inventarioTotal[0].stock);
-          }
+          this.todasLasInventarioTotal = inventarioTotal;
+          this.aplicarFiltrosInventarioTotal();
           this.inventarioTotalCargando = false;
         },
         error: (error) => {
-          console.error('❌ Error al cargar inventario total:', error);
+          console.error('Error al cargar inventario total:', error);
           this.inventarioTotalCargando = false;
         }
       });
+  }
+
+  // Aplicar filtros al inventario total
+  aplicarFiltrosInventarioTotal(): void {
+    let filtrados = [...this.todasLasInventarioTotal];
+
+    // Filtro por búsqueda
+    if (this.inventarioTotalFiltros.busqueda && this.inventarioTotalFiltros.busqueda.trim() !== '') {
+      const busqueda = this.inventarioTotalFiltros.busqueda.toLowerCase().trim();
+      filtrados = filtrados.filter(producto => 
+        producto.nombre?.toLowerCase().includes(busqueda) ||
+        producto.sku?.toLowerCase().includes(busqueda) ||
+        producto.codigo_barras?.toLowerCase().includes(busqueda) ||
+        producto.categoria_nombre?.toLowerCase().includes(busqueda) ||
+        producto.marca_nombre?.toLowerCase().includes(busqueda)
+      );
+    }
+
+    // Filtro por categoría
+    if (this.inventarioTotalFiltros.id_categoria && this.inventarioTotalFiltros.id_categoria !== '') {
+      const categoriaId = parseInt(this.inventarioTotalFiltros.id_categoria);
+      filtrados = filtrados.filter(producto => 
+        producto.id_categoria === categoriaId
+      );
+    }
+
+    // Filtro por stock bajo
+    if (this.inventarioTotalFiltros.stock_bajo && this.inventarioTotalFiltros.stock_bajo !== '') {
+      const umbralStock = parseInt(this.inventarioTotalFiltros.stock_bajo);
+      filtrados = filtrados.filter(producto => 
+        (producto.stock || 0) <= umbralStock
+      );
+    }
+
+    this.inventarioTotalFiltrados = filtrados;
+    this.inventarioTotalTotal = filtrados.length;
+    this.inventarioTotalPagina = 1;
+    this.aplicarPaginacionInventarioTotal();
+  }
+
+  // Aplicar paginación al inventario total
+  aplicarPaginacionInventarioTotal(): void {
+    const inicio = (this.inventarioTotalPagina - 1) * this.inventarioTotalLimite;
+    const fin = inicio + this.inventarioTotalLimite;
+    this.inventarioTotal = this.inventarioTotalFiltrados.slice(inicio, fin);
+    this.inventarioTotalDataSource.data = this.inventarioTotal;
+  }
+
+  // Limpiar filtros de inventario total
+  limpiarFiltrosInventarioTotal(): void {
+    this.inventarioTotalFiltros = {
+      busqueda: '',
+      id_categoria: '',
+      stock_bajo: ''
+    };
+    this.aplicarFiltrosInventarioTotal();
+  }
+
+  // Verificar si un producto tiene stock bajo (usando el umbral configurado o 10 por defecto)
+  tieneStockBajo(stock: number): boolean {
+    const umbral = this.inventarioTotalFiltros.stock_bajo ? parseInt(this.inventarioTotalFiltros.stock_bajo) : 10;
+    return (stock || 0) <= umbral;
   }
 
   cargarProductosActivos(): void {
@@ -550,6 +608,27 @@ export class InventarioComponent implements OnInit {
   }
 
   // Métodos para formateo
+  esFechaVencida(fecha: string): boolean {
+    if (!fecha) return false;
+    const fechaVencimiento = new Date(fecha);
+    const hoy = new Date();
+    hoy.setHours(0, 0, 0, 0);
+    fechaVencimiento.setHours(0, 0, 0, 0);
+    return fechaVencimiento < hoy;
+  }
+
+  esFechaPorVencer(fecha: string): boolean {
+    if (!fecha) return false;
+    const fechaVencimiento = new Date(fecha);
+    const hoy = new Date();
+    const en30Dias = new Date();
+    en30Dias.setDate(hoy.getDate() + 30);
+    hoy.setHours(0, 0, 0, 0);
+    fechaVencimiento.setHours(0, 0, 0, 0);
+    en30Dias.setHours(0, 0, 0, 0);
+    return fechaVencimiento >= hoy && fechaVencimiento <= en30Dias;
+  }
+
   formatearFecha(fecha: string): string {
     if (!fecha) return '-';
     const date = new Date(fecha);
@@ -576,19 +655,11 @@ export class InventarioComponent implements OnInit {
 
   // Métodos para nuevo movimiento
   abrirModalNuevoMovimiento(): void {
-    console.log('🔍 Abriendo modal de nuevo movimiento...');
     this.nuevoMovimientoModalAbierto = true;
     this.nuevoMovimientoForm.reset({
       tipo: 'AJUSTE_ENTRADA',
       usuario_id: this.usuariosParaDropdown[0]?.id_usuario || ''
     });
-    console.log('✅ Modal abierto:', this.nuevoMovimientoModalAbierto);
-    console.log('🔍 Estado del modal en el DOM:', document.querySelector('[data-modal="nuevo-movimiento"]'));
-    
-    // Forzar detección de cambios
-    setTimeout(() => {
-      console.log('⏰ Verificando modal después de timeout:', this.nuevoMovimientoModalAbierto);
-    }, 100);
   }
 
 
@@ -598,8 +669,6 @@ export class InventarioComponent implements OnInit {
   }
 
   crearMovimientoSimplificado(): void {
-    console.log('🔍 Creando movimiento simplificado...');
-    
     // Obtener valores del formulario simplificado
     const productoSelect = document.querySelector('select') as HTMLSelectElement;
     const tipoSelect = document.querySelectorAll('select')[1] as HTMLSelectElement;
@@ -607,7 +676,6 @@ export class InventarioComponent implements OnInit {
     const observacionTextarea = document.querySelector('textarea') as HTMLTextAreaElement;
     
     if (!productoSelect || !tipoSelect || !cantidadInput) {
-      console.error('❌ No se encontraron los elementos del formulario');
       this.snackBar.open('Error: No se encontraron los campos del formulario', 'Cerrar', { duration: 3000 });
       return;
     }
@@ -625,8 +693,6 @@ export class InventarioComponent implements OnInit {
       observacion: observacionTextarea?.value || '',
       signo: signo
     };
-    
-    console.log('📝 Datos del movimiento:', datosMovimiento);
     
     // Validaciones básicas
     if (!datosMovimiento.producto_id || datosMovimiento.producto_id === 0) {
@@ -650,22 +716,18 @@ export class InventarioComponent implements OnInit {
     this.inventarioService.crearMovimiento(datosMovimiento)
       .subscribe({
         next: (response) => {
-          console.log('✅ Movimiento creado:', response);
           this.snackBar.open('Movimiento creado correctamente', 'Cerrar', { duration: 3000 });
           this.cerrarModalNuevoMovimiento();
           // Resetear paginación a la primera página para ver el nuevo movimiento
           this.movimientoPagina = 1;
-          console.log('🔄 Recargando movimientos después de crear uno nuevo...');
           // Recargar todos los movimientos desde el backend
           this.cargarMovimientos();
           this.cargarEstadisticas();
-          console.log('🔄 Recargando productos para actualizar stock en dropdown...');
           this.cargarProductosActivos(); // Recargar productos para actualizar stock en dropdown
-          console.log('🔄 Recargando inventario total para actualizar stock...');
           this.cargarInventarioTotal(); // Recargar inventario total para actualizar stock
         },
         error: (error) => {
-          console.error('❌ Error al crear movimiento:', error);
+          console.error('Error al crear movimiento:', error);
           this.snackBar.open('Error al crear movimiento: ' + (error.error?.mensaje || error.message), 'Cerrar', { duration: 5000 });
         },
         complete: () => {
@@ -689,9 +751,7 @@ export class InventarioComponent implements OnInit {
             // Recargar todos los movimientos desde el backend
             this.cargarMovimientos();
             this.cargarEstadisticas();
-            console.log('🔄 Recargando productos para actualizar stock en dropdown...');
             this.cargarProductosActivos(); // Recargar productos para actualizar stock en dropdown
-            console.log('🔄 Recargando inventario total para actualizar stock...');
             this.cargarInventarioTotal(); // Recargar inventario total para actualizar stock
           },
           error: (error) => {

@@ -343,6 +343,12 @@
               <!-- Select editable para edición -->
               <mat-form-field appearance="outline" class="w-full" *ngIf="estadoEditable">
                 <mat-select formControlName="estado" (selectionChange)="onEstadoChange($event)">
+                  <mat-select-trigger>
+                    <span class="flex items-center gap-2">
+                      <mat-icon class="text-sm">{{ obtenerIconoEstado(pedidoForm.get('estado')?.value || '') }}</mat-icon>
+                      {{ obtenerTextoEstado(pedidoForm.get('estado')?.value || '') }}
+                    </span>
+                  </mat-select-trigger>
                   <mat-option 
                     *ngFor="let estado of obtenerEstadosDisponibles(pedidoEditando?.estado || 'CREADO')" 
                     [value]="estado">
@@ -579,6 +585,104 @@
             </button>
           </div>
         </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal para recibir pedido con fechas de vencimiento -->
+  <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4" 
+       *ngIf="recibirPedidoModalAbierto" 
+       (click)="cerrarModalRecibirPedido()">
+    <div class="bg-white rounded-xl shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-y-auto" 
+         (click)="$event.stopPropagation()">
+      <!-- Header -->
+      <div class="flex justify-between items-center p-6 border-b border-gray-200 bg-gradient-to-r from-green-50 to-emerald-50">
+        <div>
+          <h2 class="text-xl font-semibold text-gray-900">
+            Recibir Pedido #{{ pedidoRecibir?.id_pedido }}
+          </h2>
+          <p class="text-sm text-gray-600 mt-1">
+            Ingresa la fecha de vencimiento y número de lote para cada producto
+          </p>
+        </div>
+        <button 
+          (click)="cerrarModalRecibirPedido()"
+          class="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors duration-200"
+        >
+          <mat-icon>close</mat-icon>
+        </button>
+      </div>
+
+      <!-- Contenido -->
+      <div class="p-6">
+        <div class="space-y-4">
+          <div *ngFor="let detalle of detallesConFechas; let i = index" 
+               class="border border-gray-200 rounded-lg p-4 hover:border-green-300 transition-colors duration-200">
+            <div class="flex items-center gap-3 mb-4">
+              <div class="flex-shrink-0 w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
+                <span class="text-green-600 font-semibold">{{ i + 1 }}</span>
+              </div>
+              <h3 class="font-semibold text-gray-900 text-lg">
+                {{ obtenerNombreProducto(detalle.id_producto) }}
+              </h3>
+              <span class="ml-auto text-sm text-gray-500">
+                Cantidad: {{ obtenerCantidadDetalle(detalle.id_producto) }}
+              </span>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <!-- Fecha de Vencimiento -->
+              <div class="space-y-2">
+                <label class="block text-sm font-medium text-gray-700">
+                  Fecha de Vencimiento <span class="text-red-500">*</span>
+                </label>
+                <mat-form-field appearance="outline" class="w-full">
+                  <input matInput 
+                         [matDatepicker]="pickerRecibir" 
+                         [(ngModel)]="detalle.fecha_vencimiento"
+                         placeholder="Seleccionar fecha"
+                         [min]="minDate">
+                  <mat-datepicker-toggle matSuffix [for]="pickerRecibir"></mat-datepicker-toggle>
+                  <mat-datepicker #pickerRecibir></mat-datepicker>
+                  <mat-hint>Fecha de vencimiento del lote</mat-hint>
+                </mat-form-field>
+              </div>
+
+              <!-- Número de Lote -->
+              <div class="space-y-2">
+                <label class="block text-sm font-medium text-gray-700">
+                  Número de Lote
+                </label>
+                <mat-form-field appearance="outline" class="w-full">
+                  <input matInput 
+                         [(ngModel)]="detalle.numero_lote"
+                         placeholder="Ej: LOTE-2025-001"
+                         maxlength="50">
+                  <mat-hint>Opcional: número de lote del producto</mat-hint>
+                </mat-form-field>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Botones -->
+        <div class="flex justify-end gap-4 pt-6 mt-6 border-t border-gray-200">
+          <button 
+            type="button" 
+            (click)="cerrarModalRecibirPedido()"
+            class="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors duration-200"
+          >
+            Cancelar
+          </button>
+          <button 
+            type="button" 
+            (click)="confirmarRecepcionPedido()"
+            class="px-6 py-3 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium transition-colors duration-200 shadow-md hover:shadow-lg"
+          >
+            <mat-icon class="mr-2">check_circle</mat-icon>
+            Confirmar Recepción
+          </button>
+        </div>
       </div>
     </div>
   </div>

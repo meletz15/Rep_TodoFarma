@@ -262,12 +262,14 @@ class PedidoModel {
   }
 
   // Actualizar estado del pedido
-  static async actualizarEstado(idPedido, nuevoEstado) {
+  static async actualizarEstado(idPedido, nuevoEstado, detallesConFechas = null) {
     const cliente = await pool.connect();
     try {
+      await cliente.query('BEGIN');
+      
       // Verificar que el pedido existe
       const pedidoExiste = await cliente.query(
-        'SELECT estado FROM pedido WHERE id_pedido = $1',
+        'SELECT estado, usuario_id FROM pedido WHERE id_pedido = $1',
         [idPedido]
       );
       
@@ -276,6 +278,7 @@ class PedidoModel {
       }
 
       const estadoActual = pedidoExiste.rows[0].estado;
+      const usuarioId = pedidoExiste.rows[0].usuario_id;
 
       // Validar transición de estado
       const transicionesValidas = {
@@ -289,12 +292,57 @@ class PedidoModel {
         throw crearError(`No se puede cambiar el estado de ${estadoActual} a ${nuevoEstado}`, 400);
       }
 
+      // Actualizar estado del pedido
       const resultado = await cliente.query(
         'UPDATE pedido SET estado = $1, updated_at = NOW() WHERE id_pedido = $2 RETURNING *',
         [nuevoEstado, idPedido]
       );
 
+      // Si el nuevo estado es RECIBIDO y hay detalles con fechas, crear movimientos de inventario
+      if (nuevoEstado === 'RECIBIDO' && detallesConFechas && detallesConFechas.length > 0) {
+        const InventarioModel = require('./inventarioModel');
+        
+        // Obtener detalles del pedido
+        const detallesPedido = await cliente.query(
+          'SELECT * FROM pedido_detalle WHERE id_pedido = $1',
+          [idPedido]
+        );
+
+        // Crear movimientos de inventario con fechas de vencimiento
+        for (const detalle of detallesPedido.rows) {
+          const detalleConFecha = detallesConFechas.find(
+            d => d.id_producto === detalle.id_producto
+          );
+
+          if (detalleConFecha) {
+            // Crear movimiento de entrada
+            await InventarioModel.crearMovimiento({
+              producto_id: detalle.id_producto,
+              tipo: 'ENTRADA_PEDIDO',
+              cantidad: detalle.cantidad,
+              signo: 1,
+              referencia: `Pedido #${idPedido}`,
+              pedido_id: idPedido,
+              usuario_id: usuarioId,
+              observacion: `Recepción de pedido #${idPedido}`,
+              fecha_vencimiento: detalleConFecha.fecha_vencimiento || null,
+              numero_lote: detalleConFecha.numero_lote || null
+            });
+
+            // Actualizar stock del producto
+            await cliente.query(
+              'UPDATE producto SET stock = stock + $1 WHERE id_producto = $2',
+              [detalle.cantidad, detalle.id_producto]
+            );
+          }
+        }
+      }
+
+      await cliente.query('COMMIT');
       return resultado.rows[0];
+    } catch (error) {
+      await cliente.query('ROLLBACK');
+      throw error;
     } finally {
       cliente.release();
     }

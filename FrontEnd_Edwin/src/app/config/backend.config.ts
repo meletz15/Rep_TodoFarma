@@ -23,9 +23,9 @@ export const BACKEND_CONFIG: BackendConfig = {
     apiUrl: 'http://localhost:3002/api'
   },
   production: {
-    baseUrl: 'https://api.todofarma.com', // Cambiar por tu dominio de producción
+    baseUrl: 'https://api.todofarmagt.com',
     port: 443,
-    apiUrl: 'https://api.todofarma.com/api'
+    apiUrl: 'https://api.todofarmagt.com/api'
   }
   // Puedes agregar más entornos aquí
   // staging: {

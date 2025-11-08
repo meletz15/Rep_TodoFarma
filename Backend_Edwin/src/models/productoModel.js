@@ -153,6 +153,26 @@ class ProductoModel {
         contadorParametros++;
       }
       
+      // Filtro para productos próximos a vencer
+      if (filtros.proximos_a_vencer) {
+        const diasLimite = filtros.dias_vencimiento || 30;
+        consulta += ` AND EXISTS (
+          SELECT 1 
+          FROM inventario_movimiento im
+          WHERE im.producto_id = p.id_producto
+            AND im.fecha_vencimiento IS NOT NULL
+            AND im.fecha_vencimiento <= (CURRENT_DATE + INTERVAL '${diasLimite} days')
+            AND im.fecha_vencimiento >= CURRENT_DATE
+            AND (
+              SELECT SUM(CASE WHEN im2.signo = 1 THEN im2.cantidad ELSE -im2.cantidad END)
+              FROM inventario_movimiento im2
+              WHERE im2.producto_id = im.producto_id
+                AND im2.fecha_vencimiento = im.fecha_vencimiento
+                AND (im2.numero_lote = im.numero_lote OR (im2.numero_lote IS NULL AND im.numero_lote IS NULL))
+            ) > 0
+        )`;
+      }
+      
       // Contar total de registros
       // Construir consulta de conteo correctamente (el regex debe manejar múltiples líneas)
       const consultaCount = consulta.replace(/SELECT[\s\S]*?FROM/, 'SELECT COUNT(*) as total FROM');

@@ -108,16 +108,19 @@
 
 /* Responsive para móviles */
 @media (max-width: 768px) {
-  .login-container {
+  .min-h-screen {
     flex-direction: column;
   }
   
-  .welcome-section {
-    display: none;
+  /* Ocultar la parte azul en móviles */
+  .gradient-bg {
+    display: none !important;
   }
   
-  .form-section {
-    width: 100%;
+  /* Asegurar que el formulario ocupe todo el ancho */
+  .bg-gradient-to-br {
+    width: 100% !important;
+    min-height: 100vh;
   }
 }
 

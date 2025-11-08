@@ -2,7 +2,7 @@ export interface InventarioMovimiento {
   id_mov: number;
   producto_id: number;
   fecha: string;
-  tipo: 'ENTRADA_COMPRA' | 'SALIDA_VENTA' | 'AJUSTE_ENTRADA' | 'AJUSTE_SALIDA' | 'DEVOLUCION_COMPRA' | 'DEVOLUCION_CLIENTE';
+  tipo: 'ENTRADA_COMPRA' | 'SALIDA_VENTA' | 'AJUSTE_ENTRADA' | 'AJUSTE_SALIDA' | 'DEVOLUCION_COMPRA' | 'DEVOLUCION_CLIENTE' | 'ENTRADA_PEDIDO';
   cantidad: number;
   signo: number;
   referencia?: string;
@@ -10,6 +10,8 @@ export interface InventarioMovimiento {
   venta_id?: number;
   usuario_id?: number;
   observacion?: string;
+  fecha_vencimiento?: string;
+  numero_lote?: string;
   created_at: string;
   producto_nombre?: string;
   sku?: string;
@@ -36,12 +38,16 @@ export interface KardexProducto {
 
 export interface MovimientoCreate {
   producto_id: number;
-  tipo: 'AJUSTE_ENTRADA' | 'AJUSTE_SALIDA' | 'DEVOLUCION_COMPRA' | 'DEVOLUCION_CLIENTE';
+  tipo: 'AJUSTE_ENTRADA' | 'AJUSTE_SALIDA' | 'DEVOLUCION_COMPRA' | 'DEVOLUCION_CLIENTE' | 'ENTRADA_PEDIDO';
   cantidad: number;
   signo: number;
   referencia?: string;
+  pedido_id?: number;
+  venta_id?: number;
   usuario_id?: number;
   observacion?: string;
+  fecha_vencimiento?: string;
+  numero_lote?: string;
 }
 
 export interface InventarioEstadisticas {
@@ -74,9 +80,11 @@ export interface ProductoPorVencer {
   sku?: string;
   stock: number;
   fecha_vencimiento: string;
-  precio_unitario: number;
-  categoria_nombre: string;
-  marca_nombre: string;
+  numero_lote?: string;
+  cantidad_lote?: number;
+  precio_unitario?: number;
+  categoria_nombre?: string;
+  marca_nombre?: string;
   dias_para_vencer: number;
 }
 

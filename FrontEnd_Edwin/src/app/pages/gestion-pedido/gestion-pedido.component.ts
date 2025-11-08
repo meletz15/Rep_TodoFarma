@@ -96,11 +96,21 @@ export class GestionPedidoComponent implements OnInit {
   proveedoresParaDropdown: Proveedor[] = [];
   usuariosParaDropdown: Usuario[] = [];
 
+  // Variables para modal de recepción de pedido
+  recibirPedidoModalAbierto = false;
+  pedidoRecibir: Pedido | null = null;
+  detallesConFechas: Array<{
+    id_producto: number;
+    fecha_vencimiento: Date | null;
+    numero_lote: string;
+  }> = [];
+
   // Variables para estadísticas
   estadisticas: PedidoEstadisticas | null = null;
 
   // Variables generales
   cargando = false;
+  minDate = new Date(); // Fecha mínima para datepicker (hoy)
 
   constructor(
     private fb: FormBuilder,
@@ -145,12 +155,10 @@ export class GestionPedidoComponent implements OnInit {
 
   // Métodos para pedidos
   cargarPedidos(): void {
-    console.log('Cargando pedidos...', { pagina: this.pedidoPagina, limite: this.pedidoLimite, filtros: this.pedidoFiltros });
     this.pedidoCargando = true;
     this.pedidoService.obtenerPedidos(this.pedidoPagina, this.pedidoLimite, this.pedidoFiltros)
       .subscribe({
         next: (response) => {
-          console.log('Respuesta de pedidos:', response);
           const pedidos = response.datos.datos || [];
           let total = response.datos.paginacion?.total || 0;
           
@@ -167,7 +175,6 @@ export class GestionPedidoComponent implements OnInit {
           this.pedidosDataSource.data = this.pedidos;
           this.pedidoTotal = total;
           this.pedidoCargando = false;
-          console.log('Pedidos cargados:', this.pedidos.length);
         },
         error: (error) => {
           console.error('Error al cargar pedidos:', error);
@@ -230,7 +237,6 @@ export class GestionPedidoComponent implements OnInit {
     this.pedidoModalAbierto = true;
     
     if (pedido) {
-      console.log('Abriendo modal para editar pedido:', pedido);
       this.estadoEditable = true; // Al editar, el estado es editable
       this.pedidoForm.patchValue({
         proveedor_id: pedido.proveedor_id,
@@ -242,7 +248,6 @@ export class GestionPedidoComponent implements OnInit {
       
       // Cargar detalles del pedido
       this.detallesPedido = pedido.detalles || [];
-      console.log('Detalles cargados:', this.detallesPedido);
       
       // Validar estado para edición
       this.validarEstadoEdicion(pedido);
@@ -315,11 +320,9 @@ export class GestionPedidoComponent implements OnInit {
   }
 
   crearPedido(datos: PedidoCreate): void {
-    console.log('Datos del pedido a crear:', datos);
     this.pedidoService.crearPedido(datos)
       .subscribe({
         next: (response) => {
-          console.log('Pedido creado exitosamente:', response);
           this.snackBar.open('Pedido creado correctamente', 'Cerrar', { duration: 3000 });
           this.cerrarModalPedido();
           this.cargarPedidos();
@@ -327,7 +330,6 @@ export class GestionPedidoComponent implements OnInit {
         },
         error: (error) => {
           console.error('Error al crear pedido:', error);
-          console.error('Error details:', error.error);
           this.snackBar.open('Error al crear pedido: ' + (error.error?.mensaje || error.message), 'Cerrar', { duration: 5000 });
         }
       });
@@ -414,6 +416,14 @@ export class GestionPedidoComponent implements OnInit {
       case 'CANCELADO': return 'warn';
       default: return 'primary';
     }
+  }
+
+  obtenerCantidadDetalle(idProducto: number): number {
+    if (!this.pedidoRecibir?.detalles) {
+      return 0;
+    }
+    const detalle = this.pedidoRecibir.detalles.find(d => d.id_producto === idProducto);
+    return detalle?.cantidad || 0;
   }
 
   obtenerNombreProducto(idProducto: number): string {
@@ -588,19 +598,17 @@ export class GestionPedidoComponent implements OnInit {
       return;
     }
 
-    // Mostrar confirmación para cambios importantes
-    if (nuevoEstado === 'CANCELADO' || nuevoEstado === 'RECIBIDO') {
-      const mensaje = nuevoEstado === 'CANCELADO' 
-        ? '¿Estás seguro de que quieres cancelar este pedido?'
-        : '¿Estás seguro de que quieres marcar este pedido como recibido? Esto agregará los productos al inventario.';
-
+    // Si es RECIBIDO, abrir modal para fechas de vencimiento
+    if (nuevoEstado === 'RECIBIDO') {
+      this.abrirModalRecibirPedido(pedido);
+    } else if (nuevoEstado === 'CANCELADO') {
       const dialogRef = this.dialog.open(ConfirmDialogComponent, {
         width: '400px',
         data: {
-          titulo: 'Confirmar cambio de estado',
-          mensaje: mensaje,
-          confirmarTexto: 'Sí, continuar',
-          cancelarTexto: 'Cancelar'
+          titulo: 'Confirmar cancelación',
+          mensaje: '¿Estás seguro de que quieres cancelar este pedido?',
+          confirmarTexto: 'Sí, cancelar',
+          cancelarTexto: 'No'
         }
       });
 
@@ -615,10 +623,87 @@ export class GestionPedidoComponent implements OnInit {
   }
 
   /**
+   * Abre el modal para recibir pedido con fechas de vencimiento
+   */
+  abrirModalRecibirPedido(pedido: Pedido): void {
+    // Cargar detalles completos del pedido si no están cargados
+    if (!pedido.detalles || pedido.detalles.length === 0) {
+      this.pedidoService.obtenerPedido(pedido.id_pedido).subscribe({
+        next: (response) => {
+          this.pedidoRecibir = response.datos;
+          this.inicializarDetallesConFechas();
+          this.recibirPedidoModalAbierto = true;
+        },
+        error: (error) => {
+          console.error('Error al cargar detalles del pedido:', error);
+          this.snackBar.open('Error al cargar detalles del pedido', 'Cerrar', { duration: 3000 });
+        }
+      });
+    } else {
+      this.pedidoRecibir = pedido;
+      this.inicializarDetallesConFechas();
+      this.recibirPedidoModalAbierto = true;
+    }
+  }
+
+  /**
+   * Inicializa el array de detalles con fechas
+   */
+  inicializarDetallesConFechas(): void {
+    if (!this.pedidoRecibir || !this.pedidoRecibir.detalles) return;
+    
+    this.detallesConFechas = this.pedidoRecibir.detalles.map(detalle => ({
+      id_producto: detalle.id_producto,
+      fecha_vencimiento: null,
+      numero_lote: ''
+    }));
+  }
+
+  /**
+   * Cierra el modal de recepción
+   */
+  cerrarModalRecibirPedido(): void {
+    this.recibirPedidoModalAbierto = false;
+    this.pedidoRecibir = null;
+    this.detallesConFechas = [];
+  }
+
+  /**
+   * Confirma la recepción del pedido con fechas de vencimiento
+   */
+  confirmarRecepcionPedido(): void {
+    if (!this.pedidoRecibir) return;
+
+    // Formatear fechas para enviar al backend
+    const detallesConFechasFormateadas = this.detallesConFechas.map(detalle => ({
+      id_producto: detalle.id_producto,
+      fecha_vencimiento: detalle.fecha_vencimiento 
+        ? detalle.fecha_vencimiento.toISOString().split('T')[0] 
+        : null,
+      numero_lote: detalle.numero_lote?.trim() || null
+    }));
+
+    this.ejecutarCambioEstado(
+      this.pedidoRecibir, 
+      'RECIBIDO',
+      detallesConFechasFormateadas
+    );
+    
+    this.cerrarModalRecibirPedido();
+  }
+
+  /**
    * Ejecuta el cambio de estado del pedido
    */
-  private ejecutarCambioEstado(pedido: Pedido, nuevoEstado: string): void {
-    const estadoUpdate: PedidoUpdate = { estado: nuevoEstado as any };
+  private ejecutarCambioEstado(
+    pedido: Pedido, 
+    nuevoEstado: string, 
+    detallesConFechas?: Array<{ id_producto: number; fecha_vencimiento: string | null; numero_lote: string | null }>
+  ): void {
+    const estadoUpdate: PedidoUpdate = { 
+      estado: nuevoEstado as any,
+      detallesConFechas: detallesConFechas
+    };
     
     this.pedidoService.actualizarEstadoPedido(pedido.id_pedido, estadoUpdate)
       .subscribe({
@@ -634,9 +719,9 @@ export class GestionPedidoComponent implements OnInit {
         error: (error) => {
           console.error('Error al actualizar estado:', error);
           this.snackBar.open(
-            'Error al actualizar el estado del pedido',
+            'Error al actualizar el estado del pedido: ' + (error.error?.mensaje || error.message),
             'Cerrar',
-            { duration: 3000 }
+            { duration: 5000 }
           );
         }
       });

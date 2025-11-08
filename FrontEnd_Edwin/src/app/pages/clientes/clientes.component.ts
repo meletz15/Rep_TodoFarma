@@ -103,17 +103,9 @@ export class ClientesComponent implements OnInit {
   cargarClientes(): void {
     this.loading = true;
     
-    console.log('📋 Cargando clientes...', { 
-      pagina: this.currentPage, 
-      limite: this.pageSize, 
-      filtros: this.filtros 
-    });
-    
     this.clienteService.obtenerClientes(this.currentPage, this.pageSize, this.filtros)
       .subscribe({
         next: (response) => {
-          console.log('✅ [Frontend] Respuesta completa del backend:', JSON.stringify(response, null, 2));
-          
           if (response.ok && response.datos) {
             const clientes = response.datos.datos || [];
             let total = response.datos.paginacion?.total || 0;
@@ -121,7 +113,6 @@ export class ClientesComponent implements OnInit {
             // WORKAROUND: Si el backend devuelve total=0 pero hay datos, usar el tamaño de la página actual
             // como mínimo, o inferir un total basado en si hay más datos disponibles
             if (total === 0 && clientes.length > 0) {
-              console.warn('⚠️ [Frontend] Backend devolvió total=0 pero hay datos. Usando workaround...');
               // Si tenemos datos y el límite es menor que el tamaño de página, asumimos que hay más datos
               if (clientes.length === this.pageSize) {
                 // Hay más datos disponibles, establecer un total mínimo
@@ -130,33 +121,16 @@ export class ClientesComponent implements OnInit {
                 // Es la última página o no hay más datos
                 total = (this.currentPage - 1) * this.pageSize + clientes.length;
               }
-              console.log('⚠️ [Frontend] Total inferido:', total);
             }
-            
-            console.log('📊 [Frontend] Datos procesados:', { 
-              clientesRecibidos: clientes.length, 
-              total: total,
-              currentPage: this.currentPage,
-              pageSize: this.pageSize
-            });
             
             this.dataSource.data = clientes;
             this.totalClientes = total;
-            
-            console.log('✅ [Frontend] Estado final:', { 
-              totalClientes: this.totalClientes, 
-              currentPage: this.currentPage,
-              pageSize: this.pageSize,
-              dataSourceLength: this.dataSource.data.length,
-              pageIndexCalculado: this.currentPage - 1
-            });
             
             // Forzar detección de cambios para actualizar el paginator
             this.cdr.detectChanges();
             
             this.loading = false;
           } else {
-            console.error('❌ [Frontend] Respuesta inválida:', response);
             this.loading = false;
             this.snackBar.open('Error: Respuesta inválida del servidor', 'Cerrar', {
               duration: 3000
@@ -164,7 +138,7 @@ export class ClientesComponent implements OnInit {
           }
         },
         error: (error) => {
-          console.error('❌ Error al cargar clientes:', error);
+          console.error('Error al cargar clientes:', error);
           this.loading = false;
           this.snackBar.open('Error al cargar clientes: ' + (error.error?.mensaje || error.message), 'Cerrar', {
             duration: 3000

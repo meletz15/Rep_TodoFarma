@@ -6,6 +6,8 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { UsuarioService } from '../../services/usuario.service';
 import { ProductoService } from '../../services/producto.service';
 import { VentaService } from '../../services/venta.service';
+import { InventarioService } from '../../services/inventario.service';
+import { ProductoStockBajo } from '../../models/inventario.model';
 
 @Component({
   selector: 'app-dashboard',
@@ -26,6 +28,10 @@ export class DashboardComponent implements OnInit {
   ventasHoy = 0;
   ingresosHoy = 0;
 
+  // Productos con stock bajo
+  productosStockBajo: ProductoStockBajo[] = [];
+  cargandoStockBajo = false;
+
   // Estados de carga
   cargando = true;
   cargandoUsuarios = false;
@@ -35,7 +41,8 @@ export class DashboardComponent implements OnInit {
   constructor(
     private usuarioService: UsuarioService,
     private productoService: ProductoService,
-    private ventaService: VentaService
+    private ventaService: VentaService,
+    private inventarioService: InventarioService
   ) {}
 
   ngOnInit(): void {
@@ -53,6 +60,9 @@ export class DashboardComponent implements OnInit {
     
     // Cargar estadísticas de ventas
     this.cargarEstadisticasVentas();
+    
+    // Cargar productos con stock bajo
+    this.cargarProductosStockBajo();
   }
 
   cargarUsuariosActivos(): void {
@@ -142,5 +152,25 @@ export class DashboardComponent implements OnInit {
 
   formatearPrecio(precio: number): string {
     return `Q${precio.toLocaleString('es-GT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  }
+
+  cargarProductosStockBajo(): void {
+    this.cargandoStockBajo = true;
+    this.inventarioService.obtenerProductosStockBajo(10)
+      .subscribe({
+        next: (response) => {
+          if (response.ok && response.datos) {
+            this.productosStockBajo = response.datos;
+          } else {
+            this.productosStockBajo = [];
+          }
+          this.cargandoStockBajo = false;
+        },
+        error: (error) => {
+          console.error('Error al cargar productos con stock bajo:', error);
+          this.productosStockBajo = [];
+          this.cargandoStockBajo = false;
+        }
+      });
   }
 }

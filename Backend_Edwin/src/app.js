@@ -58,14 +58,49 @@ app.use((req, res, next) => {
   next();
 });
 
-// Ruta de salud
-app.get('/health', (req, res) => {
-  res.json({
+// Ruta de salud (sin autenticación) - verifica estado del backend y base de datos
+app.get('/health', async (req, res) => {
+  const { pool } = require('./config/db');
+  const estado = {
     ok: true,
     mensaje: 'API funcionando correctamente',
     timestamp: new Date().toISOString(),
-    version: '1.0.0'
-  });
+    version: '1.0.0',
+    servidor: {
+      estado: 'corriendo',
+      uptime: process.uptime(),
+      memoria: {
+        used: Math.round(process.memoryUsage().heapUsed / 1024 / 1024) + ' MB',
+        total: Math.round(process.memoryUsage().heapTotal / 1024 / 1024) + ' MB'
+      }
+    },
+    baseDatos: {
+      estado: 'verificando',
+      conectado: false,
+      error: null
+    }
+  };
+
+  // Verificar conexión a la base de datos
+  try {
+    const cliente = await pool.connect();
+    // Hacer una consulta simple para verificar la conexión
+    await cliente.query('SELECT 1');
+    cliente.release();
+    
+    estado.baseDatos.estado = 'conectado';
+    estado.baseDatos.conectado = true;
+    estado.ok = true;
+  } catch (error) {
+    estado.baseDatos.estado = 'desconectado';
+    estado.baseDatos.conectado = false;
+    estado.baseDatos.error = error.message;
+    estado.ok = false;
+  }
+
+  // Retornar el código de estado HTTP apropiado
+  const statusCode = estado.ok ? 200 : 503;
+  res.status(statusCode).json(estado);
 });
 
 // Rutas de la API

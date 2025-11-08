@@ -44,6 +44,11 @@ export interface PedidoDetalleCreate {
 export interface PedidoUpdate {
   estado?: 'CREADO' | 'ENVIADO' | 'RECIBIDO' | 'CANCELADO';
   observacion?: string;
+  detallesConFechas?: Array<{
+    id_producto: number;
+    fecha_vencimiento: string | null;
+    numero_lote: string | null;
+  }>;
 }
 
 export interface PedidoEstadisticas {

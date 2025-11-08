@@ -22,6 +22,7 @@ import { MatChipsModule } from '@angular/material/chips';
 
 import { CategoriaService } from '../../services/categoria.service';
 import { ProductoService } from '../../services/producto.service';
+import { InventarioService } from '../../services/inventario.service';
 import { MarcaService, Marca, MarcaFiltros } from '../../services/marca.service';
 import { Categoria, CategoriaCreate, CategoriaUpdate } from '../../models/categoria.model';
 import { Producto, ProductoCreate, ProductoUpdate } from '../../models/producto.model';
@@ -91,7 +92,9 @@ export class ProductosComponent implements OnInit {
   productoFiltros = {
     activo: '',
     id_categoria: '',
-    busqueda: ''
+    busqueda: '',
+    proximos_a_vencer: false,
+    dias_vencimiento: 30
   };
   categoriasParaDropdown: Categoria[] = [];
 
@@ -116,10 +119,19 @@ export class ProductosComponent implements OnInit {
   tabSeleccionado = 0;
   cargando = false;
 
+  // Variables para lotes de productos
+  lotesProducto: any[] = [];
+  lotesModalAbierto = false;
+  productoSeleccionadoLotes: Producto | null = null;
+  lotesCargando = false;
+  productosConLotes: Map<number, any[]> = new Map(); // Cache de lotes por producto
+  Math = Math; // Exponer Math para usar en el template
+
   constructor(
     private fb: FormBuilder,
     private categoriaService: CategoriaService,
     private productoService: ProductoService,
+    private inventarioService: InventarioService,
     private marcaService: MarcaService,
     private snackBar: MatSnackBar,
     private dialog: MatDialog
@@ -344,6 +356,9 @@ export class ProductosComponent implements OnInit {
           this.productosDataSource.data = this.productos;
           this.productoTotal = total;
           this.productoCargando = false;
+          
+          // Cargar lotes para productos con stock
+          this.cargarLotesParaProductos();
         },
         error: (error) => {
           console.error('Error al cargar productos:', error);
@@ -474,7 +489,9 @@ export class ProductosComponent implements OnInit {
     this.productoFiltros = {
       activo: '',
       id_categoria: '',
-      busqueda: ''
+      busqueda: '',
+      proximos_a_vencer: false,
+      dias_vencimiento: 30
     };
     this.aplicarFiltrosProducto();
   }
@@ -652,6 +669,27 @@ export class ProductosComponent implements OnInit {
     });
   }
 
+  esFechaVencida(fecha: string): boolean {
+    if (!fecha) return false;
+    const fechaVencimiento = new Date(fecha);
+    const hoy = new Date();
+    hoy.setHours(0, 0, 0, 0);
+    fechaVencimiento.setHours(0, 0, 0, 0);
+    return fechaVencimiento < hoy;
+  }
+
+  esFechaPorVencer(fecha: string): boolean {
+    if (!fecha) return false;
+    const fechaVencimiento = new Date(fecha);
+    const hoy = new Date();
+    const en30Dias = new Date();
+    en30Dias.setDate(hoy.getDate() + 30);
+    hoy.setHours(0, 0, 0, 0);
+    fechaVencimiento.setHours(0, 0, 0, 0);
+    en30Dias.setHours(0, 0, 0, 0);
+    return fechaVencimiento >= hoy && fechaVencimiento <= en30Dias;
+  }
+
   formatearFecha(fecha: string): string {
     return new Date(fecha).toLocaleDateString('es-ES');
   }
@@ -680,5 +718,91 @@ export class ProductosComponent implements OnInit {
     if (stock === 0) return 'warn';
     if (stock < 10) return 'accent';
     return 'primary';
+  }
+
+  // Métodos para manejar lotes de productos
+  obtenerLotesProducto(producto: Producto): void {
+    this.productoSeleccionadoLotes = producto;
+    this.lotesModalAbierto = true;
+    this.lotesCargando = true;
+    this.lotesProducto = [];
+
+    // Verificar si ya tenemos los lotes en cache
+    if (this.productosConLotes.has(producto.id_producto)) {
+      this.lotesProducto = this.productosConLotes.get(producto.id_producto)!;
+      this.lotesCargando = false;
+      return;
+    }
+
+    this.inventarioService.obtenerLotesProducto(producto.id_producto)
+      .subscribe({
+        next: (response) => {
+          if (response.ok && response.datos) {
+            this.lotesProducto = response.datos;
+            // Guardar en cache
+            this.productosConLotes.set(producto.id_producto, response.datos);
+          }
+          this.lotesCargando = false;
+        },
+        error: (error) => {
+          console.error('Error al cargar lotes:', error);
+          this.snackBar.open('Error al cargar los lotes del producto', 'Cerrar', { duration: 3000 });
+          this.lotesCargando = false;
+        }
+      });
+  }
+
+  cerrarModalLotes(): void {
+    this.lotesModalAbierto = false;
+    this.productoSeleccionadoLotes = null;
+    this.lotesProducto = [];
+  }
+
+  obtenerFechaVencimientoMasProxima(producto: Producto): string | null {
+    const lotes = this.productosConLotes.get(producto.id_producto);
+    if (!lotes || lotes.length === 0) {
+      return producto.fecha_vencimiento || null;
+    }
+    // Los lotes ya vienen ordenados por fecha_vencimiento ASC
+    return lotes[0].fecha_vencimiento || null;
+  }
+
+  obtenerDiasRestantes(producto: Producto): number {
+    const fechaVencimiento = this.obtenerFechaVencimientoMasProxima(producto) || producto.fecha_vencimiento;
+    if (!fechaVencimiento) return 999; // Si no hay fecha, retornar un número alto
+    
+    const fechaVenc = new Date(fechaVencimiento);
+    const hoy = new Date();
+    hoy.setHours(0, 0, 0, 0);
+    fechaVenc.setHours(0, 0, 0, 0);
+    
+    const diffTime = fechaVenc.getTime() - hoy.getTime();
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    
+    return diffDays;
+  }
+
+  tieneMultiplesLotes(producto: Producto): boolean {
+    const lotes = this.productosConLotes.get(producto.id_producto);
+    return lotes ? lotes.length > 1 : false;
+  }
+
+  cargarLotesParaProductos(): void {
+    // Cargar lotes para todos los productos que tienen stock
+    this.productos.forEach(producto => {
+      if (producto.stock > 0 && !this.productosConLotes.has(producto.id_producto)) {
+        this.inventarioService.obtenerLotesProducto(producto.id_producto)
+          .subscribe({
+            next: (response) => {
+              if (response.ok && response.datos && response.datos.length > 0) {
+                this.productosConLotes.set(producto.id_producto, response.datos);
+              }
+            },
+            error: (error) => {
+              // Silenciar errores para carga en background
+            }
+          });
+      }
+    });
   }
 }

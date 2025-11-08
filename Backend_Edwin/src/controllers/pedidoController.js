@@ -60,7 +60,14 @@ const esquemaActualizarEstado = Joi.object({
   estado: Joi.string().valid('CREADO', 'ENVIADO', 'RECIBIDO', 'CANCELADO').required().messages({
     'any.only': 'El estado debe ser uno de: CREADO, ENVIADO, RECIBIDO, CANCELADO',
     'any.required': 'El estado es requerido'
-  })
+  }),
+  detallesConFechas: Joi.array().items(
+    Joi.object({
+      id_producto: Joi.number().integer().positive().required(),
+      fecha_vencimiento: Joi.date().allow(null),
+      numero_lote: Joi.string().max(50).allow('', null)
+    })
+  ).allow(null)
 });
 
 class PedidoController {
@@ -172,8 +179,12 @@ class PedidoController {
         throw crearError('Datos de entrada inválidos', 400, error.details);
       }
       
-      // Actualizar estado del pedido
-      const pedido = await PedidoModel.actualizarEstado(id, value.estado);
+      // Actualizar estado del pedido con detalles de fechas si existen
+      const pedido = await PedidoModel.actualizarEstado(
+        id, 
+        value.estado,
+        value.detallesConFechas || null
+      );
       
       res.json({
         ok: true,

@@ -276,24 +276,24 @@ export class ProveedoresComponent implements OnInit {
 
     dialogRef.afterClosed().subscribe(result => {
       if (result) {
-        this.proveedorService.eliminarProveedor(proveedor.id).subscribe({
-          next: (response) => {
-            if (response.ok) {
-              this.snackBar.open("Proveedor eliminado correctamente", "Cerrar", {
-                duration: 3000,
-              });
-              this.cargarProveedores();
-            }
-          },
-          error: (error) => {
-            this.snackBar.open(
-              error.error?.mensaje || "Error al eliminar proveedor",
-              "Cerrar",
-              { duration: 3000 }
-            );
-          },
-        });
-      }
+      this.proveedorService.eliminarProveedor(proveedor.id).subscribe({
+        next: (response) => {
+          if (response.ok) {
+            this.snackBar.open("Proveedor eliminado correctamente", "Cerrar", {
+              duration: 3000,
+            });
+            this.cargarProveedores();
+          }
+        },
+        error: (error) => {
+          this.snackBar.open(
+            error.error?.mensaje || "Error al eliminar proveedor",
+            "Cerrar",
+            { duration: 3000 }
+          );
+        },
+      });
+    }
     });
   }
 

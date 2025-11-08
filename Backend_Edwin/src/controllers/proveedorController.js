@@ -2,7 +2,7 @@ const Joi = require('joi');
 const ProveedorModel = require('../models/proveedorModel');
 const { crearError } = require('../utils/errorHandler');
 const { validarPaginacion, construirPaginacion, construirRespuestaPaginada } = require('../utils/pagination');
-require('dotenv').config({ path: '../env.local' });
+require('dotenv').config();
 
 
 // Esquemas de validación con mensajes personalizados

@@ -195,8 +195,40 @@
                 <mat-icon matSuffix class="text-gray-400">toggle_on</mat-icon>
               </mat-form-field>
             </div>
+          </div>
 
-            <!-- Botones de acción -->
+          <!-- Filtro de Próximos a Vencer -->
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4 pt-4 border-t border-gray-200">
+            <div class="space-y-2">
+              <div class="flex items-center gap-3">
+                <mat-checkbox 
+                  [(ngModel)]="productoFiltros.proximos_a_vencer"
+                  color="primary"
+                  class="text-gray-700">
+                  <span class="ml-2 font-medium">Solo productos próximos a vencer</span>
+                </mat-checkbox>
+              </div>
+              <p class="text-xs text-gray-500 ml-9">Mostrar solo productos con lotes próximos a vencer</p>
+            </div>
+
+            <div class="space-y-2" *ngIf="productoFiltros.proximos_a_vencer">
+              <label class="block text-sm font-medium text-gray-700">Días para vencer (máximo)</label>
+              <mat-form-field appearance="outline" class="w-full">
+                <input 
+                  matInput 
+                  type="number" 
+                  [(ngModel)]="productoFiltros.dias_vencimiento" 
+                  placeholder="30"
+                  min="1"
+                  max="365">
+                <mat-icon matSuffix class="text-gray-400">calendar_today</mat-icon>
+                <mat-hint>Días desde hoy hasta la fecha de vencimiento</mat-hint>
+              </mat-form-field>
+            </div>
+          </div>
+
+          <!-- Botones de acción -->
+          <div class="mt-6">
             <div class="space-y-2">
               <label class="block text-sm font-medium text-gray-700 opacity-0">Acciones</label>
               <div class="flex gap-3">
@@ -273,7 +305,48 @@
               <ng-container matColumnDef="fecha_vencimiento">
                 <th mat-header-cell *matHeaderCellDef class="font-semibold text-gray-700 px-6 py-4">Vencimiento</th>
                 <td mat-cell *matCellDef="let producto" class="text-gray-600 px-6 py-4">
-                  {{ producto.fecha_vencimiento ? formatearFecha(producto.fecha_vencimiento) : '-' }}
+                  <div class="flex flex-col gap-1">
+                    <div class="flex items-center gap-2">
+                      <span [ngClass]="{
+                        'text-red-600 font-semibold': obtenerFechaVencimientoMasProxima(producto) && esFechaVencida(obtenerFechaVencimientoMasProxima(producto)!),
+                        'text-orange-600 font-semibold': obtenerFechaVencimientoMasProxima(producto) && esFechaPorVencer(obtenerFechaVencimientoMasProxima(producto)!),
+                        'text-gray-600': !obtenerFechaVencimientoMasProxima(producto) || (!esFechaVencida(obtenerFechaVencimientoMasProxima(producto)!) && !esFechaPorVencer(obtenerFechaVencimientoMasProxima(producto)!))
+                      }">
+                        {{ obtenerFechaVencimientoMasProxima(producto) ? formatearFecha(obtenerFechaVencimientoMasProxima(producto)!) : (producto.fecha_vencimiento ? formatearFecha(producto.fecha_vencimiento) : '-') }}
+                      </span>
+                      <button 
+                        *ngIf="tieneMultiplesLotes(producto)" 
+                        mat-icon-button 
+                        (click)="obtenerLotesProducto(producto)"
+                        matTooltip="Ver todos los lotes"
+                        class="text-blue-600 hover:bg-blue-50"
+                        style="width: 24px; height: 24px; line-height: 24px;">
+                        <mat-icon style="font-size: 18px; width: 18px; height: 18px;">info</mat-icon>
+                      </button>
+                      <span *ngIf="tieneMultiplesLotes(producto)" class="text-xs text-blue-600 font-medium">
+                        ({{ productosConLotes.get(producto.id_producto)?.length }} lotes)
+                      </span>
+                    </div>
+                    <!-- Mostrar días restantes si hay fecha de vencimiento -->
+                    <span 
+                      *ngIf="obtenerFechaVencimientoMasProxima(producto) || producto.fecha_vencimiento"
+                      class="text-xs"
+                      [ngClass]="{
+                        'text-red-600 font-semibold': obtenerDiasRestantes(producto) < 0,
+                        'text-orange-600 font-semibold': obtenerDiasRestantes(producto) >= 0 && obtenerDiasRestantes(producto) <= 30,
+                        'text-gray-500': obtenerDiasRestantes(producto) > 30
+                      }">
+                      <span *ngIf="obtenerDiasRestantes(producto) < 0">
+                        ⚠️ Vencido hace {{ Math.abs(obtenerDiasRestantes(producto)) }} días
+                      </span>
+                      <span *ngIf="obtenerDiasRestantes(producto) >= 0 && obtenerDiasRestantes(producto) <= 30">
+                        ⏰ Vence en {{ obtenerDiasRestantes(producto) }} días
+                      </span>
+                      <span *ngIf="obtenerDiasRestantes(producto) > 30">
+                        ✓ Vence en {{ obtenerDiasRestantes(producto) }} días
+                      </span>
+                    </span>
+                  </div>
                 </td>
               </ng-container>
 
@@ -788,6 +861,126 @@
             </button>
           </div>
         </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal para ver lotes de un producto -->
+  <div *ngIf="lotesModalAbierto" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4" (click)="cerrarModalLotes()">
+    <div class="bg-white rounded-xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden flex flex-col" (click)="$event.stopPropagation()">
+      <!-- Header del modal -->
+      <div class="flex justify-between items-center p-6 border-b border-gray-200 bg-gradient-to-r from-blue-600 to-blue-700">
+        <div>
+          <h2 class="text-2xl font-bold text-white">Lotes del Producto</h2>
+          <p class="text-blue-100 mt-1" *ngIf="productoSeleccionadoLotes">
+            {{ productoSeleccionadoLotes.nombre }} ({{ productoSeleccionadoLotes.sku }})
+          </p>
+        </div>
+        <button 
+          mat-icon-button 
+          (click)="cerrarModalLotes()"
+          class="text-white hover:bg-blue-800"
+        >
+          <mat-icon>close</mat-icon>
+        </button>
+      </div>
+
+      <!-- Contenido del modal -->
+      <div class="flex-1 overflow-y-auto p-6">
+        <!-- Loading -->
+        <div *ngIf="lotesCargando" class="flex flex-col items-center justify-center py-12">
+          <mat-spinner diameter="50"></mat-spinner>
+          <p class="text-gray-500 mt-4">Cargando lotes...</p>
+        </div>
+
+        <!-- Lista de lotes -->
+        <div *ngIf="!lotesCargando && lotesProducto.length > 0" class="space-y-4">
+          <div 
+            *ngFor="let lote of lotesProducto; let i = index" 
+            class="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow"
+            [ngClass]="{
+              'bg-red-50 border-red-200': esFechaVencida(lote.fecha_vencimiento),
+              'bg-orange-50 border-orange-200': esFechaPorVencer(lote.fecha_vencimiento) && !esFechaVencida(lote.fecha_vencimiento),
+              'bg-white': !esFechaVencida(lote.fecha_vencimiento) && !esFechaPorVencer(lote.fecha_vencimiento)
+            }"
+          >
+            <div class="flex justify-between items-start">
+              <div class="flex-1">
+                <div class="flex items-center gap-3 mb-2">
+                  <span class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-blue-100 text-blue-800 font-semibold text-sm">
+                    {{ i + 1 }}
+                  </span>
+                  <h3 class="text-lg font-semibold text-gray-900">Lote #{{ lote.numero_lote || 'N/A' }}</h3>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+                  <div>
+                    <p class="text-sm text-gray-500 mb-1">Cantidad en Lote</p>
+                    <p class="text-lg font-semibold text-gray-900">{{ lote.cantidad_lote }} unidades</p>
+                  </div>
+                  
+                  <div>
+                    <p class="text-sm text-gray-500 mb-1">Fecha de Vencimiento</p>
+                    <p 
+                      class="text-lg font-semibold"
+                      [ngClass]="{
+                        'text-red-600': esFechaVencida(lote.fecha_vencimiento),
+                        'text-orange-600': esFechaPorVencer(lote.fecha_vencimiento) && !esFechaVencida(lote.fecha_vencimiento),
+                        'text-gray-900': !esFechaVencida(lote.fecha_vencimiento) && !esFechaPorVencer(lote.fecha_vencimiento)
+                      }"
+                    >
+                      {{ formatearFecha(lote.fecha_vencimiento) }}
+                    </p>
+                  </div>
+                  
+                  <div>
+                    <p class="text-sm text-gray-500 mb-1">Días para Vencer</p>
+                    <p 
+                      class="text-lg font-semibold"
+                      [ngClass]="{
+                        'text-red-600': lote.dias_para_vencer < 0,
+                        'text-orange-600': lote.dias_para_vencer >= 0 && lote.dias_para_vencer <= 30,
+                        'text-gray-900': lote.dias_para_vencer > 30
+                      }"
+                    >
+                      <span *ngIf="lote.dias_para_vencer < 0">Vencido ({{ Math.abs(lote.dias_para_vencer) }} días)</span>
+                      <span *ngIf="lote.dias_para_vencer >= 0">{{ lote.dias_para_vencer }} días</span>
+                    </p>
+                  </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4 pt-4 border-t border-gray-200">
+                  <div>
+                    <p class="text-sm text-gray-500 mb-1">Fecha de Ingreso</p>
+                    <p class="text-sm text-gray-700">{{ formatearFecha(lote.fecha_ingreso) }}</p>
+                  </div>
+                  
+                  <div>
+                    <p class="text-sm text-gray-500 mb-1">Último Movimiento</p>
+                    <p class="text-sm text-gray-700">{{ formatearFecha(lote.fecha_ultimo_movimiento) }}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Sin lotes -->
+        <div *ngIf="!lotesCargando && lotesProducto.length === 0" class="text-center py-12">
+          <mat-icon class="text-gray-400 text-6xl mb-4">inventory_2</mat-icon>
+          <p class="text-gray-500 text-lg">Este producto no tiene lotes registrados</p>
+        </div>
+      </div>
+
+      <!-- Footer del modal -->
+      <div class="flex justify-end gap-3 p-6 border-t border-gray-200 bg-gray-50">
+        <button 
+          mat-raised-button 
+          (click)="cerrarModalLotes()"
+          class="bg-gray-600 hover:bg-gray-700 text-white"
+        >
+          Cerrar
+        </button>
       </div>
     </div>
   </div>

@@ -1,5 +1,5 @@
 const app = require('./src/app');
-require('dotenv').config({ path: './env.local' });
+require('dotenv').config();
 const { probarConexion, inicializarAdmin } = require('./src/config/db');
 
 // Función para iniciar el servidor

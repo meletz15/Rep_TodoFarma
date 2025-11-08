@@ -94,4 +94,9 @@ export class InventarioService {
   obtenerResumenPorCategoria(): Observable<ApiResponse<ResumenCategoria[]>> {
     return this.http.get<ApiResponse<ResumenCategoria[]>>(`${this.apiUrl}/resumen-categoria`);
   }
+
+  // Obtener lotes de un producto
+  obtenerLotesProducto(idProducto: number): Observable<ApiResponse<any[]>> {
+    return this.http.get<ApiResponse<any[]>>(`${this.apiUrl}/producto/${idProducto}/lotes`);
+  }
 }

@@ -35,6 +35,12 @@ export class ProductoService {
       if (filtros.busqueda && filtros.busqueda.trim() !== '') {
         params = params.set('busqueda', filtros.busqueda.trim());
       }
+      if (filtros.proximos_a_vencer === true) {
+        params = params.set('proximos_a_vencer', 'true');
+        if (filtros.dias_vencimiento) {
+          params = params.set('dias_vencimiento', filtros.dias_vencimiento.toString());
+        }
+      }
     }
 
     return this.http.get<ApiResponse<PaginatedResponse<Producto>>>(this.apiUrl, { params });

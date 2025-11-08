@@ -3,7 +3,7 @@ const UsuarioModel = require('../models/usuarioModel');
 const RolModel = require('../models/rolModel');
 const { crearError } = require('../utils/errorHandler');
 const { validarPaginacion, construirPaginacion, construirRespuestaPaginada } = require('../utils/pagination');
-require('dotenv').config({ path: './env.local' });
+require('dotenv').config();
 
 // Esquemas de validación
 const esquemaCrearUsuario = Joi.object({

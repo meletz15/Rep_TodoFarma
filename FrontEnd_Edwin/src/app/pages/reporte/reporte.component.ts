@@ -286,9 +286,7 @@ export class ReporteComponent implements OnInit {
         this.usuarios = usuariosData;
         this.usuariosFiltrados = [...this.usuarios];
 
-        if (this.usuarios.length === 0) {
-          console.warn('No se cargaron usuarios. Verificar estructura de respuesta del backend');
-        }
+        // Usuarios cargados
       },
       error: (error: any) => {
         console.error('Error al cargar usuarios:', error);
@@ -315,9 +313,7 @@ export class ReporteComponent implements OnInit {
         this.clientes = clientesData;
         this.clientesFiltrados = [...this.clientes];
 
-        if (this.clientes.length === 0) {
-          console.warn('No se cargaron clientes. Verificar estructura de respuesta del backend');
-        }
+        // Clientes cargados
       },
       error: (error: any) => {
         console.error('Error al cargar clientes:', error);
@@ -342,7 +338,6 @@ export class ReporteComponent implements OnInit {
         }
         this.proveedores = proveedoresData;
         this.proveedoresFiltrados = [...this.proveedores];
-        console.log('Proveedores cargados:', this.proveedores);
       },
       error: (error: any) => {
         console.error('Error al cargar proveedores:', error);
@@ -366,7 +361,6 @@ export class ReporteComponent implements OnInit {
           }
         }
         this.categorias = categoriasData;
-        console.log('Categorías cargadas:', this.categorias);
       },
       error: (error: any) => {
         console.error('Error al cargar categorías:', error);
@@ -389,7 +383,6 @@ export class ReporteComponent implements OnInit {
           }
         }
         this.marcas = marcasData;
-        console.log('Marcas cargadas:', this.marcas);
       },
       error: (error: any) => {
         console.error('Error al cargar marcas:', error);
@@ -600,7 +593,6 @@ export class ReporteComponent implements OnInit {
             } else if (response.datos.clientes_mas_frecuentes) {
               datosExtraidos = Array.isArray(response.datos.clientes_mas_frecuentes) ? response.datos.clientes_mas_frecuentes : [response.datos.clientes_mas_frecuentes];
             } else if (response.datos.ingresos) {
-              console.log('Datos de ingresos recibidos:', response.datos.ingresos);
               datosExtraidos = Array.isArray(response.datos.ingresos) ? response.datos.ingresos : [response.datos.ingresos];
             } else if (response.datos.proveedores) {
               datosExtraidos = Array.isArray(response.datos.proveedores) ? response.datos.proveedores : [response.datos.proveedores];
@@ -615,8 +607,6 @@ export class ReporteComponent implements OnInit {
           this.datos = datosExtraidos;
           this.totalRegistros = this.datos.length;
           this.paginaActual = 0; // Resetear a la primera página cuando se genera un nuevo reporte
-          console.log('Datos finales asignados:', this.datos);
-          console.log('Columnas configuradas:', this.columnas);
 
           if (this.datos.length > 0) {
             this.snackBar.open(`Reporte generado exitosamente: ${this.totalRegistros} registros`, 'Cerrar', { duration: 3000 });

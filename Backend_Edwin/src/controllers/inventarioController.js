@@ -209,6 +209,30 @@ class InventarioController {
   }
 
   // Obtener resumen de inventario por categoría
+  static async obtenerLotesProducto(req, res, next) {
+    try {
+      const { id_producto } = req.params;
+      
+      if (!id_producto || isNaN(parseInt(id_producto))) {
+        return res.status(400).json({
+          ok: false,
+          mensaje: 'ID de producto inválido'
+        });
+      }
+
+      const lotes = await InventarioModel.obtenerLotesProducto(parseInt(id_producto));
+      
+      res.json({
+        ok: true,
+        mensaje: 'Lotes obtenidos correctamente',
+        datos: lotes
+      });
+      
+    } catch (error) {
+      next(error);
+    }
+  }
+
   static async obtenerResumenPorCategoria(req, res, next) {
     try {
       const resumen = await InventarioModel.obtenerResumenCategoria();
