@@ -62,9 +62,9 @@ class ProductoModel {
       }
       
       const resultado = await cliente.query(
-        `INSERT INTO producto (nombre, descripcion, sku, codigo_barras, id_categoria, id_marca, precio_unitario, stock, fecha_vencimiento, activo)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
-         RETURNING id_producto, nombre, descripcion, sku, codigo_barras, id_categoria, id_marca, precio_unitario, stock, fecha_vencimiento, activo, created_at, updated_at`,
+        `INSERT INTO producto (nombre, descripcion, sku, codigo_barras, id_categoria, id_marca, precio_unitario, stock, fecha_vencimiento, tipo_presentacion, cantidad_presentacion, unidad_medida, activo)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+         RETURNING id_producto, nombre, descripcion, sku, codigo_barras, id_categoria, id_marca, precio_unitario, stock, fecha_vencimiento, tipo_presentacion, cantidad_presentacion, unidad_medida, activo, created_at, updated_at`,
         [
           datosProducto.nombre,
           datosProducto.descripcion || null,
@@ -75,6 +75,9 @@ class ProductoModel {
           datosProducto.precio_unitario || 0.00,
           datosProducto.stock || 0,
           datosProducto.fecha_vencimiento || null,
+          datosProducto.tipo_presentacion || null,
+          datosProducto.cantidad_presentacion || null,
+          datosProducto.unidad_medida || null,
           datosProducto.activo !== undefined ? datosProducto.activo : true
         ]
       );
@@ -91,7 +94,7 @@ class ProductoModel {
     try {
       const resultado = await cliente.query(
         `SELECT p.id_producto, p.nombre, p.descripcion, p.sku, p.codigo_barras, p.id_categoria, p.id_marca,
-                p.precio_unitario, p.stock, p.fecha_vencimiento, p.activo, p.created_at, p.updated_at,
+                p.precio_unitario, p.stock, p.fecha_vencimiento, p.tipo_presentacion, p.cantidad_presentacion, p.unidad_medida, p.activo, p.created_at, p.updated_at,
                 c.nombre as categoria_nombre, m.nombre as marca_nombre
          FROM producto p
          JOIN categoria c ON p.id_categoria = c.id_categoria
@@ -116,7 +119,7 @@ class ProductoModel {
     try {
       let consulta = `
         SELECT p.id_producto, p.nombre, p.descripcion, p.sku, p.codigo_barras, p.id_categoria, p.id_marca,
-               p.precio_unitario, p.stock, p.fecha_vencimiento, p.activo, p.created_at, p.updated_at,
+               p.precio_unitario, p.stock, p.fecha_vencimiento, p.tipo_presentacion, p.cantidad_presentacion, p.unidad_medida, p.activo, p.created_at, p.updated_at,
                c.nombre as categoria_nombre, m.nombre as marca_nombre
         FROM producto p
         JOIN categoria c ON p.id_categoria = c.id_categoria
@@ -277,7 +280,7 @@ class ProductoModel {
       }
       
       // Construir consulta de actualización
-      const camposActualizables = ['nombre', 'descripcion', 'sku', 'codigo_barras', 'id_categoria', 'id_marca', 'precio_unitario', 'stock', 'fecha_vencimiento', 'activo'];
+      const camposActualizables = ['nombre', 'descripcion', 'sku', 'codigo_barras', 'id_categoria', 'id_marca', 'precio_unitario', 'stock', 'fecha_vencimiento', 'tipo_presentacion', 'cantidad_presentacion', 'unidad_medida', 'activo'];
       const camposParaActualizar = [];
       const valores = [];
       let contadorParametros = 1;
@@ -300,7 +303,7 @@ class ProductoModel {
         UPDATE producto 
         SET ${camposParaActualizar.join(', ')}, updated_at = NOW()
         WHERE id_producto = $${contadorParametros}
-        RETURNING id_producto, nombre, descripcion, sku, codigo_barras, id_categoria, id_marca, precio_unitario, stock, fecha_vencimiento, activo, created_at, updated_at
+        RETURNING id_producto, nombre, descripcion, sku, codigo_barras, id_categoria, id_marca, precio_unitario, stock, fecha_vencimiento, tipo_presentacion, cantidad_presentacion, unidad_medida, activo, created_at, updated_at
       `;
       
       const resultado = await cliente.query(consulta, valores);

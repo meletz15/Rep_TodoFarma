@@ -286,6 +286,11 @@
                 <td mat-cell *matCellDef="let producto" class="text-gray-600 px-6 py-4">{{ producto.marca_nombre }}</td>
               </ng-container>
 
+              <ng-container matColumnDef="presentacion">
+                <th mat-header-cell *matHeaderCellDef class="font-semibold text-gray-700 px-6 py-4">Presentación</th>
+                <td mat-cell *matCellDef="let producto" class="text-gray-600 px-6 py-4">{{ formatearPresentacion(producto) }}</td>
+              </ng-container>
+
               <ng-container matColumnDef="precio_unitario">
                 <th mat-header-cell *matHeaderCellDef class="font-semibold text-gray-700 px-6 py-4">Precio</th>
                 <td mat-cell *matCellDef="let producto" class="font-semibold text-green-600 px-6 py-4">{{ formatearPrecio(producto.precio_unitario) }}</td>
@@ -526,6 +531,283 @@
         </div>
       </div>
     </mat-tab>
+
+    <!-- Tab de Presentaciones -->
+    <mat-tab label="Presentaciones">
+      <div class="p-6">
+        <!-- Filtros de Presentaciones -->
+        <div class="bg-white rounded-xl shadow-lg border border-gray-200 p-6 mb-6">
+          <div class="flex items-center gap-3 mb-6">
+            <mat-icon class="text-blue-600">filter_list</mat-icon>
+            <h3 class="text-xl font-semibold text-gray-900">Filtros de Búsqueda</h3>
+          </div>
+          
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <!-- Búsqueda -->
+            <div class="space-y-2">
+              <label class="block text-sm font-medium text-gray-700">Buscar</label>
+              <mat-form-field appearance="outline" class="w-full">
+                <input 
+                  matInput 
+                  [(ngModel)]="presentacionFiltros.busqueda" 
+                  placeholder="Nombre de la presentación"
+                  class="text-gray-900"
+                >
+                <mat-icon matSuffix class="text-gray-400">search</mat-icon>
+              </mat-form-field>
+            </div>
+
+            <!-- Estado -->
+            <div class="space-y-2">
+              <label class="block text-sm font-medium text-gray-700">Estado</label>
+              <mat-form-field appearance="outline" class="w-full">
+                <mat-select [(ngModel)]="presentacionFiltros.activo" placeholder="Seleccionar estado">
+                  <mat-option value="">Todos los estados</mat-option>
+                  <mat-option value="true">Activo</mat-option>
+                  <mat-option value="false">Inactivo</mat-option>
+                </mat-select>
+                <mat-icon matSuffix class="text-gray-400">toggle_on</mat-icon>
+              </mat-form-field>
+            </div>
+
+            <!-- Botones de acción -->
+            <div class="space-y-2">
+              <label class="block text-sm font-medium text-gray-700 opacity-0">Acciones</label>
+              <div class="flex gap-3">
+                <button
+                  (click)="aplicarFiltrosPresentacion()"
+                  class="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-4 py-3 rounded-lg font-medium flex items-center justify-center gap-2 transition-colors duration-200 shadow-md hover:shadow-lg"
+                >
+                  <mat-icon class="text-white text-lg">filter_list</mat-icon>
+                  Filtrar
+                </button>
+                <button
+                  (click)="limpiarFiltrosPresentacion()"
+                  class="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-3 rounded-lg font-medium flex items-center justify-center gap-2 transition-colors duration-200 border border-gray-300"
+                >
+                  <mat-icon class="text-gray-600 text-lg">clear</mat-icon>
+                  Limpiar
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tabla de Presentaciones -->
+        <div class="bg-white rounded-xl shadow-lg border border-gray-200">
+          <div class="flex justify-between items-center p-6 border-b border-gray-200">
+            <h3 class="text-xl font-semibold text-gray-900">Presentaciones</h3>
+            <button
+              (click)="abrirModalPresentacion()"
+              class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-semibold flex items-center gap-2 transition-colors duration-200 shadow-lg hover:shadow-xl"
+              matTooltip="Agregar nueva presentación"
+            >
+              <mat-icon class="text-white">add</mat-icon>
+              Nueva Presentación
+            </button>
+          </div>
+          <div class="overflow-x-auto">
+            <table mat-table [dataSource]="presentacionesDataSource" class="w-full">
+              <ng-container matColumnDef="nombre">
+                <th mat-header-cell *matHeaderCellDef class="font-semibold text-gray-700 px-6 py-4">Nombre</th>
+                <td mat-cell *matCellDef="let presentacion" class="font-medium px-6 py-4">{{ presentacion.nombre }}</td>
+              </ng-container>
+
+              <ng-container matColumnDef="descripcion">
+                <th mat-header-cell *matHeaderCellDef class="font-semibold text-gray-700 px-6 py-4">Descripción</th>
+                <td mat-cell *matCellDef="let presentacion" class="text-gray-600 px-6 py-4">{{ presentacion.descripcion || '-' }}</td>
+              </ng-container>
+
+              <ng-container matColumnDef="activo">
+                <th mat-header-cell *matHeaderCellDef class="font-semibold text-gray-700 px-6 py-4">Estado</th>
+                <td mat-cell *matCellDef="let presentacion" class="px-6 py-4">
+                  <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium"
+                        [class]="presentacion.activo ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'">
+                    {{ presentacion.activo ? 'Activo' : 'Inactivo' }}
+                  </span>
+                </td>
+              </ng-container>
+
+              <ng-container matColumnDef="created_at">
+                <th mat-header-cell *matHeaderCellDef class="font-semibold text-gray-700 px-6 py-4">Fecha Creación</th>
+                <td mat-cell *matCellDef="let presentacion" class="text-gray-600 px-6 py-4">{{ formatearFecha(presentacion.created_at) }}</td>
+              </ng-container>
+
+              <ng-container matColumnDef="acciones">
+                <th mat-header-cell *matHeaderCellDef class="font-semibold text-gray-700 px-6 py-4">Acciones</th>
+                <td mat-cell *matCellDef="let presentacion" class="px-6 py-4">
+                  <div class="flex gap-2">
+                    <button mat-icon-button (click)="abrirModalPresentacion(presentacion)" matTooltip="Editar" class="text-blue-600 hover:bg-blue-50">
+                      <mat-icon>edit</mat-icon>
+                    </button>
+                    <button mat-icon-button (click)="eliminarPresentacion(presentacion)" matTooltip="Eliminar" class="text-red-600 hover:bg-red-50">
+                      <mat-icon>delete</mat-icon>
+                    </button>
+                  </div>
+                </td>
+              </ng-container>
+
+              <tr mat-header-row *matHeaderRowDef="presentacionesDisplayedColumns" class="bg-gray-50 border-b border-gray-200"></tr>
+              <tr mat-row *matRowDef="let row; columns: presentacionesDisplayedColumns;" class="hover:bg-gray-50 border-b border-gray-100"></tr>
+            </table>
+
+            <mat-paginator
+              #presentacionPaginator
+              [length]="presentacionTotal"
+              [pageSize]="presentacionLimite"
+              [pageIndex]="presentacionPagina - 1"
+              [pageSizeOptions]="[5, 10, 25, 50]"
+              (page)="onPresentacionPageChange($event)"
+              showFirstLastButtons
+              class="bg-gray-50 border-t border-gray-200">
+            </mat-paginator>
+          </div>
+        </div>
+      </div>
+    </mat-tab>
+
+    <!-- Tab de Unidades de Medida -->
+    <mat-tab label="Unidades de Medida">
+      <div class="p-6">
+        <!-- Filtros de Unidades de Medida -->
+        <div class="bg-white rounded-xl shadow-lg border border-gray-200 p-6 mb-6">
+          <div class="flex items-center gap-3 mb-6">
+            <mat-icon class="text-blue-600">filter_list</mat-icon>
+            <h3 class="text-xl font-semibold text-gray-900">Filtros de Búsqueda</h3>
+          </div>
+          
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <!-- Búsqueda -->
+            <div class="space-y-2">
+              <label class="block text-sm font-medium text-gray-700">Buscar</label>
+              <mat-form-field appearance="outline" class="w-full">
+                <input 
+                  matInput 
+                  [(ngModel)]="unidadMedidaFiltros.busqueda" 
+                  placeholder="Nombre o símbolo"
+                  class="text-gray-900"
+                >
+                <mat-icon matSuffix class="text-gray-400">search</mat-icon>
+              </mat-form-field>
+            </div>
+
+            <!-- Estado -->
+            <div class="space-y-2">
+              <label class="block text-sm font-medium text-gray-700">Estado</label>
+              <mat-form-field appearance="outline" class="w-full">
+                <mat-select [(ngModel)]="unidadMedidaFiltros.activo" placeholder="Seleccionar estado">
+                  <mat-option value="">Todos los estados</mat-option>
+                  <mat-option value="true">Activo</mat-option>
+                  <mat-option value="false">Inactivo</mat-option>
+                </mat-select>
+                <mat-icon matSuffix class="text-gray-400">toggle_on</mat-icon>
+              </mat-form-field>
+            </div>
+
+            <!-- Botones de acción -->
+            <div class="space-y-2">
+              <label class="block text-sm font-medium text-gray-700 opacity-0">Acciones</label>
+              <div class="flex gap-3">
+                <button
+                  (click)="aplicarFiltrosUnidadMedida()"
+                  class="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-4 py-3 rounded-lg font-medium flex items-center justify-center gap-2 transition-colors duration-200 shadow-md hover:shadow-lg"
+                >
+                  <mat-icon class="text-white text-lg">filter_list</mat-icon>
+                  Filtrar
+                </button>
+                <button
+                  (click)="limpiarFiltrosUnidadMedida()"
+                  class="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-3 rounded-lg font-medium flex items-center justify-center gap-2 transition-colors duration-200 border border-gray-300"
+                >
+                  <mat-icon class="text-gray-600 text-lg">clear</mat-icon>
+                  Limpiar
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tabla de Unidades de Medida -->
+        <div class="bg-white rounded-xl shadow-lg border border-gray-200">
+          <div class="flex justify-between items-center p-6 border-b border-gray-200">
+            <h3 class="text-xl font-semibold text-gray-900">Unidades de Medida</h3>
+            <button
+              (click)="abrirModalUnidadMedida()"
+              class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-semibold flex items-center gap-2 transition-colors duration-200 shadow-lg hover:shadow-xl"
+              matTooltip="Agregar nueva unidad de medida"
+            >
+              <mat-icon class="text-white">add</mat-icon>
+              Nueva Unidad
+            </button>
+          </div>
+          <div class="overflow-x-auto">
+            <table mat-table [dataSource]="unidadesMedidaDataSource" class="w-full">
+              <ng-container matColumnDef="nombre">
+                <th mat-header-cell *matHeaderCellDef class="font-semibold text-gray-700 px-6 py-4">Nombre</th>
+                <td mat-cell *matCellDef="let unidadMedida" class="font-medium px-6 py-4">{{ unidadMedida.nombre }}</td>
+              </ng-container>
+
+              <ng-container matColumnDef="simbolo">
+                <th mat-header-cell *matHeaderCellDef class="font-semibold text-gray-700 px-6 py-4">Símbolo</th>
+                <td mat-cell *matCellDef="let unidadMedida" class="px-6 py-4">
+                  <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold bg-blue-100 text-blue-800">
+                    {{ unidadMedida.simbolo }}
+                  </span>
+                </td>
+              </ng-container>
+
+              <ng-container matColumnDef="descripcion">
+                <th mat-header-cell *matHeaderCellDef class="font-semibold text-gray-700 px-6 py-4">Descripción</th>
+                <td mat-cell *matCellDef="let unidadMedida" class="text-gray-600 px-6 py-4">{{ unidadMedida.descripcion || '-' }}</td>
+              </ng-container>
+
+              <ng-container matColumnDef="activo">
+                <th mat-header-cell *matHeaderCellDef class="font-semibold text-gray-700 px-6 py-4">Estado</th>
+                <td mat-cell *matCellDef="let unidadMedida" class="px-6 py-4">
+                  <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium"
+                        [class]="unidadMedida.activo ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'">
+                    {{ unidadMedida.activo ? 'Activo' : 'Inactivo' }}
+                  </span>
+                </td>
+              </ng-container>
+
+              <ng-container matColumnDef="created_at">
+                <th mat-header-cell *matHeaderCellDef class="font-semibold text-gray-700 px-6 py-4">Fecha Creación</th>
+                <td mat-cell *matCellDef="let unidadMedida" class="text-gray-600 px-6 py-4">{{ formatearFecha(unidadMedida.created_at) }}</td>
+              </ng-container>
+
+              <ng-container matColumnDef="acciones">
+                <th mat-header-cell *matHeaderCellDef class="font-semibold text-gray-700 px-6 py-4">Acciones</th>
+                <td mat-cell *matCellDef="let unidadMedida" class="px-6 py-4">
+                  <div class="flex gap-2">
+                    <button mat-icon-button (click)="abrirModalUnidadMedida(unidadMedida)" matTooltip="Editar" class="text-blue-600 hover:bg-blue-50">
+                      <mat-icon>edit</mat-icon>
+                    </button>
+                    <button mat-icon-button (click)="eliminarUnidadMedida(unidadMedida)" matTooltip="Eliminar" class="text-red-600 hover:bg-red-50">
+                      <mat-icon>delete</mat-icon>
+                    </button>
+                  </div>
+                </td>
+              </ng-container>
+
+              <tr mat-header-row *matHeaderRowDef="unidadesMedidaDisplayedColumns" class="bg-gray-50 border-b border-gray-200"></tr>
+              <tr mat-row *matRowDef="let row; columns: unidadesMedidaDisplayedColumns;" class="hover:bg-gray-50 border-b border-gray-100"></tr>
+            </table>
+
+            <mat-paginator
+              #unidadMedidaPaginator
+              [length]="unidadMedidaTotal"
+              [pageSize]="unidadMedidaLimite"
+              [pageIndex]="unidadMedidaPagina - 1"
+              [pageSizeOptions]="[5, 10, 25, 50]"
+              (page)="onUnidadMedidaPageChange($event)"
+              showFirstLastButtons
+              class="bg-gray-50 border-t border-gray-200">
+            </mat-paginator>
+          </div>
+        </div>
+      </div>
+    </mat-tab>
   </mat-tab-group>
 
   <!-- Modal de Categoría -->
@@ -738,6 +1020,62 @@
             </div>
           </div>
 
+          <!-- Presentación -->
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div class="space-y-2">
+              <label class="block text-sm font-medium text-gray-700">Tipo de Presentación</label>
+              <mat-form-field appearance="outline" class="w-full">
+                <mat-select formControlName="tipo_presentacion" placeholder="Seleccionar tipo">
+                  <mat-option value="">Sin especificar</mat-option>
+                  <mat-option value="Tabletas">Tabletas</mat-option>
+                  <mat-option value="Cápsulas">Cápsulas</mat-option>
+                  <mat-option value="Jarabe">Jarabe</mat-option>
+                  <mat-option value="Suspensión">Suspensión</mat-option>
+                  <mat-option value="Inyección">Inyección</mat-option>
+                  <mat-option value="Gotas">Gotas</mat-option>
+                  <mat-option value="Ungüento">Ungüento</mat-option>
+                  <mat-option value="Crema">Crema</mat-option>
+                  <mat-option value="Polvo">Polvo</mat-option>
+                  <mat-option value="Blister">Blister</mat-option>
+                  <mat-option value="Otro">Otro</mat-option>
+                </mat-select>
+                <mat-error *ngIf="productoForm.get('tipo_presentacion')?.hasError('maxlength')">
+                  El tipo de presentación no puede exceder 50 caracteres
+                </mat-error>
+              </mat-form-field>
+            </div>
+
+            <div class="space-y-2">
+              <label class="block text-sm font-medium text-gray-700">Cantidad</label>
+              <mat-form-field appearance="outline" class="w-full">
+                <input matInput type="number" formControlName="cantidad_presentacion" placeholder="Ej: 10, 20, 100" step="0.01">
+                <mat-error *ngIf="productoForm.get('cantidad_presentacion')?.hasError('min')">
+                  La cantidad no puede ser negativa
+                </mat-error>
+              </mat-form-field>
+            </div>
+
+            <div class="space-y-2">
+              <label class="block text-sm font-medium text-gray-700">Unidad de Medida</label>
+              <mat-form-field appearance="outline" class="w-full">
+                <mat-select formControlName="unidad_medida" placeholder="Seleccionar unidad">
+                  <mat-option value="">Sin especificar</mat-option>
+                  <mat-option value="unidades">unidades</mat-option>
+                  <mat-option value="ml">ml</mat-option>
+                  <mat-option value="mg">mg</mat-option>
+                  <mat-option value="g">g</mat-option>
+                  <mat-option value="L">L</mat-option>
+                  <mat-option value="kg">kg</mat-option>
+                  <mat-option value="tabletas">tabletas</mat-option>
+                  <mat-option value="cápsulas">cápsulas</mat-option>
+                </mat-select>
+                <mat-error *ngIf="productoForm.get('unidad_medida')?.hasError('maxlength')">
+                  La unidad de medida no puede exceder 20 caracteres
+                </mat-error>
+              </mat-form-field>
+            </div>
+          </div>
+
           <!-- Fecha de Vencimiento y Estado -->
           <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div class="space-y-2">
@@ -775,6 +1113,189 @@
               class="px-6 py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white rounded-lg font-medium transition-colors duration-200"
             >
               {{ productoEditando ? 'Actualizar' : 'Crear' }}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal de Presentación -->
+  <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4" 
+       *ngIf="presentacionModalAbierto" 
+       (click)="cerrarModalPresentacion()">
+    <div class="bg-white rounded-xl shadow-2xl w-full max-w-md max-h-[90vh] overflow-y-auto" 
+         (click)="$event.stopPropagation()">
+      <!-- Header del dialog -->
+      <div class="flex justify-between items-center p-6 border-b border-gray-200">
+        <h2 class="text-xl font-semibold text-gray-900">
+          {{ presentacionEditando ? 'Editar Presentación' : 'Crear Nueva Presentación' }}
+        </h2>
+        <button 
+          (click)="cerrarModalPresentacion()"
+          class="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors duration-200"
+        >
+          <mat-icon>close</mat-icon>
+        </button>
+      </div>
+
+      <!-- Contenido del dialog -->
+      <div class="p-6">
+        <form [formGroup]="presentacionForm" (ngSubmit)="guardarPresentacion()" class="space-y-6">
+          <!-- Nombre -->
+          <div class="space-y-2">
+            <label class="block text-sm font-medium text-gray-700">Nombre *</label>
+            <mat-form-field appearance="outline" class="w-full">
+              <input matInput formControlName="nombre" placeholder="Ingrese el nombre de la presentación">
+              <mat-error *ngIf="presentacionForm.get('nombre')?.hasError('required')">
+                El nombre es requerido
+              </mat-error>
+              <mat-error *ngIf="presentacionForm.get('nombre')?.hasError('minlength')">
+                El nombre debe tener al menos 2 caracteres
+              </mat-error>
+              <mat-error *ngIf="presentacionForm.get('nombre')?.hasError('maxlength')">
+                El nombre no puede exceder 50 caracteres
+              </mat-error>
+            </mat-form-field>
+          </div>
+
+          <!-- Descripción -->
+          <div class="space-y-2">
+            <label class="block text-sm font-medium text-gray-700">Descripción</label>
+            <mat-form-field appearance="outline" class="w-full">
+              <textarea matInput formControlName="descripcion" placeholder="Descripción de la presentación" rows="3"></textarea>
+              <mat-error *ngIf="presentacionForm.get('descripcion')?.hasError('maxlength')">
+                La descripción no puede exceder 255 caracteres
+              </mat-error>
+            </mat-form-field>
+          </div>
+
+          <!-- Estado -->
+          <div class="space-y-2">
+            <label class="block text-sm font-medium text-gray-700">Estado</label>
+            <mat-form-field appearance="outline" class="w-full">
+              <mat-select formControlName="activo" placeholder="Seleccionar estado">
+                <mat-option [value]="true">Activo</mat-option>
+                <mat-option [value]="false">Inactivo</mat-option>
+              </mat-select>
+            </mat-form-field>
+          </div>
+
+          <!-- Botones de acción -->
+          <div class="flex justify-end gap-4 pt-6 border-t border-gray-200">
+            <button 
+              type="button" 
+              (click)="cerrarModalPresentacion()"
+              class="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors duration-200"
+            >
+              Cancelar
+            </button>
+            <button 
+              type="submit" 
+              [disabled]="presentacionForm.invalid"
+              class="px-6 py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white rounded-lg font-medium transition-colors duration-200"
+            >
+              {{ presentacionEditando ? 'Actualizar' : 'Crear' }}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal de Unidad de Medida -->
+  <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4" 
+       *ngIf="unidadMedidaModalAbierto" 
+       (click)="cerrarModalUnidadMedida()">
+    <div class="bg-white rounded-xl shadow-2xl w-full max-w-md max-h-[90vh] overflow-y-auto" 
+         (click)="$event.stopPropagation()">
+      <!-- Header del dialog -->
+      <div class="flex justify-between items-center p-6 border-b border-gray-200">
+        <h2 class="text-xl font-semibold text-gray-900">
+          {{ unidadMedidaEditando ? 'Editar Unidad de Medida' : 'Crear Nueva Unidad de Medida' }}
+        </h2>
+        <button 
+          (click)="cerrarModalUnidadMedida()"
+          class="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors duration-200"
+        >
+          <mat-icon>close</mat-icon>
+        </button>
+      </div>
+
+      <!-- Contenido del dialog -->
+      <div class="p-6">
+        <form [formGroup]="unidadMedidaForm" (ngSubmit)="guardarUnidadMedida()" class="space-y-6">
+          <!-- Nombre -->
+          <div class="space-y-2">
+            <label class="block text-sm font-medium text-gray-700">Nombre *</label>
+            <mat-form-field appearance="outline" class="w-full">
+              <input matInput formControlName="nombre" placeholder="Ej: Mililitros, Gramos">
+              <mat-error *ngIf="unidadMedidaForm.get('nombre')?.hasError('required')">
+                El nombre es requerido
+              </mat-error>
+              <mat-error *ngIf="unidadMedidaForm.get('nombre')?.hasError('minlength')">
+                El nombre debe tener al menos 2 caracteres
+              </mat-error>
+              <mat-error *ngIf="unidadMedidaForm.get('nombre')?.hasError('maxlength')">
+                El nombre no puede exceder 20 caracteres
+              </mat-error>
+            </mat-form-field>
+          </div>
+
+          <!-- Símbolo -->
+          <div class="space-y-2">
+            <label class="block text-sm font-medium text-gray-700">Símbolo *</label>
+            <mat-form-field appearance="outline" class="w-full">
+              <input matInput formControlName="simbolo" placeholder="Ej: ml, g, kg">
+              <mat-error *ngIf="unidadMedidaForm.get('simbolo')?.hasError('required')">
+                El símbolo es requerido
+              </mat-error>
+              <mat-error *ngIf="unidadMedidaForm.get('simbolo')?.hasError('minlength')">
+                El símbolo debe tener al menos 1 carácter
+              </mat-error>
+              <mat-error *ngIf="unidadMedidaForm.get('simbolo')?.hasError('maxlength')">
+                El símbolo no puede exceder 10 caracteres
+              </mat-error>
+            </mat-form-field>
+          </div>
+
+          <!-- Descripción -->
+          <div class="space-y-2">
+            <label class="block text-sm font-medium text-gray-700">Descripción</label>
+            <mat-form-field appearance="outline" class="w-full">
+              <textarea matInput formControlName="descripcion" placeholder="Descripción de la unidad de medida" rows="3"></textarea>
+              <mat-error *ngIf="unidadMedidaForm.get('descripcion')?.hasError('maxlength')">
+                La descripción no puede exceder 255 caracteres
+              </mat-error>
+            </mat-form-field>
+          </div>
+
+          <!-- Estado -->
+          <div class="space-y-2">
+            <label class="block text-sm font-medium text-gray-700">Estado</label>
+            <mat-form-field appearance="outline" class="w-full">
+              <mat-select formControlName="activo" placeholder="Seleccionar estado">
+                <mat-option [value]="true">Activo</mat-option>
+                <mat-option [value]="false">Inactivo</mat-option>
+              </mat-select>
+            </mat-form-field>
+          </div>
+
+          <!-- Botones de acción -->
+          <div class="flex justify-end gap-4 pt-6 border-t border-gray-200">
+            <button 
+              type="button" 
+              (click)="cerrarModalUnidadMedida()"
+              class="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors duration-200"
+            >
+              Cancelar
+            </button>
+            <button 
+              type="submit" 
+              [disabled]="unidadMedidaForm.invalid"
+              class="px-6 py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white rounded-lg font-medium transition-colors duration-200"
+            >
+              {{ unidadMedidaEditando ? 'Actualizar' : 'Crear' }}
             </button>
           </div>
         </form>

@@ -8,6 +8,14 @@
         </div>
         <div class="flex items-center gap-3">
           <button
+            (click)="abrirGestionRoles()"
+            class="bg-purple-600 hover:bg-purple-700 text-white px-6 py-3 rounded-lg font-semibold flex items-center gap-2 transition-colors duration-200 shadow-lg hover:shadow-xl"
+            matTooltip="Gestionar roles y permisos del sistema"
+          >
+            <mat-icon class="text-white">admin_panel_settings</mat-icon>
+            Gestionar Roles
+          </button>
+          <button
             (click)="exportarAExcel()"
             class="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg font-semibold flex items-center gap-2 transition-colors duration-200 shadow-lg hover:shadow-xl"
             matTooltip="Exportar usuarios filtrados a Excel"

@@ -260,12 +260,31 @@
               </div>
             </div>
 
-            <!-- Menú Inicio -->
+            <!-- Carga -->
             <div 
               (click)="onMenuClick(menuItems[10])"
-              class="bg-white rounded-lg shadow-sm border border-gray-200 p-4 cursor-pointer hover:shadow-md hover:border-pink-300 transition-all duration-200 relative overflow-hidden"
+              class="bg-white rounded-lg shadow-sm border border-gray-200 p-4 cursor-pointer hover:shadow-md hover:border-emerald-300 transition-all duration-200 relative overflow-hidden"
               [class.opacity-50]="!menuItems[10].disponible"
               [class.cursor-not-allowed]="!menuItems[10].disponible"
+            >
+              <div class="flex flex-col items-center text-center">
+                <div class="w-12 h-12 bg-emerald-100 rounded-lg flex items-center justify-center mb-3">
+                  <mat-icon class="text-emerald-600">upload_file</mat-icon>
+                </div>
+                <span class="text-sm font-medium text-gray-900">Carga</span>
+              </div>
+              <!-- Overlay de bloqueado -->
+              <div *ngIf="!menuItems[10].disponible" class="absolute inset-0 bg-gray-900 bg-opacity-20 flex items-center justify-center">
+                <mat-icon class="text-gray-600 text-lg">lock</mat-icon>
+              </div>
+            </div>
+
+            <!-- Menú Inicio -->
+            <div 
+              (click)="onMenuClick(menuItems[11])"
+              class="bg-white rounded-lg shadow-sm border border-gray-200 p-4 cursor-pointer hover:shadow-md hover:border-pink-300 transition-all duration-200 relative overflow-hidden"
+              [class.opacity-50]="!menuItems[11].disponible"
+              [class.cursor-not-allowed]="!menuItems[11].disponible"
             >
               <div class="flex flex-col items-center text-center">
                 <div class="w-12 h-12 bg-pink-100 rounded-lg flex items-center justify-center mb-3">
@@ -274,7 +293,7 @@
                 <span class="text-sm font-medium text-gray-900">Menú Inicio</span>
               </div>
               <!-- Overlay de bloqueado -->
-              <div *ngIf="!menuItems[10].disponible" class="absolute inset-0 bg-gray-900 bg-opacity-20 flex items-center justify-center">
+              <div *ngIf="!menuItems[11].disponible" class="absolute inset-0 bg-gray-900 bg-opacity-20 flex items-center justify-center">
                 <mat-icon class="text-gray-600 text-lg">lock</mat-icon>
               </div>
             </div>

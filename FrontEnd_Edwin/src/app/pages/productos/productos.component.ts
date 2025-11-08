@@ -24,8 +24,12 @@ import { CategoriaService } from '../../services/categoria.service';
 import { ProductoService } from '../../services/producto.service';
 import { InventarioService } from '../../services/inventario.service';
 import { MarcaService, Marca, MarcaFiltros } from '../../services/marca.service';
+import { PresentacionService, PresentacionFiltros } from '../../services/presentacion.service';
+import { UnidadMedidaService, UnidadMedidaFiltros } from '../../services/unidad-medida.service';
 import { Categoria, CategoriaCreate, CategoriaUpdate } from '../../models/categoria.model';
 import { Producto, ProductoCreate, ProductoUpdate } from '../../models/producto.model';
+import { Presentacion, PresentacionCreate, PresentacionUpdate } from '../../models/presentacion.model';
+import { UnidadMedida, UnidadMedidaCreate, UnidadMedidaUpdate } from '../../models/unidad-medida.model';
 import { ConfirmDialogComponent } from '../../components/confirm-dialog.component';
 
 @Component({
@@ -59,6 +63,8 @@ import { ConfirmDialogComponent } from '../../components/confirm-dialog.componen
 export class ProductosComponent implements OnInit {
   @ViewChild('categoriaPaginator') categoriaPaginator!: MatPaginator;
   @ViewChild('productoPaginator') productoPaginator!: MatPaginator;
+  @ViewChild('presentacionPaginator') presentacionPaginator!: MatPaginator;
+  @ViewChild('unidadMedidaPaginator') unidadMedidaPaginator!: MatPaginator;
   @ViewChild('categoriaSort') categoriaSort!: MatSort;
   @ViewChild('productoSort') productoSort!: MatSort;
 
@@ -81,7 +87,7 @@ export class ProductosComponent implements OnInit {
   // Variables para productos
   productos: Producto[] = [];
   productosDataSource = new MatTableDataSource<Producto>();
-  productosDisplayedColumns = ['nombre', 'sku', 'categoria_nombre', 'marca_nombre', 'precio_unitario', 'stock', 'fecha_vencimiento', 'activo', 'acciones'];
+  productosDisplayedColumns = ['nombre', 'sku', 'categoria_nombre', 'marca_nombre', 'presentacion', 'precio_unitario', 'stock', 'fecha_vencimiento', 'activo', 'acciones'];
   productoForm!: FormGroup;
   productoEditando: Producto | null = null;
   productoModalAbierto = false;
@@ -115,6 +121,38 @@ export class ProductosComponent implements OnInit {
   };
   marcasParaDropdown: { id_marca: number; nombre: string }[] = [];
 
+  // Variables para presentaciones
+  presentaciones: Presentacion[] = [];
+  presentacionesDataSource = new MatTableDataSource<Presentacion>();
+  presentacionesDisplayedColumns = ['nombre', 'descripcion', 'activo', 'created_at', 'acciones'];
+  presentacionForm!: FormGroup;
+  presentacionModalAbierto = false;
+  presentacionEditando: Presentacion | null = null;
+  presentacionCargando = false;
+  presentacionPagina = 1;
+  presentacionLimite = 10;
+  presentacionTotal = 0;
+  presentacionFiltros: PresentacionFiltros = {
+    activo: '',
+    busqueda: ''
+  };
+
+  // Variables para unidades de medida
+  unidadesMedida: UnidadMedida[] = [];
+  unidadesMedidaDataSource = new MatTableDataSource<UnidadMedida>();
+  unidadesMedidaDisplayedColumns = ['nombre', 'simbolo', 'descripcion', 'activo', 'created_at', 'acciones'];
+  unidadMedidaForm!: FormGroup;
+  unidadMedidaModalAbierto = false;
+  unidadMedidaEditando: UnidadMedida | null = null;
+  unidadMedidaCargando = false;
+  unidadMedidaPagina = 1;
+  unidadMedidaLimite = 10;
+  unidadMedidaTotal = 0;
+  unidadMedidaFiltros: UnidadMedidaFiltros = {
+    activo: '',
+    busqueda: ''
+  };
+
   // Variables generales
   tabSeleccionado = 0;
   cargando = false;
@@ -133,6 +171,8 @@ export class ProductosComponent implements OnInit {
     private productoService: ProductoService,
     private inventarioService: InventarioService,
     private marcaService: MarcaService,
+    private presentacionService: PresentacionService,
+    private unidadMedidaService: UnidadMedidaService,
     private snackBar: MatSnackBar,
     private dialog: MatDialog
   ) {
@@ -145,6 +185,8 @@ export class ProductosComponent implements OnInit {
     this.cargarProductos();
     this.cargarMarcasActivas();
     this.cargarMarcas();
+    this.cargarPresentaciones();
+    this.cargarUnidadesMedida();
   }
 
   inicializarFormularios(): void {
@@ -166,12 +208,30 @@ export class ProductosComponent implements OnInit {
       precio_unitario: [0, [Validators.min(0)]],
       stock: [0, [Validators.min(0)]],
       fecha_vencimiento: [''],
+      tipo_presentacion: ['', [Validators.maxLength(50)]],
+      cantidad_presentacion: [null, [Validators.min(0)]],
+      unidad_medida: ['', [Validators.maxLength(20)]],
       activo: [true]
     });
 
     // Formulario de marca
     this.marcaForm = this.fb.group({
       nombre: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(120)]],
+      descripcion: ['', [Validators.maxLength(255)]],
+      activo: [true]
+    });
+
+    // Formulario de presentación
+    this.presentacionForm = this.fb.group({
+      nombre: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(50)]],
+      descripcion: ['', [Validators.maxLength(255)]],
+      activo: [true]
+    });
+
+    // Formulario de unidad de medida
+    this.unidadMedidaForm = this.fb.group({
+      nombre: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(20)]],
+      simbolo: ['', [Validators.required, Validators.minLength(1), Validators.maxLength(10)]],
       descripcion: ['', [Validators.maxLength(255)]],
       activo: [true]
     });
@@ -383,6 +443,9 @@ export class ProductosComponent implements OnInit {
         precio_unitario: producto.precio_unitario,
         stock: producto.stock,
         fecha_vencimiento: producto.fecha_vencimiento ? new Date(producto.fecha_vencimiento) : '',
+        tipo_presentacion: producto.tipo_presentacion || '',
+        cantidad_presentacion: producto.cantidad_presentacion || null,
+        unidad_medida: producto.unidad_medida || '',
         activo: producto.activo
       });
     } else {
@@ -663,6 +726,319 @@ export class ProductosComponent implements OnInit {
     this.aplicarFiltrosMarca();
   }
 
+  // Métodos para presentaciones
+  cargarPresentaciones(): void {
+    this.presentacionCargando = true;
+    this.presentacionService.obtenerTodas(this.presentacionPagina, this.presentacionLimite, this.presentacionFiltros)
+      .subscribe({
+        next: (response) => {
+          if (response.ok && response.datos) {
+            // El backend devuelve datos.datos y datos.paginacion
+            const presentaciones = response.datos.datos || response.datos.items || [];
+            const paginacion = response.datos.paginacion;
+            let total = paginacion?.total || response.datos.total || 0;
+            
+            // Si no hay total, calcularlo
+            if (total === 0 && presentaciones.length > 0) {
+              if (presentaciones.length === this.presentacionLimite) {
+                total = this.presentacionPagina * this.presentacionLimite + 1;
+              } else {
+                total = (this.presentacionPagina - 1) * this.presentacionLimite + presentaciones.length;
+              }
+            }
+            
+            this.presentaciones = presentaciones;
+            this.presentacionesDataSource.data = this.presentaciones;
+            this.presentacionTotal = total;
+            this.presentacionCargando = false;
+          } else {
+            this.presentacionCargando = false;
+          }
+        },
+        error: (error) => {
+          console.error('Error al cargar presentaciones:', error);
+          const mensaje = error.error?.mensaje || 'Error al cargar presentaciones';
+          this.snackBar.open(mensaje, 'Cerrar', { duration: 3000 });
+          this.presentacionCargando = false;
+        }
+      });
+  }
+
+  abrirModalPresentacion(presentacion?: Presentacion): void {
+    this.presentacionEditando = presentacion || null;
+    this.presentacionModalAbierto = true;
+
+    if (presentacion) {
+      this.presentacionForm.patchValue({
+        nombre: presentacion.nombre,
+        descripcion: presentacion.descripcion,
+        activo: presentacion.activo
+      });
+    } else {
+      this.presentacionForm.reset({
+        nombre: '',
+        descripcion: '',
+        activo: true
+      });
+    }
+  }
+
+  cerrarModalPresentacion(): void {
+    this.presentacionModalAbierto = false;
+    this.presentacionEditando = null;
+    this.presentacionForm.reset({
+      nombre: '',
+      descripcion: '',
+      activo: true
+    });
+  }
+
+  guardarPresentacion(): void {
+    if (this.presentacionForm.invalid) {
+      this.marcarFormularioComoTocado(this.presentacionForm);
+      return;
+    }
+
+    const datosPresentacion = this.presentacionForm.value;
+
+    if (this.presentacionEditando) {
+      // Actualizar presentación existente
+      this.presentacionService.actualizar(this.presentacionEditando.id_presentacion, datosPresentacion)
+        .subscribe({
+          next: (response) => {
+            this.snackBar.open('Presentación actualizada exitosamente', 'Cerrar', { duration: 3000 });
+            this.cerrarModalPresentacion();
+            this.cargarPresentaciones();
+          },
+          error: (error) => {
+            console.error('Error al actualizar presentación:', error);
+            const mensaje = error.error?.mensaje || 'Error al actualizar presentación';
+            this.snackBar.open(mensaje, 'Cerrar', { duration: 3000 });
+          }
+        });
+    } else {
+      // Crear nueva presentación
+      this.presentacionService.crear(datosPresentacion)
+        .subscribe({
+          next: (response) => {
+            this.snackBar.open('Presentación creada exitosamente', 'Cerrar', { duration: 3000 });
+            this.cerrarModalPresentacion();
+            this.cargarPresentaciones();
+          },
+          error: (error) => {
+            console.error('Error al crear presentación:', error);
+            const mensaje = error.error?.mensaje || 'Error al crear presentación';
+            this.snackBar.open(mensaje, 'Cerrar', { duration: 3000 });
+          }
+        });
+    }
+  }
+
+  eliminarPresentacion(presentacion: Presentacion): void {
+    const dialogRef = this.dialog.open(ConfirmDialogComponent, {
+      data: {
+        titulo: 'Eliminar Presentación',
+        mensaje: `¿Estás seguro de que deseas eliminar la presentación "${presentacion.nombre}"?`,
+        confirmarTexto: 'Eliminar',
+        cancelarTexto: 'Cancelar'
+      }
+    });
+
+    dialogRef.afterClosed().subscribe(result => {
+      if (result) {
+        this.presentacionService.eliminar(presentacion.id_presentacion)
+          .subscribe({
+            next: (response) => {
+              this.snackBar.open('Presentación eliminada exitosamente', 'Cerrar', { duration: 3000 });
+              this.cargarPresentaciones();
+            },
+            error: (error) => {
+              console.error('Error al eliminar presentación:', error);
+              const mensaje = error.error?.mensaje || 'Error al eliminar presentación';
+              this.snackBar.open(mensaje, 'Cerrar', { duration: 3000 });
+            }
+          });
+      }
+    });
+  }
+
+  onPresentacionPageChange(event: PageEvent): void {
+    this.presentacionPagina = event.pageIndex + 1;
+    this.presentacionLimite = event.pageSize;
+    this.cargarPresentaciones();
+  }
+
+  aplicarFiltrosPresentacion(): void {
+    this.presentacionPagina = 1;
+    this.cargarPresentaciones();
+  }
+
+  limpiarFiltrosPresentacion(): void {
+    this.presentacionFiltros = {
+      activo: '',
+      busqueda: ''
+    };
+    this.aplicarFiltrosPresentacion();
+  }
+
+  // Métodos para unidades de medida
+  cargarUnidadesMedida(): void {
+    this.unidadMedidaCargando = true;
+    this.unidadMedidaService.obtenerTodas(this.unidadMedidaPagina, this.unidadMedidaLimite, this.unidadMedidaFiltros)
+      .subscribe({
+        next: (response) => {
+          if (response.ok && response.datos) {
+            // El backend devuelve datos.datos y datos.paginacion
+            const unidadesMedida = response.datos.datos || response.datos.items || [];
+            const paginacion = response.datos.paginacion;
+            let total = paginacion?.total || response.datos.total || 0;
+            
+            // Si no hay total, calcularlo
+            if (total === 0 && unidadesMedida.length > 0) {
+              if (unidadesMedida.length === this.unidadMedidaLimite) {
+                total = this.unidadMedidaPagina * this.unidadMedidaLimite + 1;
+              } else {
+                total = (this.unidadMedidaPagina - 1) * this.unidadMedidaLimite + unidadesMedida.length;
+              }
+            }
+            
+            this.unidadesMedida = unidadesMedida;
+            this.unidadesMedidaDataSource.data = this.unidadesMedida;
+            this.unidadMedidaTotal = total;
+            this.unidadMedidaCargando = false;
+          } else {
+            this.unidadMedidaCargando = false;
+          }
+        },
+        error: (error) => {
+          console.error('Error al cargar unidades de medida:', error);
+          const mensaje = error.error?.mensaje || 'Error al cargar unidades de medida';
+          this.snackBar.open(mensaje, 'Cerrar', { duration: 3000 });
+          this.unidadMedidaCargando = false;
+        }
+      });
+  }
+
+  abrirModalUnidadMedida(unidadMedida?: UnidadMedida): void {
+    this.unidadMedidaEditando = unidadMedida || null;
+    this.unidadMedidaModalAbierto = true;
+
+    if (unidadMedida) {
+      this.unidadMedidaForm.patchValue({
+        nombre: unidadMedida.nombre,
+        simbolo: unidadMedida.simbolo,
+        descripcion: unidadMedida.descripcion,
+        activo: unidadMedida.activo
+      });
+    } else {
+      this.unidadMedidaForm.reset({
+        nombre: '',
+        simbolo: '',
+        descripcion: '',
+        activo: true
+      });
+    }
+  }
+
+  cerrarModalUnidadMedida(): void {
+    this.unidadMedidaModalAbierto = false;
+    this.unidadMedidaEditando = null;
+    this.unidadMedidaForm.reset({
+      nombre: '',
+      simbolo: '',
+      descripcion: '',
+      activo: true
+    });
+  }
+
+  guardarUnidadMedida(): void {
+    if (this.unidadMedidaForm.invalid) {
+      this.marcarFormularioComoTocado(this.unidadMedidaForm);
+      return;
+    }
+
+    const datosUnidadMedida = this.unidadMedidaForm.value;
+
+    if (this.unidadMedidaEditando) {
+      // Actualizar unidad de medida existente
+      this.unidadMedidaService.actualizar(this.unidadMedidaEditando.id_unidad_medida, datosUnidadMedida)
+        .subscribe({
+          next: (response) => {
+            this.snackBar.open('Unidad de medida actualizada exitosamente', 'Cerrar', { duration: 3000 });
+            this.cerrarModalUnidadMedida();
+            this.cargarUnidadesMedida();
+          },
+          error: (error) => {
+            console.error('Error al actualizar unidad de medida:', error);
+            const mensaje = error.error?.mensaje || 'Error al actualizar unidad de medida';
+            this.snackBar.open(mensaje, 'Cerrar', { duration: 3000 });
+          }
+        });
+    } else {
+      // Crear nueva unidad de medida
+      this.unidadMedidaService.crear(datosUnidadMedida)
+        .subscribe({
+          next: (response) => {
+            this.snackBar.open('Unidad de medida creada exitosamente', 'Cerrar', { duration: 3000 });
+            this.cerrarModalUnidadMedida();
+            this.cargarUnidadesMedida();
+          },
+          error: (error) => {
+            console.error('Error al crear unidad de medida:', error);
+            const mensaje = error.error?.mensaje || 'Error al crear unidad de medida';
+            this.snackBar.open(mensaje, 'Cerrar', { duration: 3000 });
+          }
+        });
+    }
+  }
+
+  eliminarUnidadMedida(unidadMedida: UnidadMedida): void {
+    const dialogRef = this.dialog.open(ConfirmDialogComponent, {
+      data: {
+        titulo: 'Eliminar Unidad de Medida',
+        mensaje: `¿Estás seguro de que deseas eliminar la unidad de medida "${unidadMedida.nombre}" (${unidadMedida.simbolo})?`,
+        confirmarTexto: 'Eliminar',
+        cancelarTexto: 'Cancelar'
+      }
+    });
+
+    dialogRef.afterClosed().subscribe(result => {
+      if (result) {
+        this.unidadMedidaService.eliminar(unidadMedida.id_unidad_medida)
+          .subscribe({
+            next: (response) => {
+              this.snackBar.open('Unidad de medida eliminada exitosamente', 'Cerrar', { duration: 3000 });
+              this.cargarUnidadesMedida();
+            },
+            error: (error) => {
+              console.error('Error al eliminar unidad de medida:', error);
+              const mensaje = error.error?.mensaje || 'Error al eliminar unidad de medida';
+              this.snackBar.open(mensaje, 'Cerrar', { duration: 3000 });
+            }
+          });
+      }
+    });
+  }
+
+  onUnidadMedidaPageChange(event: PageEvent): void {
+    this.unidadMedidaPagina = event.pageIndex + 1;
+    this.unidadMedidaLimite = event.pageSize;
+    this.cargarUnidadesMedida();
+  }
+
+  aplicarFiltrosUnidadMedida(): void {
+    this.unidadMedidaPagina = 1;
+    this.cargarUnidadesMedida();
+  }
+
+  limpiarFiltrosUnidadMedida(): void {
+    this.unidadMedidaFiltros = {
+      activo: '',
+      busqueda: ''
+    };
+    this.aplicarFiltrosUnidadMedida();
+  }
+
   marcarFormularioComoTocado(form: FormGroup): void {
     Object.keys(form.controls).forEach(key => {
       form.get(key)?.markAsTouched();
@@ -718,6 +1094,33 @@ export class ProductosComponent implements OnInit {
     if (stock === 0) return 'warn';
     if (stock < 10) return 'accent';
     return 'primary';
+  }
+
+  formatearPresentacion(producto: Producto): string {
+    if (!producto.tipo_presentacion && !producto.unidad_medida) {
+      return '-';
+    }
+    
+    const partes: string[] = [];
+    
+    if (producto.cantidad_presentacion) {
+      partes.push(producto.cantidad_presentacion.toString());
+    }
+    
+    if (producto.unidad_medida) {
+      partes.push(producto.unidad_medida);
+    }
+    
+    if (producto.tipo_presentacion) {
+      partes.push(producto.tipo_presentacion);
+    }
+    
+    // Si solo hay tipo_presentacion sin cantidad ni unidad, mostrar solo el tipo
+    if (partes.length === 0 && producto.tipo_presentacion) {
+      return producto.tipo_presentacion;
+    }
+    
+    return partes.length > 0 ? partes.join(' ') : '-';
   }
 
   // Métodos para manejar lotes de productos

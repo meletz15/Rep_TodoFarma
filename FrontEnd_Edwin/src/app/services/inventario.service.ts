@@ -11,6 +11,8 @@ import {
   ProductoPorVencer,
   ResumenCategoria,
   InventarioFiltros,
+  ConversionRequest,
+  ConversionResponse,
   ApiResponse, 
   PaginatedResponse 
 } from '../models/inventario.model';
@@ -98,5 +100,10 @@ export class InventarioService {
   // Obtener lotes de un producto
   obtenerLotesProducto(idProducto: number): Observable<ApiResponse<any[]>> {
     return this.http.get<ApiResponse<any[]>>(`${this.apiUrl}/producto/${idProducto}/lotes`);
+  }
+
+  // Crear conversión de producto (ej: blister a pastillas sueltas)
+  crearConversion(conversion: ConversionRequest): Observable<ApiResponse<ConversionResponse>> {
+    return this.http.post<ApiResponse<ConversionResponse>>(`${this.apiUrl}/conversion`, conversion);
   }
 }

@@ -42,6 +42,16 @@ const esquemaCrearProducto = Joi.object({
   fecha_vencimiento: Joi.date().min('now').allow(null).messages({
     'date.min': 'La fecha de vencimiento no puede ser anterior a hoy'
   }),
+  tipo_presentacion: Joi.string().max(50).allow('', null).messages({
+    'string.max': 'El tipo de presentación no puede exceder 50 caracteres'
+  }),
+  cantidad_presentacion: Joi.number().min(0).precision(2).allow(null).messages({
+    'number.min': 'La cantidad de presentación no puede ser negativa',
+    'number.precision': 'La cantidad de presentación debe tener máximo 2 decimales'
+  }),
+  unidad_medida: Joi.string().max(20).allow('', null).messages({
+    'string.max': 'La unidad de medida no puede exceder 20 caracteres'
+  }),
   activo: Joi.boolean().default(true).messages({
     'boolean.base': 'El estado activo debe ser verdadero o falso'
   })
@@ -81,6 +91,16 @@ const esquemaActualizarProducto = Joi.object({
   }),
   fecha_vencimiento: Joi.date().min('now').allow(null).messages({
     'date.min': 'La fecha de vencimiento no puede ser anterior a hoy'
+  }),
+  tipo_presentacion: Joi.string().max(50).allow('', null).messages({
+    'string.max': 'El tipo de presentación no puede exceder 50 caracteres'
+  }),
+  cantidad_presentacion: Joi.number().min(0).precision(2).allow(null).messages({
+    'number.min': 'La cantidad de presentación no puede ser negativa',
+    'number.precision': 'La cantidad de presentación debe tener máximo 2 decimales'
+  }),
+  unidad_medida: Joi.string().max(20).allow('', null).messages({
+    'string.max': 'La unidad de medida no puede exceder 20 caracteres'
   }),
   activo: Joi.boolean().messages({
     'boolean.base': 'El estado activo debe ser verdadero o falso'

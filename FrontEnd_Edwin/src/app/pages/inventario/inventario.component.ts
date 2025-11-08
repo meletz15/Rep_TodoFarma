@@ -33,7 +33,9 @@ import {
   ProductoStockBajo,
   ProductoPorVencer,
   ResumenCategoria,
-  InventarioFiltros 
+  InventarioFiltros,
+  ConversionRequest,
+  ConversionMovimiento
 } from '../../models/inventario.model';
 import { Producto } from '../../models/producto.model';
 import { Usuario } from '../../models/usuario.model';
@@ -102,7 +104,7 @@ export class InventarioComponent implements OnInit {
   todasLasInventarioTotal: any[] = []; // Todos los productos cargados
   inventarioTotalFiltrados: any[] = []; // Productos después de filtrar
   inventarioTotalDataSource = new MatTableDataSource<any>();
-  inventarioTotalDisplayedColumns = ['producto', 'stock_actual', 'precio_compra', 'precio_venta', 'valor_total'];
+  inventarioTotalDisplayedColumns = ['producto', 'stock_actual', 'precio_compra', 'precio_venta', 'valor_total', 'acciones'];
   inventarioTotalCargando = false;
   inventarioTotalPagina = 1;
   inventarioTotalLimite = 10;
@@ -117,6 +119,15 @@ export class InventarioComponent implements OnInit {
   nuevoMovimientoModalAbierto = false;
   nuevoMovimientoForm!: FormGroup;
   nuevoMovimientoCargando = false;
+
+  // Variables para conversión de productos
+  conversionModalAbierto = false;
+  productoBlisterSeleccionado: Producto | null = null;
+  productoPastillaSuelta: Producto | null = null;
+  cantidadBlisters = 1;
+  factorConversion = 1; // Cantidad de pastillas por blister
+  conversionForm!: FormGroup;
+  conversionCargando = false;
 
   // Variables para modal de prueba
 
@@ -199,6 +210,11 @@ export class InventarioComponent implements OnInit {
       referencia: ['', [Validators.maxLength(100)]],
       usuario_id: ['', [Validators.required]],
       observacion: ['', [Validators.maxLength(300)]]
+    });
+
+    // Formulario de conversión
+    this.conversionForm = this.fb.group({
+      cantidad_blisters: [1, [Validators.required, Validators.min(1)]]
     });
   }
 
@@ -794,4 +810,149 @@ export class InventarioComponent implements OnInit {
     });
   }
 
+  // Métodos para conversión de productos
+  abrirModalConversion(producto: Producto): void {
+    // Verificar que el producto es tipo Blister
+    if (producto.tipo_presentacion?.toLowerCase() !== 'blister') {
+      this.snackBar.open('Este producto no es un blister. Solo se pueden desglosar blisters.', 'Cerrar', { duration: 3000 });
+      return;
+    }
+
+    // Verificar stock
+    if (producto.stock <= 0) {
+      this.snackBar.open('No hay stock disponible para desglosar', 'Cerrar', { duration: 3000 });
+      return;
+    }
+
+    this.productoBlisterSeleccionado = producto;
+    this.cantidadBlisters = 1;
+    this.factorConversion = producto.cantidad_presentacion || 1;
+    
+    // Buscar producto de pastilla suelta relacionado
+    this.buscarProductoPastillaSuelta(producto);
+    
+    this.conversionForm.patchValue({ cantidad_blisters: 1 });
+    this.conversionModalAbierto = true;
+  }
+
+  buscarProductoPastillaSuelta(productoBlister: Producto): void {
+    // Estrategia: Buscar producto con nombre similar pero sin "blister"
+    // Ejemplo: "Paracetamol 500mg Blister" -> "Paracetamol 500mg Pastilla Suelta"
+    const nombreBase = productoBlister.nombre.toLowerCase()
+      .replace(/\s*blister\s*/gi, '')
+      .replace(/\s*tabletas?\s*/gi, '')
+      .trim();
+
+    // Buscar en los productos activos
+    const productoEncontrado = this.productosParaDropdown.find(p => {
+      const nombreProducto = p.nombre.toLowerCase();
+      return nombreProducto.includes(nombreBase) && 
+             (nombreProducto.includes('suelta') || nombreProducto.includes('suelto') || 
+              (p.tipo_presentacion?.toLowerCase() === 'tabletas' && !nombreProducto.includes('blister')));
+    });
+
+    if (productoEncontrado) {
+      this.productoPastillaSuelta = productoEncontrado;
+    } else {
+      this.productoPastillaSuelta = null;
+      this.snackBar.open('No se encontró un producto de pastilla suelta relacionado. Debe crearlo primero.', 'Cerrar', { duration: 5000 });
+    }
+  }
+
+  cerrarModalConversion(): void {
+    this.conversionModalAbierto = false;
+    this.productoBlisterSeleccionado = null;
+    this.productoPastillaSuelta = null;
+    this.cantidadBlisters = 1;
+    this.conversionForm.reset({ cantidad_blisters: 1 });
+  }
+
+  calcularPastillasSuelta(): number {
+    const cantidad = this.conversionForm.get('cantidad_blisters')?.value || this.cantidadBlisters || 1;
+    return cantidad * this.factorConversion;
+  }
+
+  confirmarConversion(): void {
+    if (!this.productoBlisterSeleccionado || !this.productoPastillaSuelta) {
+      this.snackBar.open('Debe seleccionar un producto blister y un producto de pastilla suelta', 'Cerrar', { duration: 3000 });
+      return;
+    }
+
+    if (this.conversionForm.invalid) {
+      this.marcarFormularioComoTocado(this.conversionForm);
+      this.snackBar.open('Por favor, ingrese una cantidad válida', 'Cerrar', { duration: 3000 });
+      return;
+    }
+
+    const cantidadBlisters = this.conversionForm.get('cantidad_blisters')?.value || 1;
+
+    // Validar stock
+    if (this.productoBlisterSeleccionado.stock < cantidadBlisters) {
+      this.snackBar.open(`Stock insuficiente. Stock actual: ${this.productoBlisterSeleccionado.stock}`, 'Cerrar', { duration: 3000 });
+      return;
+    }
+
+    const dialogRef = this.dialog.open(ConfirmDialogComponent, {
+      data: {
+        titulo: 'Confirmar Conversión',
+        mensaje: `¿Está seguro de convertir ${cantidadBlisters} blister(s) de "${this.productoBlisterSeleccionado.nombre}" en ${this.calcularPastillasSuelta()} pastilla(s) suelta(s) de "${this.productoPastillaSuelta.nombre}"?`,
+        confirmarTexto: 'Confirmar',
+        cancelarTexto: 'Cancelar'
+      }
+    });
+
+    dialogRef.afterClosed().subscribe(result => {
+      if (result) {
+        this.ejecutarConversion(cantidadBlisters);
+      }
+    });
+  }
+
+  ejecutarConversion(cantidadBlisters: number): void {
+    if (!this.productoBlisterSeleccionado || !this.productoPastillaSuelta) {
+      return;
+    }
+
+    this.conversionCargando = true;
+
+    const cantidadPastillas = cantidadBlisters * this.factorConversion;
+
+    const movimientos: ConversionMovimiento[] = [
+      {
+        producto_id: this.productoBlisterSeleccionado.id_producto,
+        cantidad: cantidadBlisters,
+        signo: -1,
+        tipo: 'AJUSTE_SALIDA',
+        observacion: `Conversión a ${cantidadPastillas} pastilla(s) suelta(s) de ${this.productoPastillaSuelta.nombre}`
+      },
+      {
+        producto_id: this.productoPastillaSuelta.id_producto,
+        cantidad: cantidadPastillas,
+        signo: 1,
+        tipo: 'AJUSTE_ENTRADA',
+        observacion: `Conversión desde ${cantidadBlisters} blister(s) de ${this.productoBlisterSeleccionado.nombre}`
+      }
+    ];
+
+    const conversionRequest: ConversionRequest = { movimientos };
+
+    this.inventarioService.crearConversion(conversionRequest)
+      .subscribe({
+        next: (response) => {
+          this.snackBar.open('Conversión realizada correctamente', 'Cerrar', { duration: 3000 });
+          this.cerrarModalConversion();
+          this.cargarMovimientos();
+          this.cargarInventarioTotal();
+          this.cargarProductosActivos();
+          this.cargarEstadisticas();
+        },
+        error: (error) => {
+          console.error('Error al realizar conversión:', error);
+          this.snackBar.open('Error al realizar conversión: ' + (error.error?.mensaje || error.message), 'Cerrar', { duration: 5000 });
+        },
+        complete: () => {
+          this.conversionCargando = false;
+        }
+      });
+  }
 }

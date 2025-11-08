@@ -1,0 +1,226 @@
+<div class="min-h-screen bg-gray-50 p-6">
+  <!-- Header -->
+  <div class="mb-8">
+    <div class="flex justify-between items-center">
+      <div class="flex items-center gap-4">
+        <button
+          (click)="volverAUsuarios()"
+          class="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg font-semibold flex items-center gap-2 transition-colors duration-200 shadow-lg hover:shadow-xl"
+          matTooltip="Volver a gestión de usuarios"
+        >
+          <mat-icon class="text-white">arrow_back</mat-icon>
+          Volver
+        </button>
+        <div>
+          <h1 class="text-3xl font-bold text-gray-900">Gestión de Roles</h1>
+          <p class="text-gray-600 mt-2">Administra los roles y permisos del sistema TodoFarma</p>
+        </div>
+      </div>
+      <button
+        (click)="abrirDialogoRol()"
+        class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-semibold flex items-center gap-2 transition-colors duration-200 shadow-lg hover:shadow-xl"
+        matTooltip="Crear nuevo rol"
+      >
+        <mat-icon class="text-white">add</mat-icon>
+        Crear Rol
+      </button>
+    </div>
+  </div>
+
+  <!-- Tabla de Roles -->
+  <div class="bg-white rounded-xl shadow-lg border border-gray-200">
+    <div *ngIf="loading" class="flex justify-center items-center py-12">
+      <mat-spinner diameter="50"></mat-spinner>
+    </div>
+
+    <div *ngIf="!loading" class="overflow-x-auto">
+      <table mat-table [dataSource]="dataSource" class="w-full">
+        <!-- Nombre -->
+        <ng-container matColumnDef="nombre">
+          <th mat-header-cell *matHeaderCellDef class="font-semibold text-gray-700 px-6 py-4">Nombre</th>
+          <td mat-cell *matCellDef="let rol" class="px-6 py-4">
+            <span class="font-semibold text-gray-900">{{ rol.nombre }}</span>
+          </td>
+        </ng-container>
+
+        <!-- Descripción -->
+        <ng-container matColumnDef="descripcion">
+          <th mat-header-cell *matHeaderCellDef class="font-semibold text-gray-700 px-6 py-4">Descripción</th>
+          <td mat-cell *matCellDef="let rol" class="px-6 py-4 text-gray-600">
+            {{ rol.descripcion || '-' }}
+          </td>
+        </ng-container>
+
+        <!-- Activo -->
+        <ng-container matColumnDef="activo">
+          <th mat-header-cell *matHeaderCellDef class="font-semibold text-gray-700 px-6 py-4">Estado</th>
+          <td mat-cell *matCellDef="let rol" class="px-6 py-4">
+            <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold"
+                  [class.bg-green-100]="rol.activo"
+                  [class.text-green-800]="rol.activo"
+                  [class.bg-red-100]="!rol.activo"
+                  [class.text-red-800]="!rol.activo">
+              {{ rol.activo ? 'Activo' : 'Inactivo' }}
+            </span>
+          </td>
+        </ng-container>
+
+        <!-- Fecha Creación -->
+        <ng-container matColumnDef="fecha_creacion">
+          <th mat-header-cell *matHeaderCellDef class="font-semibold text-gray-700 px-6 py-4">Fecha Creación</th>
+          <td mat-cell *matCellDef="let rol" class="px-6 py-4 text-gray-600">
+            {{ rol.fecha_creacion | date:'dd/MM/yyyy' }}
+          </td>
+        </ng-container>
+
+        <!-- Acciones -->
+        <ng-container matColumnDef="acciones">
+          <th mat-header-cell *matHeaderCellDef class="font-semibold text-gray-700 px-6 py-4 text-right">Acciones</th>
+          <td mat-cell *matCellDef="let rol" class="px-6 py-4 text-right">
+            <div class="flex justify-end gap-2">
+              <button
+                (click)="abrirDialogoRol(rol)"
+                class="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors duration-200"
+                matTooltip="Editar rol"
+              >
+                <mat-icon>edit</mat-icon>
+              </button>
+              <button
+                (click)="eliminarRol(rol)"
+                class="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors duration-200"
+                matTooltip="Eliminar rol"
+              >
+                <mat-icon>delete</mat-icon>
+              </button>
+            </div>
+          </td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="displayedColumns" class="bg-gray-50 border-b border-gray-200"></tr>
+        <tr mat-row *matRowDef="let row; columns: displayedColumns;" class="hover:bg-gray-50 border-b border-gray-100"></tr>
+      </table>
+
+      <div *ngIf="dataSource.data.length === 0" class="text-center py-12 text-gray-500">
+        No hay roles registrados
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal de Crear/Editar Rol -->
+  <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4" 
+       *ngIf="mostrarDialogo" 
+       (click)="cerrarDialogo()">
+    <div class="bg-white rounded-xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto" 
+         (click)="$event.stopPropagation()">
+      <!-- Header -->
+      <div class="flex justify-between items-center p-6 border-b border-gray-200">
+        <h2 class="text-xl font-semibold text-gray-900">
+          {{ editMode ? 'Editar Rol' : 'Crear Nuevo Rol' }}
+        </h2>
+        <button 
+          (click)="cerrarDialogo()"
+          class="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors duration-200"
+        >
+          <mat-icon>close</mat-icon>
+        </button>
+      </div>
+
+      <!-- Contenido -->
+      <div class="p-6">
+        <form [formGroup]="rolForm" (ngSubmit)="guardarRol()" class="space-y-6">
+          <!-- Información Básica -->
+          <div class="space-y-4">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">Información Básica</h3>
+            
+            <!-- Nombre -->
+            <div class="space-y-2">
+              <label class="block text-sm font-medium text-gray-700">Nombre *</label>
+              <mat-form-field appearance="outline" class="w-full">
+                <input matInput formControlName="nombre" placeholder="Ej: VENDEDOR, CAJERO">
+                <mat-error *ngIf="rolForm.get('nombre')?.hasError('required')">
+                  El nombre es requerido
+                </mat-error>
+                <mat-error *ngIf="rolForm.get('nombre')?.hasError('minlength')">
+                  El nombre debe tener al menos 2 caracteres
+                </mat-error>
+                <mat-error *ngIf="rolForm.get('nombre')?.hasError('maxlength')">
+                  El nombre no puede exceder 50 caracteres
+                </mat-error>
+              </mat-form-field>
+            </div>
+
+            <!-- Descripción -->
+            <div class="space-y-2">
+              <label class="block text-sm font-medium text-gray-700">Descripción</label>
+              <mat-form-field appearance="outline" class="w-full">
+                <textarea matInput formControlName="descripcion" placeholder="Descripción del rol" rows="3"></textarea>
+                <mat-error *ngIf="rolForm.get('descripcion')?.hasError('maxlength')">
+                  La descripción no puede exceder 255 caracteres
+                </mat-error>
+              </mat-form-field>
+            </div>
+
+            <!-- Estado -->
+            <div class="space-y-2">
+              <label class="block text-sm font-medium text-gray-700">Estado</label>
+              <mat-form-field appearance="outline" class="w-full">
+                <mat-select formControlName="activo" placeholder="Seleccionar estado">
+                  <mat-option [value]="true">Activo</mat-option>
+                  <mat-option [value]="false">Inactivo</mat-option>
+                </mat-select>
+              </mat-form-field>
+            </div>
+          </div>
+
+          <!-- Permisos -->
+          <div class="space-y-4 border-t border-gray-200 pt-6">
+            <div class="flex justify-between items-center mb-4">
+              <h3 class="text-lg font-semibold text-gray-900">Permisos del Menú</h3>
+              <button
+                type="button"
+                (click)="seleccionarTodosPermisos()"
+                class="text-sm text-blue-600 hover:text-blue-700 font-medium"
+              >
+                Seleccionar/Deseleccionar Todos
+              </button>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div *ngFor="let opcion of opcionesMenu" 
+                   class="flex items-center p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors duration-200">
+                <mat-checkbox 
+                  [formControlName]="opcion.key"
+                  class="flex-1"
+                >
+                  <div class="flex items-center gap-2 ml-2">
+                    <mat-icon class="text-gray-600 text-lg">{{ opcion.icon }}</mat-icon>
+                    <span class="text-gray-900 font-medium">{{ opcion.label }}</span>
+                  </div>
+                </mat-checkbox>
+              </div>
+            </div>
+          </div>
+
+          <!-- Botones -->
+          <div class="flex justify-end gap-4 pt-6 border-t border-gray-200">
+            <button 
+              type="button" 
+              (click)="cerrarDialogo()"
+              class="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors duration-200"
+            >
+              Cancelar
+            </button>
+            <button 
+              type="submit" 
+              [disabled]="rolForm.invalid"
+              class="px-6 py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white rounded-lg font-medium transition-colors duration-200"
+            >
+              {{ editMode ? 'Actualizar' : 'Crear' }}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+

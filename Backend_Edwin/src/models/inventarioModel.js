@@ -397,6 +397,122 @@ class InventarioModel {
     }
   }
 
+  // Crear conversión de producto (ej: blister a pastillas sueltas)
+  static async crearConversion(movimientos) {
+    const cliente = await pool.connect();
+    try {
+      await cliente.query('BEGIN');
+
+      // Validar que hay exactamente 2 movimientos (salida + entrada)
+      if (!Array.isArray(movimientos) || movimientos.length !== 2) {
+        throw crearError('Debe proporcionar exactamente 2 movimientos (salida y entrada)', 400);
+      }
+
+      const [movimientoSalida, movimientoEntrada] = movimientos;
+
+      // Validar que uno es salida (signo = -1) y otro es entrada (signo = 1)
+      if (movimientoSalida.signo !== -1 || movimientoEntrada.signo !== 1) {
+        throw crearError('El primer movimiento debe ser salida (signo = -1) y el segundo entrada (signo = 1)', 400);
+      }
+
+      // Validar stock del producto origen
+      const productoOrigen = await cliente.query(
+        'SELECT stock, nombre FROM producto WHERE id_producto = $1',
+        [movimientoSalida.producto_id]
+      );
+
+      if (productoOrigen.rows.length === 0) {
+        throw crearError('Producto origen no encontrado', 404);
+      }
+
+      const stockActual = productoOrigen.rows[0].stock;
+      if (stockActual < movimientoSalida.cantidad) {
+        throw crearError(
+          `Stock insuficiente. Stock actual: ${stockActual}, cantidad requerida: ${movimientoSalida.cantidad}`,
+          400
+        );
+      }
+
+      // Validar que el producto destino existe
+      const productoDestino = await cliente.query(
+        'SELECT id_producto, nombre FROM producto WHERE id_producto = $1',
+        [movimientoEntrada.producto_id]
+      );
+
+      if (productoDestino.rows.length === 0) {
+        throw crearError('Producto destino no encontrado', 404);
+      }
+
+      // Crear movimiento de salida
+      const consultaSalida = `
+        INSERT INTO inventario_movimiento 
+        (producto_id, tipo, cantidad, signo, referencia, usuario_id, observacion, fecha_vencimiento, numero_lote)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+        RETURNING *
+      `;
+      
+      const parametrosSalida = [
+        movimientoSalida.producto_id,
+        movimientoSalida.tipo || 'AJUSTE_SALIDA',
+        movimientoSalida.cantidad,
+        movimientoSalida.signo,
+        movimientoSalida.referencia || 'CONVERSION',
+        movimientoSalida.usuario_id || null,
+        movimientoSalida.observacion || `Conversión a producto ${productoDestino.rows[0].nombre}`,
+        movimientoSalida.fecha_vencimiento || null,
+        movimientoSalida.numero_lote || null
+      ];
+
+      const resultadoSalida = await cliente.query(consultaSalida, parametrosSalida);
+
+      // Crear movimiento de entrada
+      const consultaEntrada = `
+        INSERT INTO inventario_movimiento 
+        (producto_id, tipo, cantidad, signo, referencia, usuario_id, observacion, fecha_vencimiento, numero_lote)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+        RETURNING *
+      `;
+      
+      const parametrosEntrada = [
+        movimientoEntrada.producto_id,
+        movimientoEntrada.tipo || 'AJUSTE_ENTRADA',
+        movimientoEntrada.cantidad,
+        movimientoEntrada.signo,
+        movimientoEntrada.referencia || 'CONVERSION',
+        movimientoEntrada.usuario_id || null,
+        movimientoEntrada.observacion || `Conversión desde producto ${productoOrigen.rows[0].nombre}`,
+        movimientoEntrada.fecha_vencimiento || null,
+        movimientoEntrada.numero_lote || null
+      ];
+
+      const resultadoEntrada = await cliente.query(consultaEntrada, parametrosEntrada);
+
+      // Actualizar stock del producto origen (restar)
+      await cliente.query(
+        'UPDATE producto SET stock = stock - $1 WHERE id_producto = $2',
+        [movimientoSalida.cantidad, movimientoSalida.producto_id]
+      );
+
+      // Actualizar stock del producto destino (sumar)
+      await cliente.query(
+        'UPDATE producto SET stock = stock + $1 WHERE id_producto = $2',
+        [movimientoEntrada.cantidad, movimientoEntrada.producto_id]
+      );
+
+      await cliente.query('COMMIT');
+
+      return {
+        movimiento_salida: resultadoSalida.rows[0],
+        movimiento_entrada: resultadoEntrada.rows[0]
+      };
+    } catch (error) {
+      await cliente.query('ROLLBACK');
+      throw error;
+    } finally {
+      cliente.release();
+    }
+  }
+
   // ========================================
   // MÉTODOS PARA REPORTES
   // ========================================

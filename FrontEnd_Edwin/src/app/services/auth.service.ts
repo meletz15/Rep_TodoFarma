@@ -99,4 +99,17 @@ export class AuthService {
     const user = this.getCurrentUser();
     return user?.rol === 'ADMIN';
   }
+
+  // Recargar el perfil del usuario actual desde el servidor
+  recargarPerfil(): Observable<any> {
+    return this.http.get<any>(`${environment.apiUrl}/auth/perfil`).pipe(
+      tap(response => {
+        if (response.ok && response.datos) {
+          // Actualizar el usuario en localStorage y en el BehaviorSubject
+          this.setLocalStorageItem('user', JSON.stringify(response.datos));
+          this.currentUserSubject.next(response.datos);
+        }
+      })
+    );
+  }
 }

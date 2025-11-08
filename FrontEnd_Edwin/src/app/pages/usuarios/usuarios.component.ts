@@ -19,6 +19,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { UsuarioService } from '../../services/usuario.service';
 import { Usuario, UsuarioCreate, UsuarioUpdate } from '../../models/usuario.model';
 import { ConfirmDialogComponent } from '../../components/confirm-dialog.component';
+import { Router } from '@angular/router';
 import * as XLSX from 'xlsx';
 import { saveAs } from 'file-saver';
 
@@ -83,7 +84,8 @@ export class UsuariosComponent implements OnInit {
     private usuarioService: UsuarioService,
     private fb: FormBuilder,
     private snackBar: MatSnackBar,
-    private dialog: MatDialog
+    private dialog: MatDialog,
+    private router: Router
   ) {
     this.usuarioForm = this.fb.group({
       nombre: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(80)]],
@@ -156,6 +158,12 @@ export class UsuariosComponent implements OnInit {
     this.currentPage = event.pageIndex + 1;
     this.pageSize = event.pageSize;
     this.cargarUsuarios();
+  }
+
+  abrirGestionRoles(): void {
+    if (this.router) {
+      this.router.navigate(['/gestion-roles']);
+    }
   }
 
   abrirDialogoUsuario(usuario?: Usuario): void {

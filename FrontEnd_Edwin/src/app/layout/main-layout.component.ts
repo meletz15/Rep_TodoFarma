@@ -102,6 +102,13 @@ export class MainLayoutComponent implements OnInit {
       disponible: true
     },
     {
+      title: 'Carga',
+      description: 'Carga masiva de datos desde Excel',
+      icon: 'upload_file',
+      route: '/carga',
+      disponible: true
+    },
+    {
       title: 'Menú Inicio',
       description: 'Página principal del sistema',
       icon: 'home',
@@ -118,6 +125,53 @@ export class MainLayoutComponent implements OnInit {
 
   ngOnInit(): void {
     this.currentUser = this.authService.getCurrentUser();
+    this.filtrarMenuSegunPermisos();
+    
+    // Suscribirse a cambios en el usuario para actualizar el menú
+    this.authService.currentUser$.subscribe(user => {
+      this.currentUser = user;
+      this.filtrarMenuSegunPermisos();
+    });
+  }
+
+  filtrarMenuSegunPermisos(): void {
+    const user = this.authService.getCurrentUser();
+    if (!user || !user.permisos) {
+      // Si no hay permisos, ocultar todo excepto dashboard
+      this.menuItems.forEach(item => {
+        item.disponible = item.route === '/dashboard';
+      });
+      return;
+    }
+
+    const permisos = user.permisos;
+
+    // Mapear rutas a claves de permisos
+    const mapeoPermisos: { [key: string]: string } = {
+      '/ventas': 'ventas',
+      '/productos': 'productos',
+      '/caja': 'caja',
+      '/clientes': 'clientes',
+      '/proveedores': 'proveedores',
+      '/gestion-pedido': 'gestion_pedidos',
+      '/inventario': 'inventario',
+      '/reporte': 'reportes',
+      '/usuarios': 'usuarios',
+      '/configuracion': 'configuracion',
+      '/carga': 'carga',
+      '/dashboard': 'dashboard'
+    };
+
+    // Filtrar menú según permisos
+    this.menuItems.forEach(item => {
+      const permisoKey = mapeoPermisos[item.route];
+      if (permisoKey) {
+        item.disponible = permisos[permisoKey] === true;
+      } else {
+        // Si no hay mapeo, mantener disponible
+        item.disponible = true;
+      }
+    });
   }
 
   toggleMenu(): void {

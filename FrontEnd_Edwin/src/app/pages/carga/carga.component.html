@@ -1,0 +1,372 @@
+<div class="min-h-screen bg-gray-50 p-6">
+  <!-- Header -->
+  <div class="mb-8">
+    <div class="flex justify-between items-center">
+      <div>
+        <h1 class="text-3xl font-bold text-gray-900">Carga Masiva de Datos</h1>
+        <p class="text-gray-600 mt-2">Importa datos desde archivos Excel al sistema</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tabs para cada tipo de carga -->
+  <mat-tab-group [(selectedIndex)]="tabSeleccionado" (selectedIndexChange)="onTabChange($event)" class="bg-white rounded-xl shadow-lg border border-gray-200">
+    <!-- Tab de Catálogos -->
+    <mat-tab label="Catálogos">
+      <div class="p-6">
+        <!-- Instrucciones -->
+        <div class="bg-blue-50 border border-blue-200 rounded-lg p-6 mb-6">
+          <div class="flex items-start gap-3 mb-4">
+            <mat-icon class="text-blue-600 mt-1">info</mat-icon>
+            <div>
+              <h3 class="text-xl font-semibold text-blue-900 mb-2">Instrucciones para el Llenado Correcto</h3>
+              <div class="text-blue-800 space-y-2 text-sm">
+                <p><strong>1. Campos de Catálogo:</strong> Al cargar productos, debe usar los nombres EXACTOS que aparecen en las tablas de abajo para los campos:</p>
+                <ul class="list-disc list-inside ml-4 space-y-1">
+                  <li><strong>Categoría:</strong> Use exactamente el nombre de la categoría (ver tabla de Categorías)</li>
+                  <li><strong>Marca:</strong> Use exactamente el nombre de la marca (ver tabla de Marcas)</li>
+                  <li><strong>Tipo de Presentación:</strong> Use exactamente el nombre de la presentación (ver tabla de Presentaciones)</li>
+                  <li><strong>Unidad de Medida:</strong> Use exactamente el nombre o símbolo de la unidad (ver tabla de Unidades de Medida)</li>
+                </ul>
+                <p class="mt-3"><strong>2. Campo Activo:</strong> Use "Sí" o "No" (con o sin tilde). Por defecto es "Sí" si está vacío.</p>
+                <p><strong>3. Orden de Carga:</strong> Se recomienda cargar primero: Categorías → Marcas → Presentaciones → Unidades de Medida → Productos</p>
+                <p><strong>4. Nombres Exactos:</strong> Los nombres deben coincidir EXACTAMENTE (mayúsculas, minúsculas, tildes, espacios). Copie y pegue desde las tablas de abajo.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Catálogos disponibles -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <!-- Categorías -->
+          <div class="bg-white rounded-xl shadow-lg border border-gray-200 p-6">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+              <mat-icon class="text-blue-600">category</mat-icon>
+              Categorías Disponibles
+            </h3>
+            <div *ngIf="cargandoCatalogos" class="flex justify-center py-8">
+              <mat-spinner diameter="40"></mat-spinner>
+            </div>
+            <div *ngIf="!cargandoCatalogos" class="max-h-64 overflow-y-auto">
+              <table class="w-full text-sm">
+                <thead class="bg-gray-50 sticky top-0">
+                  <tr>
+                    <th class="px-4 py-2 text-left font-semibold text-gray-700 border-b">Nombre</th>
+                    <th class="px-4 py-2 text-left font-semibold text-gray-700 border-b">Estado</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let categoria of categorias" class="hover:bg-gray-50 border-b">
+                    <td class="px-4 py-2 text-gray-800 font-medium">{{ categoria.nombre }}</td>
+                    <td class="px-4 py-2">
+                      <span class="inline-flex items-center px-2 py-1 rounded text-xs font-medium"
+                            [class]="categoria.activo ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'">
+                        {{ categoria.activo ? 'Activo' : 'Inactivo' }}
+                      </span>
+                    </td>
+                  </tr>
+                  <tr *ngIf="categorias.length === 0">
+                    <td colspan="2" class="px-4 py-4 text-center text-gray-500">No hay categorías disponibles</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <p class="text-xs text-gray-600 mt-3 italic">Use estos nombres EXACTOS en la columna "Categoría" al cargar productos</p>
+          </div>
+
+          <!-- Marcas -->
+          <div class="bg-white rounded-xl shadow-lg border border-gray-200 p-6">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+              <mat-icon class="text-green-600">label</mat-icon>
+              Marcas Disponibles
+            </h3>
+            <div *ngIf="cargandoCatalogos" class="flex justify-center py-8">
+              <mat-spinner diameter="40"></mat-spinner>
+            </div>
+            <div *ngIf="!cargandoCatalogos" class="max-h-64 overflow-y-auto">
+              <table class="w-full text-sm">
+                <thead class="bg-gray-50 sticky top-0">
+                  <tr>
+                    <th class="px-4 py-2 text-left font-semibold text-gray-700 border-b">Nombre</th>
+                    <th class="px-4 py-2 text-left font-semibold text-gray-700 border-b">Estado</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let marca of marcas" class="hover:bg-gray-50 border-b">
+                    <td class="px-4 py-2 text-gray-800 font-medium">{{ marca.nombre }}</td>
+                    <td class="px-4 py-2">
+                      <span class="inline-flex items-center px-2 py-1 rounded text-xs font-medium"
+                            [class]="marca.activo ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'">
+                        {{ marca.activo ? 'Activo' : 'Inactivo' }}
+                      </span>
+                    </td>
+                  </tr>
+                  <tr *ngIf="marcas.length === 0">
+                    <td colspan="2" class="px-4 py-4 text-center text-gray-500">No hay marcas disponibles</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <p class="text-xs text-gray-600 mt-3 italic">Use estos nombres EXACTOS en la columna "Marca" al cargar productos</p>
+          </div>
+
+          <!-- Presentaciones -->
+          <div class="bg-white rounded-xl shadow-lg border border-gray-200 p-6">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+              <mat-icon class="text-purple-600">inventory_2</mat-icon>
+              Presentaciones Disponibles
+            </h3>
+            <div *ngIf="cargandoCatalogos" class="flex justify-center py-8">
+              <mat-spinner diameter="40"></mat-spinner>
+            </div>
+            <div *ngIf="!cargandoCatalogos" class="max-h-64 overflow-y-auto">
+              <table class="w-full text-sm">
+                <thead class="bg-gray-50 sticky top-0">
+                  <tr>
+                    <th class="px-4 py-2 text-left font-semibold text-gray-700 border-b">Nombre</th>
+                    <th class="px-4 py-2 text-left font-semibold text-gray-700 border-b">Estado</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let presentacion of presentaciones" class="hover:bg-gray-50 border-b">
+                    <td class="px-4 py-2 text-gray-800 font-medium">{{ presentacion.nombre }}</td>
+                    <td class="px-4 py-2">
+                      <span class="inline-flex items-center px-2 py-1 rounded text-xs font-medium"
+                            [class]="presentacion.activo ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'">
+                        {{ presentacion.activo ? 'Activo' : 'Inactivo' }}
+                      </span>
+                    </td>
+                  </tr>
+                  <tr *ngIf="presentaciones.length === 0">
+                    <td colspan="2" class="px-4 py-4 text-center text-gray-500">No hay presentaciones disponibles</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <p class="text-xs text-gray-600 mt-3 italic">Use estos nombres EXACTOS en la columna "Tipo de Presentación" al cargar productos</p>
+          </div>
+
+          <!-- Unidades de Medida -->
+          <div class="bg-white rounded-xl shadow-lg border border-gray-200 p-6">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+              <mat-icon class="text-orange-600">straighten</mat-icon>
+              Unidades de Medida Disponibles
+            </h3>
+            <div *ngIf="cargandoCatalogos" class="flex justify-center py-8">
+              <mat-spinner diameter="40"></mat-spinner>
+            </div>
+            <div *ngIf="!cargandoCatalogos" class="max-h-64 overflow-y-auto">
+              <table class="w-full text-sm">
+                <thead class="bg-gray-50 sticky top-0">
+                  <tr>
+                    <th class="px-4 py-2 text-left font-semibold text-gray-700 border-b">Nombre</th>
+                    <th class="px-4 py-2 text-left font-semibold text-gray-700 border-b">Símbolo</th>
+                    <th class="px-4 py-2 text-left font-semibold text-gray-700 border-b">Estado</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let unidad of unidadesMedida" class="hover:bg-gray-50 border-b">
+                    <td class="px-4 py-2 text-gray-800 font-medium">{{ unidad.nombre }}</td>
+                    <td class="px-4 py-2 text-gray-600">
+                      <span class="inline-flex items-center px-2 py-1 rounded text-xs font-semibold bg-blue-100 text-blue-800">
+                        {{ unidad.simbolo }}
+                      </span>
+                    </td>
+                    <td class="px-4 py-2">
+                      <span class="inline-flex items-center px-2 py-1 rounded text-xs font-medium"
+                            [class]="unidad.activo ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'">
+                        {{ unidad.activo ? 'Activo' : 'Inactivo' }}
+                      </span>
+                    </td>
+                  </tr>
+                  <tr *ngIf="unidadesMedida.length === 0">
+                    <td colspan="3" class="px-4 py-4 text-center text-gray-500">No hay unidades de medida disponibles</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <p class="text-xs text-gray-600 mt-3 italic">Use el nombre o símbolo EXACTO en la columna "Unidad de Medida" al cargar productos</p>
+          </div>
+        </div>
+      </div>
+    </mat-tab>
+
+    <!-- Tabs de carga por tipo -->
+    <mat-tab *ngFor="let tipo of tiposCarga; let i = index" [label]="tipo.nombre">
+      <div class="p-6">
+        <!-- Información del tipo de carga -->
+        <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+          <div class="flex items-start gap-3">
+            <mat-icon class="text-blue-600 mt-1">{{ tipo.icono }}</mat-icon>
+            <div>
+              <h3 class="text-lg font-semibold text-blue-900">{{ tipo.nombre }}</h3>
+              <p class="text-blue-700 text-sm mt-1">{{ tipo.descripcion }}</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Sección de carga de archivo -->
+        <div class="bg-white rounded-xl shadow-lg border border-gray-200 p-6 mb-6">
+          <h3 class="text-xl font-semibold text-gray-900 mb-4">1. Seleccionar Archivo Excel</h3>
+          
+          <div class="space-y-4">
+            <!-- Botón para descargar plantilla -->
+            <div class="flex items-center gap-4">
+              <button
+                (click)="descargarPlantilla()"
+                [disabled]="cargando"
+                class="bg-green-600 hover:bg-green-700 disabled:bg-gray-400 text-white px-6 py-3 rounded-lg font-semibold flex items-center gap-2 transition-colors duration-200 shadow-lg hover:shadow-xl"
+                matTooltip="Descargar plantilla de ejemplo"
+              >
+                <mat-icon>download</mat-icon>
+                Descargar Plantilla
+              </button>
+              <span class="text-sm text-gray-600">Descarga la plantilla Excel con el formato correcto</span>
+            </div>
+
+            <!-- Input para seleccionar archivo -->
+            <div class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-blue-400 transition-colors">
+              <input
+                type="file"
+                id="file-input"
+                accept=".xlsx,.xls"
+                (change)="onFileSelected($event)"
+                class="hidden"
+              >
+              <label for="file-input" class="cursor-pointer">
+                <mat-icon class="text-6xl text-gray-400 mb-4">cloud_upload</mat-icon>
+                <p class="text-gray-700 font-medium mb-2">Haz clic para seleccionar un archivo Excel</p>
+                <p class="text-sm text-gray-500">Formatos permitidos: .xlsx, .xls</p>
+                <p class="text-sm text-blue-600 mt-2 font-semibold" *ngIf="archivoSeleccionado">
+                  {{ obtenerNombreArchivo() }}
+                </p>
+              </label>
+            </div>
+
+            <!-- Botón procesar -->
+            <div class="flex justify-end">
+              <button
+                (click)="procesarArchivo()"
+                [disabled]="!archivoSeleccionado || procesando"
+                class="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white px-6 py-3 rounded-lg font-semibold flex items-center gap-2 transition-colors duration-200 shadow-lg hover:shadow-xl"
+              >
+                <mat-spinner *ngIf="procesando" diameter="20" class="mr-2"></mat-spinner>
+                <mat-icon *ngIf="!procesando">search</mat-icon>
+                {{ procesando ? 'Procesando...' : 'Procesar Archivo' }}
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Preview de datos -->
+        <div *ngIf="previewData" class="bg-white rounded-xl shadow-lg border border-gray-200 p-6 mb-6">
+          <h3 class="text-xl font-semibold text-gray-900 mb-4">2. Vista Previa de Datos a Subir</h3>
+          
+          <!-- Estadísticas -->
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+            <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+              <div class="flex items-center gap-3">
+                <mat-icon class="text-blue-600">list</mat-icon>
+                <div>
+                  <p class="text-sm text-blue-600">Total de Filas</p>
+                  <p class="text-2xl font-bold text-blue-900">{{ previewData.totalFilas }}</p>
+                </div>
+              </div>
+            </div>
+            <div class="bg-green-50 border border-green-200 rounded-lg p-4">
+              <div class="flex items-center gap-3">
+                <mat-icon class="text-green-600">check_circle</mat-icon>
+                <div>
+                  <p class="text-sm text-green-600">Válidas</p>
+                  <p class="text-2xl font-bold text-green-900">{{ previewData.filasValidas }}</p>
+                </div>
+              </div>
+            </div>
+            <div class="bg-red-50 border border-red-200 rounded-lg p-4">
+              <div class="flex items-center gap-3">
+                <mat-icon class="text-red-600">error</mat-icon>
+                <div>
+                  <p class="text-sm text-red-600">Con Errores</p>
+                  <p class="text-2xl font-bold text-red-900">{{ previewData.filasConError }}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Tabla de preview -->
+          <div *ngIf="previewData.filasValidas > 0" class="mb-6">
+            <h4 class="text-lg font-semibold text-gray-800 mb-3">Datos a Subir al Sistema (Preview - Primeras 10 filas de {{ previewData.filasValidas }} totales)</h4>
+            <div class="overflow-x-auto border border-gray-200 rounded-lg">
+              <table mat-table [dataSource]="previewDataSource" class="w-full">
+                <ng-container *ngFor="let col of previewDisplayedColumns" [matColumnDef]="col">
+                  <th mat-header-cell *matHeaderCellDef class="font-semibold text-gray-700 px-4 py-3 bg-gray-50">
+                    {{ col | titlecase }}
+                  </th>
+                  <td mat-cell *matCellDef="let row" class="px-4 py-3 text-gray-700">
+                    <span *ngIf="col === 'yaExiste'" class="inline-flex items-center px-2 py-1 rounded text-xs font-medium"
+                          [class]="row[col] ? 'bg-yellow-100 text-yellow-800' : 'bg-green-100 text-green-800'">
+                      {{ row[col] ? 'Ya existe' : 'Nuevo' }}
+                    </span>
+                    <span *ngIf="col === 'activo'" 
+                          class="inline-flex items-center px-2 py-1 rounded text-xs font-medium"
+                          [class]="row[col] ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'">
+                      {{ formatearActivo(row[col]) }}
+                    </span>
+                    <span *ngIf="col !== 'yaExiste' && col !== 'activo'">{{ row[col] || '-' }}</span>
+                  </td>
+                </ng-container>
+                <tr mat-header-row *matHeaderRowDef="previewDisplayedColumns" class="bg-gray-50"></tr>
+                <tr mat-row *matRowDef="let row; columns: previewDisplayedColumns;" class="hover:bg-gray-50 border-b border-gray-100"></tr>
+              </table>
+            </div>
+          </div>
+
+          <!-- Errores -->
+          <div *ngIf="previewData.filasConError > 0" class="mb-6">
+            <h4 class="text-lg font-semibold text-red-800 mb-3">Errores Encontrados (Primeros 10)</h4>
+            <div class="overflow-x-auto border border-red-200 rounded-lg">
+              <table mat-table [dataSource]="erroresDataSource" class="w-full">
+                <ng-container matColumnDef="fila">
+                  <th mat-header-cell *matHeaderCellDef class="font-semibold text-gray-700 px-4 py-3 bg-red-50">Fila</th>
+                  <td mat-cell *matCellDef="let error" class="px-4 py-3 text-gray-700 font-semibold">{{ error.fila }}</td>
+                </ng-container>
+                <ng-container matColumnDef="error">
+                  <th mat-header-cell *matHeaderCellDef class="font-semibold text-gray-700 px-4 py-3 bg-red-50">Error</th>
+                  <td mat-cell *matCellDef="let error" class="px-4 py-3 text-red-600">{{ error.error }}</td>
+                </ng-container>
+                <ng-container matColumnDef="datos">
+                  <th mat-header-cell *matHeaderCellDef class="font-semibold text-gray-700 px-4 py-3 bg-red-50">Datos</th>
+                  <td mat-cell *matCellDef="let error" class="px-4 py-3 text-gray-600 text-sm">
+                    <pre class="whitespace-pre-wrap text-xs">{{ formatearObjeto(error.datos) }}</pre>
+                  </td>
+                </ng-container>
+                <tr mat-header-row *matHeaderRowDef="erroresDisplayedColumns" class="bg-red-50"></tr>
+                <tr mat-row *matRowDef="let row; columns: erroresDisplayedColumns;" class="hover:bg-red-50 border-b border-red-100"></tr>
+              </table>
+            </div>
+          </div>
+
+          <!-- Botón confirmar carga -->
+          <div class="flex justify-end gap-4 pt-4 border-t border-gray-200">
+            <button
+              (click)="limpiarDatos()"
+              class="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors duration-200"
+            >
+              Cancelar
+            </button>
+            <button
+              (click)="confirmarCarga()"
+              [disabled]="previewData.filasValidas === 0 || cargando"
+              class="bg-green-600 hover:bg-green-700 disabled:bg-gray-400 text-white px-6 py-3 rounded-lg font-semibold flex items-center gap-2 transition-colors duration-200 shadow-lg hover:shadow-xl"
+            >
+              <mat-spinner *ngIf="cargando" diameter="20" class="mr-2"></mat-spinner>
+              <mat-icon *ngIf="!cargando">upload</mat-icon>
+              {{ cargando ? 'Subiendo...' : 'Subir al Sistema' }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </mat-tab>
+  </mat-tab-group>
+</div>
+

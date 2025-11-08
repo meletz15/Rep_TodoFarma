@@ -51,7 +51,8 @@ class AuthController {
             nombre: usuario.nombre,
             apellido: usuario.apellido,
             correo: usuario.correo,
-            rol: usuario.rol_nombre
+            rol: usuario.rol_nombre,
+            permisos: usuario.permisos || {}
           }
         }
       });
@@ -76,7 +77,8 @@ class AuthController {
           correo: usuario.correo,
           rol: usuario.rol_nombre,
           estado: usuario.estado,
-          fecha_registro: usuario.fecha_registro
+          fecha_registro: usuario.fecha_registro,
+          permisos: usuario.permisos || {}
         }
       });
       

@@ -120,3 +120,23 @@ export interface PaginatedResponse<T> {
     total_paginas: number;
   };
 }
+
+export interface ConversionMovimiento {
+  producto_id: number;
+  cantidad: number;
+  signo: number;
+  tipo?: 'AJUSTE_ENTRADA' | 'AJUSTE_SALIDA' | 'DEVOLUCION_COMPRA' | 'DEVOLUCION_CLIENTE';
+  referencia?: string;
+  observacion?: string;
+  fecha_vencimiento?: string | null;
+  numero_lote?: string | null;
+}
+
+export interface ConversionRequest {
+  movimientos: ConversionMovimiento[];
+}
+
+export interface ConversionResponse {
+  movimiento_salida: InventarioMovimiento;
+  movimiento_entrada: InventarioMovimiento;
+}

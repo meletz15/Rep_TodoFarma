@@ -247,6 +247,62 @@ class InventarioController {
       next(error);
     }
   }
+
+  // Crear conversión de producto (ej: blister a pastillas sueltas)
+  static async crearConversion(req, res, next) {
+    try {
+      const { movimientos } = req.body;
+      const usuarioId = req.usuario?.id_usuario || null;
+
+      // Validar que se proporcionaron movimientos
+      if (!Array.isArray(movimientos) || movimientos.length !== 2) {
+        return res.status(400).json({
+          ok: false,
+          mensaje: 'Debe proporcionar exactamente 2 movimientos (salida y entrada)'
+        });
+      }
+
+      // Validar estructura de cada movimiento
+      const esquemaMovimiento = Joi.object({
+        producto_id: Joi.number().integer().positive().required(),
+        cantidad: Joi.number().integer().positive().required(),
+        signo: Joi.number().integer().valid(1, -1).required(),
+        tipo: Joi.string().valid('AJUSTE_ENTRADA', 'AJUSTE_SALIDA', 'DEVOLUCION_COMPRA', 'DEVOLUCION_CLIENTE').optional(),
+        referencia: Joi.string().max(100).allow('', null).optional(),
+        observacion: Joi.string().max(300).allow('', null).optional(),
+        fecha_vencimiento: Joi.date().allow(null).optional(),
+        numero_lote: Joi.string().max(50).allow('', null).optional()
+      });
+
+      for (let i = 0; i < movimientos.length; i++) {
+        const { error } = esquemaMovimiento.validate(movimientos[i]);
+        if (error) {
+          return res.status(400).json({
+            ok: false,
+            mensaje: `Error en movimiento ${i + 1}: ${error.details[0].message}`
+          });
+        }
+      }
+
+      // Agregar usuario_id a los movimientos si está disponible
+      movimientos.forEach(mov => {
+        if (!mov.usuario_id && usuarioId) {
+          mov.usuario_id = usuarioId;
+        }
+      });
+
+      const resultado = await InventarioModel.crearConversion(movimientos);
+      
+      res.json({
+        ok: true,
+        mensaje: 'Conversión realizada correctamente',
+        datos: resultado
+      });
+      
+    } catch (error) {
+      next(error);
+    }
+  }
 }
 
 module.exports = InventarioController;

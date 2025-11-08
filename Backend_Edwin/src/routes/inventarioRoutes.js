@@ -19,6 +19,9 @@ router.get('/producto/:id_producto/kardex', InventarioController.obtenerKardexPr
 // POST /api/inventario/movimiento - Crear movimiento de inventario manual
 router.post('/movimiento', requiereRol('ADMIN'), InventarioController.crearMovimiento);
 
+// POST /api/inventario/conversion - Crear conversión de producto (ej: blister a pastillas sueltas)
+router.post('/conversion', requiereRol('ADMIN'), InventarioController.crearConversion);
+
 // GET /api/inventario/estadisticas - Obtener estadísticas de inventario
 router.get('/estadisticas', InventarioController.obtenerEstadisticas);
 

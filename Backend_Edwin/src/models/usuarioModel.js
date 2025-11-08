@@ -46,7 +46,7 @@ class UsuarioModel {
     try {
       const resultado = await cliente.query(
         `SELECT u.id_usuario, u.nombre, u.apellido, u.correo, u.rol_id, u.estado, u.fecha_registro,
-                r.nombre as rol_nombre
+                r.nombre as rol_nombre, r.permisos
          FROM usuarios u
          JOIN roles r ON u.rol_id = r.id_rol
          WHERE u.id_usuario = $1`,
@@ -57,7 +57,11 @@ class UsuarioModel {
         throw crearError('Usuario no encontrado', 404);
       }
       
-      return resultado.rows[0];
+      const usuario = resultado.rows[0];
+      // Parsear permisos JSON si existe
+      usuario.permisos = typeof usuario.permisos === 'string' ? JSON.parse(usuario.permisos) : (usuario.permisos || {});
+      
+      return usuario;
     } finally {
       cliente.release();
     }
@@ -69,14 +73,21 @@ class UsuarioModel {
     try {
       const resultado = await cliente.query(
         `SELECT u.id_usuario, u.nombre, u.apellido, u.correo, u.contrasena_hash, u.rol_id, u.estado,
-                r.nombre as rol_nombre
+                r.nombre as rol_nombre, r.permisos
          FROM usuarios u
          JOIN roles r ON u.rol_id = r.id_rol
          WHERE u.correo = $1`,
         [correo]
       );
       
-      return resultado.rows[0] || null;
+      if (resultado.rows[0]) {
+        // Parsear permisos JSON si existe
+        const usuario = resultado.rows[0];
+        usuario.permisos = typeof usuario.permisos === 'string' ? JSON.parse(usuario.permisos) : (usuario.permisos || {});
+        return usuario;
+      }
+      
+      return null;
     } finally {
       cliente.release();
     }

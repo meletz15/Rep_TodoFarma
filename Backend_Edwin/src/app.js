@@ -18,6 +18,10 @@ const inventarioRoutes = require('./routes/inventarioRoutes');
 const cajaRoutes = require('./routes/cajaRoutes');
 const ventaRoutes = require('./routes/ventaRoutes');
 const configuracionRoutes = require('./routes/configuracionRoutes');
+const presentacionRoutes = require('./routes/presentacionRoutes');
+const unidadMedidaRoutes = require('./routes/unidadMedidaRoutes');
+const cargaRoutes = require('./routes/cargaRoutes');
+const rolRoutes = require('./routes/rolRoutes');
 
 const app = express();
 
@@ -117,6 +121,10 @@ app.use('/api/inventario', inventarioRoutes);
 app.use('/api/caja', cajaRoutes);
 app.use('/api/ventas', ventaRoutes);
 app.use('/api/configuracion', configuracionRoutes);
+app.use('/api/presentacion', presentacionRoutes);
+app.use('/api/unidad-medida', unidadMedidaRoutes);
+app.use('/api/carga', cargaRoutes);
+app.use('/api/roles', rolRoutes);
 
 // Middleware para rutas no encontradas
 app.use('*', (req, res) => {

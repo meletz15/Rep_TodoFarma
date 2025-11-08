@@ -11,6 +11,9 @@ export interface Producto {
   precio_unitario: number;
   stock: number;
   fecha_vencimiento?: string;
+  tipo_presentacion?: string;
+  cantidad_presentacion?: number;
+  unidad_medida?: string;
   activo: boolean;
   created_at: string;
   updated_at: string;
@@ -26,6 +29,9 @@ export interface ProductoCreate {
   precio_unitario?: number;
   stock?: number;
   fecha_vencimiento?: string;
+  tipo_presentacion?: string;
+  cantidad_presentacion?: number;
+  unidad_medida?: string;
   activo?: boolean;
 }
 
@@ -39,6 +45,9 @@ export interface ProductoUpdate {
   precio_unitario?: number;
   stock?: number;
   fecha_vencimiento?: string;
+  tipo_presentacion?: string;
+  cantidad_presentacion?: number;
+  unidad_medida?: string;
   activo?: boolean;
 }
 

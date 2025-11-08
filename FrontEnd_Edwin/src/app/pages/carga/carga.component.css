@@ -1,0 +1,8 @@
+/* Estilos específicos para el componente de carga */
+pre {
+  font-family: 'Courier New', monospace;
+  font-size: 0.75rem;
+  max-width: 400px;
+  overflow-x: auto;
+}
+
