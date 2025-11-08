@@ -50,6 +50,9 @@ const esquemaActualizarUsuario = Joi.object({
     'string.email': 'El correo debe tener un formato válido',
     'string.max': 'El correo no puede exceder 120 caracteres'
   }),
+  contrasena: Joi.string().pattern(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/).messages({
+    'string.pattern.base': 'La contraseña debe tener al menos 8 caracteres, una mayúscula, una minúscula, un número y un símbolo'
+  }),
   rol_id: Joi.number().integer().positive().messages({
     'number.base': 'El ID del rol debe ser un número',
     'number.integer': 'El ID del rol debe ser un número entero',

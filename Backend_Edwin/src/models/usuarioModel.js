@@ -183,8 +183,15 @@ class UsuarioModel {
         }
       }
       
+      // Si se proporciona una contraseña, hashearla
+      if (datosActualizacion.contrasena) {
+        const contrasenaHash = await bcrypt.hash(datosActualizacion.contrasena, 10);
+        datosActualizacion.contrasena_hash = contrasenaHash;
+        delete datosActualizacion.contrasena; // Eliminar la contraseña en texto plano
+      }
+      
       // Construir consulta de actualización
-      const camposActualizables = ['nombre', 'apellido', 'correo', 'rol_id', 'estado'];
+      const camposActualizables = ['nombre', 'apellido', 'correo', 'contrasena_hash', 'rol_id', 'estado'];
       const camposParaActualizar = [];
       const valores = [];
       let contadorParametros = 1;

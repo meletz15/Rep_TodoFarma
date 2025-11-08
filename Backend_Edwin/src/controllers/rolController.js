@@ -98,6 +98,15 @@ class RolController {
         throw crearError(error.details[0].message, 400);
       }
 
+      // Asegurar que siempre tenga el permiso de dashboard
+      if (!value.permisos) {
+        value.permisos = {};
+      }
+      // Si no se especifica dashboard, asignarlo por defecto
+      if (value.permisos.dashboard === undefined) {
+        value.permisos.dashboard = true;
+      }
+
       const nuevoRol = await RolModel.crear(value);
 
       // Parsear permisos JSON
@@ -127,6 +136,14 @@ class RolController {
 
       if (error) {
         throw crearError(error.details[0].message, 400);
+      }
+
+      // Si se están actualizando permisos, asegurar que dashboard esté presente
+      if (value.permisos !== undefined) {
+        // Si no se especifica dashboard en la actualización, asignarlo como true por defecto
+        if (value.permisos.dashboard === undefined) {
+          value.permisos.dashboard = true;
+        }
       }
 
       const rolActualizado = await RolModel.actualizar(idRol, value);

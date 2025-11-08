@@ -5,16 +5,17 @@ const { verificarAutenticacion } = require('../middlewares/authMiddleware');
 
 const router = express.Router();
 
-// Rate limiting para login (5 intentos por 15 minutos)
+// Rate limiting para login (10 intentos por 15 minutos)
 const loginLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutos
-  max: 5, // máximo 5 intentos
+  max: 10, // máximo 10 intentos (aumentado de 5 a 10)
   message: {
     ok: false,
     mensaje: 'Demasiados intentos de inicio de sesión. Intenta de nuevo en 15 minutos.'
   },
   standardHeaders: true,
   legacyHeaders: false,
+  skipSuccessfulRequests: true, // No contar intentos exitosos
 });
 
 // POST /api/auth/login - Iniciar sesión
