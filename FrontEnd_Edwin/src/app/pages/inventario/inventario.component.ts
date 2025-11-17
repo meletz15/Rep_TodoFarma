@@ -104,7 +104,7 @@ export class InventarioComponent implements OnInit {
   todasLasInventarioTotal: any[] = []; // Todos los productos cargados
   inventarioTotalFiltrados: any[] = []; // Productos después de filtrar
   inventarioTotalDataSource = new MatTableDataSource<any>();
-  inventarioTotalDisplayedColumns = ['producto', 'stock_actual', 'precio_compra', 'precio_venta', 'valor_total', 'acciones'];
+  inventarioTotalDisplayedColumns = ['producto', 'stock_actual', 'precio_compra', 'precio_venta', 'valor_total'];
   inventarioTotalCargando = false;
   inventarioTotalPagina = 1;
   inventarioTotalLimite = 10;

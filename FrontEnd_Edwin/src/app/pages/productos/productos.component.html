@@ -321,14 +321,15 @@
                       </span>
                       <button 
                         *ngIf="tieneMultiplesLotes(producto)" 
-                        mat-icon-button 
+                        mat-mini-fab
+                        color="primary"
                         (click)="obtenerLotesProducto(producto)"
-                        matTooltip="Ver todos los lotes"
-                        class="text-blue-600 hover:bg-blue-50"
-                        style="width: 24px; height: 24px; line-height: 24px;">
-                        <mat-icon style="font-size: 18px; width: 18px; height: 18px;">info</mat-icon>
+                        matTooltip="Ver todos los lotes ({{ productosConLotes.get(producto.id_producto)?.length }})"
+                        class="!w-8 !h-8 !min-w-8"
+                        style="box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                        <mat-icon class="!text-base">inventory_2</mat-icon>
                       </button>
-                      <span *ngIf="tieneMultiplesLotes(producto)" class="text-xs text-blue-600 font-medium">
+                      <span *ngIf="tieneMultiplesLotes(producto)" class="text-xs text-blue-600 font-medium ml-1">
                         ({{ productosConLotes.get(producto.id_producto)?.length }} lotes)
                       </span>
                     </div>
