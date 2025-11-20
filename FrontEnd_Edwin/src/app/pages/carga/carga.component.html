@@ -52,21 +52,14 @@
                 <thead class="bg-gray-50 sticky top-0">
                   <tr>
                     <th class="px-4 py-2 text-left font-semibold text-gray-700 border-b">Nombre</th>
-                    <th class="px-4 py-2 text-left font-semibold text-gray-700 border-b">Estado</th>
                   </tr>
                 </thead>
                 <tbody>
                   <tr *ngFor="let categoria of categorias" class="hover:bg-gray-50 border-b">
                     <td class="px-4 py-2 text-gray-800 font-medium">{{ categoria.nombre }}</td>
-                    <td class="px-4 py-2">
-                      <span class="inline-flex items-center px-2 py-1 rounded text-xs font-medium"
-                            [class]="categoria.activo ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'">
-                        {{ categoria.activo ? 'Activo' : 'Inactivo' }}
-                      </span>
-                    </td>
                   </tr>
                   <tr *ngIf="categorias.length === 0">
-                    <td colspan="2" class="px-4 py-4 text-center text-gray-500">No hay categorías disponibles</td>
+                    <td colspan="1" class="px-4 py-4 text-center text-gray-500">No hay categorías disponibles</td>
                   </tr>
                 </tbody>
               </table>
@@ -88,21 +81,14 @@
                 <thead class="bg-gray-50 sticky top-0">
                   <tr>
                     <th class="px-4 py-2 text-left font-semibold text-gray-700 border-b">Nombre</th>
-                    <th class="px-4 py-2 text-left font-semibold text-gray-700 border-b">Estado</th>
                   </tr>
                 </thead>
                 <tbody>
                   <tr *ngFor="let marca of marcas" class="hover:bg-gray-50 border-b">
                     <td class="px-4 py-2 text-gray-800 font-medium">{{ marca.nombre }}</td>
-                    <td class="px-4 py-2">
-                      <span class="inline-flex items-center px-2 py-1 rounded text-xs font-medium"
-                            [class]="marca.activo ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'">
-                        {{ marca.activo ? 'Activo' : 'Inactivo' }}
-                      </span>
-                    </td>
                   </tr>
                   <tr *ngIf="marcas.length === 0">
-                    <td colspan="2" class="px-4 py-4 text-center text-gray-500">No hay marcas disponibles</td>
+                    <td colspan="1" class="px-4 py-4 text-center text-gray-500">No hay marcas disponibles</td>
                   </tr>
                 </tbody>
               </table>
@@ -124,21 +110,14 @@
                 <thead class="bg-gray-50 sticky top-0">
                   <tr>
                     <th class="px-4 py-2 text-left font-semibold text-gray-700 border-b">Nombre</th>
-                    <th class="px-4 py-2 text-left font-semibold text-gray-700 border-b">Estado</th>
                   </tr>
                 </thead>
                 <tbody>
                   <tr *ngFor="let presentacion of presentaciones" class="hover:bg-gray-50 border-b">
                     <td class="px-4 py-2 text-gray-800 font-medium">{{ presentacion.nombre }}</td>
-                    <td class="px-4 py-2">
-                      <span class="inline-flex items-center px-2 py-1 rounded text-xs font-medium"
-                            [class]="presentacion.activo ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'">
-                        {{ presentacion.activo ? 'Activo' : 'Inactivo' }}
-                      </span>
-                    </td>
                   </tr>
                   <tr *ngIf="presentaciones.length === 0">
-                    <td colspan="2" class="px-4 py-4 text-center text-gray-500">No hay presentaciones disponibles</td>
+                    <td colspan="1" class="px-4 py-4 text-center text-gray-500">No hay presentaciones disponibles</td>
                   </tr>
                 </tbody>
               </table>
@@ -161,7 +140,6 @@
                   <tr>
                     <th class="px-4 py-2 text-left font-semibold text-gray-700 border-b">Nombre</th>
                     <th class="px-4 py-2 text-left font-semibold text-gray-700 border-b">Símbolo</th>
-                    <th class="px-4 py-2 text-left font-semibold text-gray-700 border-b">Estado</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -172,15 +150,9 @@
                         {{ unidad.simbolo }}
                       </span>
                     </td>
-                    <td class="px-4 py-2">
-                      <span class="inline-flex items-center px-2 py-1 rounded text-xs font-medium"
-                            [class]="unidad.activo ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'">
-                        {{ unidad.activo ? 'Activo' : 'Inactivo' }}
-                      </span>
-                    </td>
                   </tr>
                   <tr *ngIf="unidadesMedida.length === 0">
-                    <td colspan="3" class="px-4 py-4 text-center text-gray-500">No hay unidades de medida disponibles</td>
+                    <td colspan="2" class="px-4 py-4 text-center text-gray-500">No hay unidades de medida disponibles</td>
                   </tr>
                 </tbody>
               </table>

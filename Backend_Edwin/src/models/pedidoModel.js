@@ -263,9 +263,11 @@ class PedidoModel {
 
   // Actualizar estado del pedido
   static async actualizarEstado(idPedido, nuevoEstado, detallesConFechas = null) {
+    console.log(`[PEDIDO] Actualizando estado del pedido #${idPedido} a ${nuevoEstado}`);
     const cliente = await pool.connect();
     try {
       await cliente.query('BEGIN');
+      console.log(`[PEDIDO] Transacción iniciada para pedido #${idPedido}`);
       
       // Verificar que el pedido existe
       const pedidoExiste = await cliente.query(
@@ -298,49 +300,129 @@ class PedidoModel {
         [nuevoEstado, idPedido]
       );
 
-      // Si el nuevo estado es RECIBIDO y hay detalles con fechas, crear movimientos de inventario
-      if (nuevoEstado === 'RECIBIDO' && detallesConFechas && detallesConFechas.length > 0) {
-        const InventarioModel = require('./inventarioModel');
+      // Si el nuevo estado es RECIBIDO, crear movimientos de inventario
+      if (nuevoEstado === 'RECIBIDO') {
+        console.log(`[PEDIDO] ========================================`);
+        console.log(`[PEDIDO] INICIANDO CREACIÓN DE MOVIMIENTOS`);
+        console.log(`[PEDIDO] Pedido #${idPedido}, Estado: ${nuevoEstado}`);
+        console.log(`[PEDIDO] ========================================`);
         
-        // Obtener detalles del pedido
-        const detallesPedido = await cliente.query(
-          'SELECT * FROM pedido_detalle WHERE id_pedido = $1',
-          [idPedido]
-        );
-
-        // Crear movimientos de inventario con fechas de vencimiento
-        for (const detalle of detallesPedido.rows) {
-          const detalleConFecha = detallesConFechas.find(
-            d => d.id_producto === detalle.id_producto
+        try {
+          const CargaController = require('../controllers/cargaController');
+          
+          // Obtener detalles del pedido
+          console.log(`[PEDIDO] Obteniendo detalles del pedido #${idPedido}...`);
+          const detallesPedido = await cliente.query(
+            'SELECT * FROM pedido_detalle WHERE id_pedido = $1',
+            [idPedido]
           );
-
-          if (detalleConFecha) {
-            // Crear movimiento de entrada
-            await InventarioModel.crearMovimiento({
-              producto_id: detalle.id_producto,
-              tipo: 'ENTRADA_PEDIDO',
-              cantidad: detalle.cantidad,
-              signo: 1,
-              referencia: `Pedido #${idPedido}`,
-              pedido_id: idPedido,
-              usuario_id: usuarioId,
-              observacion: `Recepción de pedido #${idPedido}`,
-              fecha_vencimiento: detalleConFecha.fecha_vencimiento || null,
-              numero_lote: detalleConFecha.numero_lote || null
-            });
-
-            // Actualizar stock del producto
-            await cliente.query(
-              'UPDATE producto SET stock = stock + $1 WHERE id_producto = $2',
-              [detalle.cantidad, detalle.id_producto]
-            );
+          
+          console.log(`[PEDIDO] Pedido #${idPedido} tiene ${detallesPedido.rows.length} detalles`);
+          
+          // Validar que el pedido tenga detalles
+          if (detallesPedido.rows.length === 0) {
+            console.warn(`[PEDIDO] ⚠️ Pedido #${idPedido} no tiene detalles, no se crearán movimientos`);
+            throw crearError(`El pedido #${idPedido} no tiene detalles. No se pueden crear movimientos de inventario.`, 400);
           }
+
+          // Obtener el siguiente número de lote base para este pedido
+          const hoy = new Date();
+          const año = hoy.getFullYear();
+          const mes = String(hoy.getMonth() + 1).padStart(2, '0');
+          const dia = String(hoy.getDate()).padStart(2, '0');
+          const fechaFormato = `${año}${mes}${dia}`;
+          
+          // Obtener el último número de lote del día para inicializar el contador
+          const ultimoLote = await cliente.query(
+            `SELECT numero_lote FROM inventario_movimiento 
+             WHERE numero_lote IS NOT NULL AND numero_lote != ''
+               AND numero_lote LIKE $1
+             ORDER BY id_mov DESC LIMIT 1`,
+            [`LOTE-${fechaFormato}-%`]
+          );
+          
+          let contadorLote = 0;
+          if (ultimoLote.rows.length > 0 && ultimoLote.rows[0].numero_lote) {
+            const match = ultimoLote.rows[0].numero_lote.match(/LOTE-\d{8}-(\d+)$/);
+            if (match) {
+              contadorLote = parseInt(match[1], 10);
+            }
+          }
+
+          // Crear movimientos de inventario con fechas de vencimiento y números de lote
+          let movimientosCreados = 0;
+          for (let i = 0; i < detallesPedido.rows.length; i++) {
+            const detalle = detallesPedido.rows[i];
+            contadorLote++;
+            
+            // Buscar fecha y lote en detallesConFechas si se proporcionaron
+            let fechaVencimiento = null;
+            let numeroLote = null;
+            
+            if (detallesConFechas && detallesConFechas.length > 0) {
+              const detalleConFecha = detallesConFechas.find(
+                d => d.id_producto === detalle.id_producto
+              );
+              
+              if (detalleConFecha) {
+                fechaVencimiento = detalleConFecha.fecha_vencimiento || null;
+                numeroLote = detalleConFecha.numero_lote || null;
+              }
+            }
+            
+            // Si no se proporcionó fecha, generar una aleatoria
+            if (!fechaVencimiento) {
+              fechaVencimiento = CargaController.generarFechaVencimientoAleatoria();
+            }
+            
+            // Si no se proporcionó lote, generar uno incremental
+            if (!numeroLote) {
+              numeroLote = `LOTE-${fechaFormato}-${String(contadorLote).padStart(6, '0')}`;
+            }
+
+            // Crear movimiento de entrada usando la misma conexión de la transacción
+            // NOTA: El trigger tr_inv_mov__apply_stock actualiza el stock automáticamente,
+            // por lo que NO debemos actualizar el stock manualmente aquí
+            console.log(`[PEDIDO] Creando movimiento para producto ${detalle.id_producto}, cantidad: ${detalle.cantidad}, lote: ${numeroLote}`);
+            const resultadoMovimiento = await cliente.query(
+              `INSERT INTO inventario_movimiento 
+               (producto_id, tipo, cantidad, signo, referencia, pedido_id, usuario_id, observacion, fecha_vencimiento, numero_lote)
+               VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+               RETURNING id_mov`,
+              [
+                detalle.id_producto,
+                'ENTRADA_COMPRA',
+                detalle.cantidad,
+                1,
+                `Pedido #${idPedido}`,
+                idPedido,
+                usuarioId,
+                `Recepción de pedido #${idPedido}`,
+                fechaVencimiento,
+                numeroLote
+              ]
+            );
+            movimientosCreados++;
+            console.log(`[PEDIDO] ✅ Movimiento creado (ID: ${resultadoMovimiento.rows[0].id_mov}) para producto ${detalle.id_producto} (el trigger actualizará el stock automáticamente)`);
+          }
+          
+          console.log(`[PEDIDO] ✅ ${movimientosCreados} de ${detallesPedido.rows.length} movimientos creados para pedido #${idPedido}`);
+          console.log(`[PEDIDO] ========================================`);
+        } catch (errorCreacion) {
+          console.error(`[PEDIDO] ❌ ERROR CRÍTICO al crear movimientos para pedido #${idPedido}:`, errorCreacion.message);
+          console.error(`[PEDIDO] Stack:`, errorCreacion.stack);
+          throw errorCreacion; // Re-lanzar para que se haga rollback
         }
+      } else {
+        console.log(`[PEDIDO] Estado ${nuevoEstado} no requiere creación de movimientos`);
       }
 
       await cliente.query('COMMIT');
+      console.log(`[PEDIDO] ✅ Transacción completada para pedido #${idPedido}`);
       return resultado.rows[0];
     } catch (error) {
+      console.error(`[PEDIDO] ❌ Error en pedido #${idPedido}:`, error.message);
+      console.error(`[PEDIDO] Stack:`, error.stack);
       await cliente.query('ROLLBACK');
       throw error;
     } finally {

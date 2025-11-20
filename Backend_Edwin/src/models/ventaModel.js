@@ -62,9 +62,32 @@ class VentaModel {
 
       // Crear los detalles de la venta
       if (datosVenta.detalles && datosVenta.detalles.length > 0) {
+        // Consolidar detalles: si hay múltiples líneas del mismo producto, sumar cantidades
+        const detallesConsolidados = new Map();
+        
+        for (const detalle of datosVenta.detalles) {
+          const key = detalle.id_producto;
+          
+          if (detallesConsolidados.has(key)) {
+            // Si el producto ya existe, sumar la cantidad
+            const existente = detallesConsolidados.get(key);
+            existente.cantidad += detalle.cantidad;
+            // Usar el último precio_unitario (o podrías calcular promedio si prefieres)
+            existente.precio_unitario = detalle.precio_unitario;
+          } else {
+            // Si es nuevo, agregarlo
+            detallesConsolidados.set(key, {
+              id_producto: detalle.id_producto,
+              cantidad: detalle.cantidad,
+              precio_unitario: detalle.precio_unitario
+            });
+          }
+        }
+        
         let totalCalculado = 0;
 
-        for (const detalle of datosVenta.detalles) {
+        // Procesar los detalles consolidados
+        for (const detalle of detallesConsolidados.values()) {
           // Verificar que el producto existe y tiene stock suficiente
           const productoExiste = await cliente.query(
             'SELECT stock, nombre FROM producto WHERE id_producto = $1',
@@ -84,6 +107,110 @@ class VentaModel {
             `INSERT INTO venta_detalle (id_venta, id_producto, cantidad, precio_unitario)
              VALUES ($1, $2, $3, $4)`,
             [venta.id_venta, detalle.id_producto, detalle.cantidad, detalle.precio_unitario]
+          );
+
+          // Actualizar stock del producto (restar)
+          await cliente.query(
+            'UPDATE producto SET stock = stock - $1 WHERE id_producto = $2',
+            [detalle.cantidad, detalle.id_producto]
+          );
+
+          // Crear movimiento de inventario (SALIDA_VENTA)
+          // Usar FIFO: obtener el lote más antiguo con stock disponible
+          // Primero buscar movimientos de entrada que tengan fecha_vencimiento y numero_lote
+          const lotesDisponibles = await cliente.query(
+            `SELECT 
+              im.fecha_vencimiento,
+              im.numero_lote,
+              SUM(CASE WHEN im.signo = 1 THEN im.cantidad ELSE -im.cantidad END) as stock_disponible
+            FROM inventario_movimiento im
+            WHERE im.producto_id = $1
+              AND im.fecha_vencimiento IS NOT NULL
+              AND im.numero_lote IS NOT NULL
+            GROUP BY im.producto_id, im.fecha_vencimiento, im.numero_lote
+            HAVING SUM(CASE WHEN im.signo = 1 THEN im.cantidad ELSE -im.cantidad END) > 0
+            ORDER BY im.fecha_vencimiento ASC, MIN(im.fecha) ASC
+            LIMIT 1`,
+            [detalle.id_producto]
+          );
+          
+          let fechaVencimiento = null;
+          let numeroLote = null;
+          
+          if (lotesDisponibles.rows.length > 0) {
+            // Usar el lote más antiguo (FIFO) con fecha y lote
+            fechaVencimiento = lotesDisponibles.rows[0].fecha_vencimiento;
+            numeroLote = lotesDisponibles.rows[0].numero_lote;
+          } else {
+            // Si no hay lotes con fecha y lote, buscar solo con fecha_vencimiento
+            const lotesSoloFecha = await cliente.query(
+              `SELECT 
+                im.fecha_vencimiento,
+                im.numero_lote,
+                SUM(CASE WHEN im.signo = 1 THEN im.cantidad ELSE -im.cantidad END) as stock_disponible
+              FROM inventario_movimiento im
+              WHERE im.producto_id = $1
+                AND im.fecha_vencimiento IS NOT NULL
+              GROUP BY im.producto_id, im.fecha_vencimiento, im.numero_lote
+              HAVING SUM(CASE WHEN im.signo = 1 THEN im.cantidad ELSE -im.cantidad END) > 0
+              ORDER BY im.fecha_vencimiento ASC, MIN(im.fecha) ASC
+              LIMIT 1`,
+              [detalle.id_producto]
+            );
+            
+            if (lotesSoloFecha.rows.length > 0) {
+              // Usar el lote más antiguo con fecha (puede no tener numero_lote)
+              fechaVencimiento = lotesSoloFecha.rows[0].fecha_vencimiento;
+              numeroLote = lotesSoloFecha.rows[0].numero_lote; // Puede ser null
+            } else {
+              // Si no hay movimientos de entrada con stock disponible, buscar el último movimiento de entrada
+              // para obtener su fecha y lote (aunque ya no tenga stock)
+              const ultimoMovimientoEntrada = await cliente.query(
+                `SELECT fecha_vencimiento, numero_lote
+                 FROM inventario_movimiento
+                 WHERE producto_id = $1
+                   AND signo = 1
+                   AND fecha_vencimiento IS NOT NULL
+                 ORDER BY fecha DESC, id_mov DESC
+                 LIMIT 1`,
+                [detalle.id_producto]
+              );
+              
+              if (ultimoMovimientoEntrada.rows.length > 0) {
+                // Usar la fecha y lote del último movimiento de entrada
+                fechaVencimiento = ultimoMovimientoEntrada.rows[0].fecha_vencimiento;
+                numeroLote = ultimoMovimientoEntrada.rows[0].numero_lote; // Puede ser null
+              } else {
+                // Si no hay movimientos de entrada, usar la fecha del producto
+                const productoInfo = await cliente.query(
+                  'SELECT fecha_vencimiento FROM producto WHERE id_producto = $1',
+                  [detalle.id_producto]
+                );
+                fechaVencimiento = productoInfo.rows[0]?.fecha_vencimiento || null;
+                
+                // Para una salida, NO generar un nuevo número de lote
+                // Si no hay lote disponible, dejar null (es una salida, no una entrada)
+                numeroLote = null;
+              }
+            }
+          }
+          
+          await cliente.query(
+            `INSERT INTO inventario_movimiento 
+             (producto_id, tipo, cantidad, signo, referencia, venta_id, usuario_id, observacion, fecha_vencimiento, numero_lote)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`,
+            [
+              detalle.id_producto,
+              'SALIDA_VENTA',
+              detalle.cantidad,
+              -1,
+              `Venta ${venta.id_venta}`,
+              venta.id_venta,
+              datosVenta.usuario_id,
+              `Venta de ${detalle.cantidad} unidades`,
+              fechaVencimiento,
+              numeroLote
+            ]
           );
 
           totalCalculado += detalle.cantidad * detalle.precio_unitario;

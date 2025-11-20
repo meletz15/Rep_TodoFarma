@@ -644,7 +644,9 @@
                          [min]="minDate">
                   <mat-datepicker-toggle matSuffix [for]="pickerRecibir"></mat-datepicker-toggle>
                   <mat-datepicker #pickerRecibir></mat-datepicker>
-                  <mat-hint>Fecha de vencimiento del lote</mat-hint>
+                  <mat-hint>
+                    <span class="text-red-500">Obligatorio:</span> Si no seleccionas, se generará una fecha aleatoria (6 meses a 3 años)
+                  </mat-hint>
                 </mat-form-field>
               </div>
 
@@ -656,9 +658,11 @@
                 <mat-form-field appearance="outline" class="w-full">
                   <input matInput 
                          [(ngModel)]="detalle.numero_lote"
-                         placeholder="Ej: LOTE-2025-001"
+                         placeholder="Dejar vacío para generar automáticamente"
                          maxlength="50">
-                  <mat-hint>Opcional: número de lote del producto</mat-hint>
+                  <mat-hint>
+                    <span class="text-blue-600">Opcional:</span> Si lo dejas vacío, se generará automáticamente (ej: LOTE-20251118-000071)
+                  </mat-hint>
                 </mat-form-field>
               </div>
             </div>

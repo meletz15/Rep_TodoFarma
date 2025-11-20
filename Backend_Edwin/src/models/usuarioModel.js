@@ -259,31 +259,21 @@ class UsuarioModel {
     }
   }
 
-  // Eliminar usuario (lógico o físico)
+  // Eliminar usuario (eliminado lógico - desactivar)
   static async eliminar(idUsuario, borradoFisico = false) {
     const cliente = await pool.connect();
     try {
-      if (borradoFisico) {
-        const resultado = await cliente.query(
-          'DELETE FROM usuarios WHERE id_usuario = $1 RETURNING id_usuario',
-          [idUsuario]
-        );
-        
-        if (resultado.rows.length === 0) {
-          throw crearError('Usuario no encontrado', 404);
-        }
-      } else {
-        const resultado = await cliente.query(
-          'UPDATE usuarios SET estado = \'INACTIVO\' WHERE id_usuario = $1 RETURNING id_usuario',
-          [idUsuario]
-        );
-        
-        if (resultado.rows.length === 0) {
-          throw crearError('Usuario no encontrado', 404);
-        }
+      // Siempre hacer eliminado lógico (desactivar), nunca eliminar físicamente
+      const resultado = await cliente.query(
+        'UPDATE usuarios SET estado = \'INACTIVO\' WHERE id_usuario = $1 RETURNING id_usuario',
+        [idUsuario]
+      );
+      
+      if (resultado.rows.length === 0) {
+        throw crearError('Usuario no encontrado', 404);
       }
       
-      return { mensaje: 'Usuario eliminado correctamente' };
+      return { mensaje: 'Usuario desactivado correctamente' };
     } finally {
       cliente.release();
     }

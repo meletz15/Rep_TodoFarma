@@ -222,8 +222,9 @@ export class InventarioComponent implements OnInit {
   cargarMovimientos(): void {
     this.movimientoCargando = true;
     
-    // Cargar todos los movimientos (sin filtros, con límite alto)
-    this.inventarioService.obtenerMovimientos(1, 100, {})
+    // Cargar todos los movimientos (sin filtros, con límite alto para incluir salidas antiguas)
+    // Aumentar el límite a 1000 para asegurar que se carguen todas las salidas
+    this.inventarioService.obtenerMovimientos(1, 1000, {})
       .subscribe({
         next: (response) => {
           const movimientos = response.datos.datos || [];
@@ -308,8 +309,9 @@ export class InventarioComponent implements OnInit {
   cargarInventarioTotal(): void {
     this.inventarioTotalCargando = true;
     
-    // Cargar todos los productos activos (hasta 100) para filtrar en frontend
-    this.productoService.obtenerProductos(1, 100, { activo: 'true' })
+    // Cargar todos los productos activos (límite alto para incluir todos los productos)
+    // Usar límite de 1000 para que el backend devuelva todos los productos
+    this.productoService.obtenerProductos(1, 1000, { activo: 'true' })
       .subscribe({
         next: (response) => {
           const inventarioTotal = response.datos.datos || [];

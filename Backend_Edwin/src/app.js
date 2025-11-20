@@ -26,14 +26,25 @@ const rolRoutes = require('./routes/rolRoutes');
 const app = express();
 
 // Middlewares de seguridad
-app.use(helmet());
+// Configurar Helmet con opciones optimizadas para Chrome
+app.use(helmet({
+  crossOriginEmbedderPolicy: false, // Deshabilitar para evitar problemas con recursos externos
+  contentSecurityPolicy: false, // Deshabilitar CSP estricto que puede bloquear recursos en Chrome
+  crossOriginResourcePolicy: { policy: "cross-origin" } // Permitir recursos cross-origin
+}));
 
-// Middleware de CORS
+// Middleware de CORS con configuración optimizada para Chrome
 app.use(cors({
   origin: process.env.NODE_ENV === 'production' 
     ? process.env.ALLOWED_ORIGINS?.split(',') || ['http://localhost:3000']
     : true,
-  credentials: true
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+  exposedHeaders: ['Content-Range', 'X-Content-Range'],
+  maxAge: 86400, // Cache preflight por 24 horas (reduce requests en Chrome)
+  preflightContinue: false,
+  optionsSuccessStatus: 204
 }));
 
 // Middleware de logging

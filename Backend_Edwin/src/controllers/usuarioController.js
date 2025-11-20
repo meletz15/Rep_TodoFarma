@@ -220,7 +220,7 @@ class UsuarioController {
     }
   }
 
-  // Eliminar usuario
+  // Eliminar usuario (eliminado lógico - desactivar)
   static async eliminar(req, res, next) {
     try {
       const { id_usuario } = req.params;
@@ -231,13 +231,13 @@ class UsuarioController {
         throw crearError('ID de usuario inválido', 400);
       }
       
-      // Verificar que no se elimine a sí mismo
+      // Verificar que no se desactive a sí mismo
       if (id === req.usuario.id_usuario) {
-        throw crearError('No puedes eliminar tu propia cuenta', 400);
+        throw crearError('No puedes desactivar tu propia cuenta', 400);
       }
       
-      // Eliminar usuario
-      const resultado = await UsuarioModel.eliminar(id, process.env.BORRADO_FISICO);
+      // Desactivar usuario (eliminado lógico - siempre desactivar, nunca eliminar físicamente)
+      const resultado = await UsuarioModel.eliminar(id, false);
       
       res.json({
         ok: true,

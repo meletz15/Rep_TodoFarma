@@ -184,16 +184,19 @@ class ProductoModel {
       
       // Aplicar paginación
       consulta += ` ORDER BY p.created_at DESC`;
-      if (paginacion.limite) {
+      // Si hay límite, aplicarlo; si es null, devolver todos los registros
+      if (paginacion.limite && paginacion.limite !== null) {
         consulta += ` LIMIT $${contadorParametros}`;
         parametros.push(paginacion.limite);
         contadorParametros++;
+        
+        // Solo aplicar OFFSET si hay límite
+        if (paginacion.offset) {
+          consulta += ` OFFSET $${contadorParametros}`;
+          parametros.push(paginacion.offset);
+        }
       }
-      
-      if (paginacion.offset) {
-        consulta += ` OFFSET $${contadorParametros}`;
-        parametros.push(paginacion.offset);
-      }
+      // Si no hay límite (null), devolver todos los registros sin paginación
       
       const resultado = await cliente.query(consulta, parametros);
       

@@ -1,25 +1,28 @@
 // Función para construir consultas paginadas
 const construirPaginacion = (pagina = 1, limite = 10) => {
-  const offset = (pagina - 1) * limite;
+  // Si limite es null, significa que se quieren todos los registros
+  const offset = limite ? (pagina - 1) * limite : 0;
   return {
     offset,
-    limite: parseInt(limite),
+    limite: limite !== null ? parseInt(limite) : null,
     pagina: parseInt(pagina)
   };
 };
 
 // Función para construir respuesta paginada
 const construirRespuestaPaginada = (datos, total, pagina, limite) => {
-  const totalPaginas = Math.ceil(total / limite);
+  // Si no hay límite, significa que se devolvieron todos los registros
+  const limiteNum = limite || total;
+  const totalPaginas = limite ? Math.ceil(total / limiteNum) : 1;
   
   return {
     datos,
     paginacion: {
       pagina: parseInt(pagina),
-      limite: parseInt(limite),
+      limite: limiteNum,
       total,
       totalPaginas,
-      tieneSiguiente: pagina < totalPaginas,
+      tieneSiguiente: limite ? pagina < totalPaginas : false,
       tieneAnterior: pagina > 1
     }
   };
@@ -28,14 +31,18 @@ const construirRespuestaPaginada = (datos, total, pagina, limite) => {
 // Función para validar parámetros de paginación
 const validarPaginacion = (pagina, limite) => {
   const paginaNum = parseInt(pagina) || 1;
-  const limiteNum = parseInt(limite) || 10;
+  let limiteNum = parseInt(limite) || 10;
   
   if (paginaNum < 1) {
     throw new Error('La página debe ser mayor a 0');
   }
   
-  if (limiteNum < 1 || limiteNum > 100) {
-    throw new Error('El límite debe estar entre 1 y 100');
+  // Si el límite es >= 1000, tratarlo como "sin límite" para devolver todos los registros
+  // Esto permite obtener todos los registros cuando se necesita
+  if (limiteNum >= 1000) {
+    limiteNum = null; // null significa sin límite
+  } else if (limiteNum < 1) {
+    throw new Error('El límite debe ser mayor a 0');
   }
   
   return { pagina: paginaNum, limite: limiteNum };

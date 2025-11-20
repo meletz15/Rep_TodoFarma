@@ -264,9 +264,9 @@ export class UsuariosComponent implements OnInit {
   eliminarUsuario(usuario: Usuario): void {
     const dialogRef = this.dialog.open(ConfirmDialogComponent, {
       data: {
-        titulo: 'Eliminar Usuario',
-        mensaje: `¿Está seguro de que desea eliminar al usuario ${usuario.nombre} ${usuario.apellido}?`,
-        confirmarTexto: 'Eliminar',
+        titulo: 'Desactivar Usuario',
+        mensaje: `¿Está seguro de que desea desactivar al usuario ${usuario.nombre} ${usuario.apellido}? El usuario quedará inactivo pero no se eliminará del sistema.`,
+        confirmarTexto: 'Desactivar',
         cancelarTexto: 'Cancelar'
       }
     });
@@ -277,14 +277,14 @@ export class UsuariosComponent implements OnInit {
           .subscribe({
             next: (response) => {
               if (response.ok) {
-                this.snackBar.open('Usuario eliminado correctamente', 'Cerrar', {
+                this.snackBar.open('Usuario desactivado correctamente', 'Cerrar', {
                   duration: 3000
                 });
                 this.cargarUsuarios();
               }
             },
             error: (error) => {
-              this.snackBar.open(error.error?.mensaje || 'Error al eliminar usuario', 'Cerrar', {
+              this.snackBar.open(error.error?.mensaje || 'Error al desactivar usuario', 'Cerrar', {
                 duration: 3000
               });
             }
